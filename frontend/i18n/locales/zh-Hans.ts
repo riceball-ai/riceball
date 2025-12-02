@@ -2,8 +2,8 @@ export default defineI18nLocale(async locale => {
   return {
     // 通用
     common: {
-      slogan: '按量付费的AI助理平台',
       app_name: '饭团',
+      slogan: '用AI提高你的生产力',
       use_terms: '使用条款',
       privacy: '隐私政策',
       welcome: '你好',

@@ -2,8 +2,8 @@ export default defineI18nLocale(async locale => {
   return {
     // Common
     common: {
-      slogan: 'Pay-as-you-go AI Assistant Platform',
       app_name: 'RiceBall',
+      slogan: 'Boost your productivity with AI',
       use_terms: 'Terms of Service',
       privacy: 'Privacy Policy',
       welcome: 'Welcome',

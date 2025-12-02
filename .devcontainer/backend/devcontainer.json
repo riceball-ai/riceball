@@ -1,0 +1,22 @@
+{
+  "name": "backend",
+  "dockerComposeFile": "../../docker-compose.yml",
+  "service": "backend",
+  "workspaceFolder": "/app",
+  "mounts": [
+    "source=${localEnv:HOME}/.gitconfig,target=/home/appuser/.gitconfig,type=bind",
+    "source=${localEnv:HOME}/.ssh,target=/home/appuser/.ssh,type=bind,consistency=cached"
+  ],
+  "postCreateCommand": "chmod 700 /home/appuser/.ssh && chmod 600 /home/appuser/.ssh/id_* 2>/dev/null || true",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.isort",
+        "ms-python.vscode-pylance",
+        "ms-python.python",
+        "ms-python.debugpy",
+        "ms-python.vscode-python-envs"
+      ]
+    }
+  }
+}

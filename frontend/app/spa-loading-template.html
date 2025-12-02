@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading...</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #0a1f0a 0%, #0d1a0d 50%, #0f1e0f 100%);
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    .loading-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    /* AI Core */
+    .ai-core {
+      position: relative;
+      width: 120px;
+      height: 120px;
+    }
+
+    /* Center Orb */
+    .center-orb {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #00ff88, #00cc6a);
+      border-radius: 50%;
+      box-shadow: 
+        0 0 20px rgba(0, 255, 136, 0.6),
+        0 0 40px rgba(0, 255, 136, 0.4),
+        0 0 60px rgba(0, 255, 136, 0.2);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0.8;
+      }
+    }
+
+    /* Orbit Rings */
+    .orbit-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 2px solid transparent;
+      animation: rotate 3s linear infinite;
+    }
+
+    .orbit-ring-1 {
+      width: 80px;
+      height: 80px;
+      border-top-color: rgba(0, 255, 136, 0.8);
+      border-right-color: rgba(0, 255, 136, 0.4);
+      animation-duration: 2s;
+    }
+
+    .orbit-ring-2 {
+      width: 100px;
+      height: 100px;
+      border-top-color: rgba(0, 230, 118, 0.6);
+      border-left-color: rgba(0, 230, 118, 0.3);
+      animation-duration: 3s;
+      animation-direction: reverse;
+    }
+
+    .orbit-ring-3 {
+      width: 120px;
+      height: 120px;
+      border-top-color: rgba(16, 172, 132, 0.5);
+      border-right-color: rgba(16, 172, 132, 0.2);
+      animation-duration: 4s;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+      to {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    /* Particles */
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: #00ff88;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+    }
+
+    .particle-1 {
+      top: 0;
+      left: 50%;
+      animation: orbit-particle 2s linear infinite;
+    }
+
+    .particle-2 {
+      top: 50%;
+      right: 0;
+      animation: orbit-particle 3s linear infinite;
+      animation-delay: -1s;
+      background: #00e676;
+      box-shadow: 0 0 10px rgba(0, 230, 118, 0.8);
+    }
+
+    .particle-3 {
+      bottom: 0;
+      left: 50%;
+      animation: orbit-particle 4s linear infinite;
+      animation-delay: -2s;
+      background: #10ac84;
+      box-shadow: 0 0 10px rgba(16, 172, 132, 0.8);
+    }
+
+    @keyframes orbit-particle {
+      from {
+        transform: rotate(0deg) translateX(60px) rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg) translateX(60px) rotate(-360deg);
+      }
+    }
+
+    /* Loading Text */
+    .loading-text {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #00ff88;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% {
+        text-shadow: 
+          0 0 10px rgba(0, 255, 136, 0.5),
+          0 0 20px rgba(0, 255, 136, 0.3);
+        opacity: 1;
+      }
+      50% {
+        text-shadow: 
+          0 0 20px rgba(0, 255, 136, 0.8),
+          0 0 30px rgba(0, 255, 136, 0.5),
+          0 0 40px rgba(0, 255, 136, 0.3);
+        opacity: 0.8;
+      }
+    }
+
+    /* Loading Dots Animation */
+    .loading-text::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% {
+        content: '';
+      }
+      40% {
+        content: '.';
+      }
+      60% {
+        content: '..';
+      }
+      80%, 100% {
+        content: '...';
+      }
+    }
+
+    /* Background Particles */
+    .bg-particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(0, 255, 136, 0.3);
+      border-radius: 50%;
+      animation: float linear infinite;
+    }
+
+    @keyframes float {
+      from {
+        transform: translateY(100vh) translateX(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      to {
+        transform: translateY(-100px) translateX(var(--drift));
+        opacity: 0;
+      }
+    }
+
+    .bg-particle:nth-child(1) {
+      left: 10%;
+      animation-duration: 8s;
+      animation-delay: 0s;
+      --drift: 20px;
+    }
+
+    .bg-particle:nth-child(2) {
+      left: 25%;
+      animation-duration: 12s;
+      animation-delay: 2s;
+      --drift: -30px;
+    }
+
+    .bg-particle:nth-child(3) {
+      left: 40%;
+      animation-duration: 10s;
+      animation-delay: 4s;
+      --drift: 15px;
+    }
+
+    .bg-particle:nth-child(4) {
+      left: 55%;
+      animation-duration: 14s;
+      animation-delay: 1s;
+      --drift: -20px;
+    }
+
+    .bg-particle:nth-child(5) {
+      left: 70%;
+      animation-duration: 9s;
+      animation-delay: 3s;
+      --drift: 25px;
+    }
+
+    .bg-particle:nth-child(6) {
+      left: 85%;
+      animation-duration: 11s;
+      animation-delay: 5s;
+      --drift: -15px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Background Floating Particles -->
+  <div class="bg-particle"></div>
+  <div class="bg-particle"></div>
+  <div class="bg-particle"></div>
+  <div class="bg-particle"></div>
+  <div class="bg-particle"></div>
+  <div class="bg-particle"></div>
+
+  <!-- Main Loading Container -->
+  <div class="loading-container">
+    <div class="ai-core">
+      <!-- Center Glowing Orb -->
+      <div class="center-orb"></div>
+      
+      <!-- Orbit Rings -->
+      <div class="orbit-ring orbit-ring-1"></div>
+      <div class="orbit-ring orbit-ring-2"></div>
+      <div class="orbit-ring orbit-ring-3"></div>
+      
+      <!-- Orbit Particles -->
+      <div class="particle particle-1"></div>
+      <div class="particle particle-2"></div>
+      <div class="particle particle-3"></div>
+    </div>
+    
+    <div class="loading-text">Loading</div>
+  </div>
+</body>
+</html>

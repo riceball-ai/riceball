@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>邮箱验证请求</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
+      font-family: Arial, 'Microsoft YaHei', sans-serif;
+      color: #333;
+    "
+  >
+    <div
+      style="
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      "
+    >
+      <div style="background-color: #3b82f6; padding: 20px; text-align: center">
+        <h1 style="font-size: 24px; color: #ffffff; margin: 0">
+          邮箱验证请求
+        </h1>
+      </div>
+
+      <div style="padding: 30px; text-align: center">
+        <!-- Logo (inline) -->
+        <!-- <img
+          src="cid:company_logo"
+          alt="Logo"
+          style="max-width: 120px; margin-bottom: 20px"
+        /> -->
+        
+        <p style="margin:0 0 15px;">
+          您好 {{ user.email }}，
+        </p>
+        <p style="margin:0 0 20px;">
+          感谢您的注册！为了完成您的注册，请点击下方按钮验证您的邮箱。
+        </p>
+        <p style="margin:0 0 20px; text-align:center;">
+          <a
+            href="{{ verify_link }}"
+            style="background-color:#1a73e8; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:4px; display:inline-block; font-weight:bold;"
+          >
+            立即验证
+          </a>
+        </p>
+        <p style="margin:0;">
+          如果这不是您的操作，请忽略此邮件。
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

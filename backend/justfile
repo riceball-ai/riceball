@@ -1,0 +1,20 @@
+migrate:
+    uv run alembic upgrade head
+
+make_migration name:
+    uv run alembic revision --autogenerate -m "{{name}}"
+
+init_data:
+    python scripts/init_system_config.py
+
+# Create superuser interactively
+create-superuser:
+    python scripts/create_superuser.py
+
+# Create superuser with environment variables
+create-superuser-with email password:
+    SUPERUSER_EMAIL={{email}} SUPERUSER_PASSWORD={{password}} python scripts/create_superuser.py
+
+# List all superusers
+list-superusers:
+    python scripts/create_superuser.py --list

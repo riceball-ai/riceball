@@ -1,0 +1,94 @@
+services:
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  minio-mc:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        until mc alias set local http://minio:9000 minioadmin minioadmin; do
+          echo 'Waiting for MinIO...' && sleep 2;
+        done &&
+        mc mb local/public-bucket --ignore-existing &&
+        mc anonymous set download local/public-bucket &&
+        tail -f /dev/null
+      "
+  chromadb:
+    image: chromadb/chroma
+    volumes:
+      - chroma_data:/data
+    ports:
+      - "8088:8000"
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: riceball
+      POSTGRES_PASSWORD: RiceBall999
+      POSTGRES_DB: riceball
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    user: "${UID:-1000}:${GID:-1000}"
+    env_file:
+      - ./backend/.env
+    environment:
+      S3_EXTERNAL_ENDPOINT_URL: http://localhost:9000/public-bucket
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+    depends_on:
+      - mailhog
+      - minio
+      - postgres
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    environment:
+      API_BASE_URL: http://backend:8000/api
+      NUXT_PUBLIC_I18N_BASE_URL: http://localhost:3000
+    user: "${UID:-1000}:${GID:-1000}"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+volumes:
+  minio_data:
+  chroma_data:
+  postgres_data:

@@ -1,0 +1,13 @@
+{
+  "name": "frontend",
+  "dockerComposeFile": "../../docker-compose.yml",
+  "service": "frontend",
+  "workspaceFolder": "/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Vue.volar"
+      ]
+    }
+  }
+}

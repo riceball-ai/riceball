@@ -4,6 +4,7 @@ import { markdownChartPlugin } from '@vuepress/plugin-markdown-chart'
 import { defineUserConfig } from 'vuepress'
 
 export default defineUserConfig({
+  base: '/riceball/', // GitHub Pages base URL, change this if you use a custom domain
   locales: {
     '/': {
       lang: 'en-US',

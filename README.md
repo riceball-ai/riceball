@@ -1,5 +1,7 @@
 # RiceBall - Private AI Knowledge Base & Agent Platform Built for Teams and Enterprises
 
+[Documentation](https://riceball-ai.github.io/riceball/) | [文档](https://riceball-ai.github.io/riceball/zh/)
+
 ## 🍚 What is RiceBall?
 
 RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. It aims to help teams and enterprises quickly build and deploy LLM-based intelligent applications in a private environment.

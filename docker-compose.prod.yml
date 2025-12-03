@@ -1,0 +1,87 @@
+services:
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    restart: always
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio-mc:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        until mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}; do
+          echo 'Waiting for MinIO...' && sleep 2;
+        done &&
+        mc mb local/${S3_BUCKET_NAME:-public-bucket} --ignore-existing &&
+        mc anonymous set download local/${S3_BUCKET_NAME:-public-bucket} &&
+        exit 0
+      "
+
+  chromadb:
+    image: chromadb/chroma
+    restart: always
+    volumes:
+      - chroma_data:/data
+    ports:
+      - "8088:8000"
+
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-riceball}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-RiceBall999}
+      POSTGRES_DB: ${POSTGRES_DB:-riceball}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: pro
+    restart: always
+    env_file:
+      - ./backend/.env
+    environment:
+      ENVIRONMENT: production
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_EXTERNAL_ENDPOINT_URL: ${S3_EXTERNAL_ENDPOINT_URL:-http://localhost:9000/public-bucket}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-riceball}:${POSTGRES_PASSWORD:-RiceBall999}@postgres:5432/${POSTGRES_DB:-riceball}
+    depends_on:
+      - minio
+      - postgres
+      - chromadb
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: pro
+    restart: always
+    environment:
+      API_BASE_URL: http://backend:8000/api/
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  minio_data:
+  chroma_data:
+  postgres_data:

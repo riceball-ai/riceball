@@ -1,11 +1,8 @@
-# RiceBall - Private AI Knowledge Base & Agent Platform Built for Teams and Enterprises
+# Introduction
 
 ## 🍚 What is RiceBall?
 
 RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. It aims to help teams and enterprises quickly build and deploy LLM-based intelligent applications in a private environment.
-
-![Client Interface](docs/.vuepress/public/client.png)
-![Dashboard Interface](docs/.vuepress/public/dashboard.png)
 
 **Core Capabilities:**
 
@@ -32,29 +29,3 @@ In the process of AI adoption, enterprises often face the dilemma of balancing d
 ## 🐹 About the Name
 
 The name RiceBall comes from a hamster I own. Every time it eats in its little food bowl, it curls up like a rice ball, so I named it RiceBall.
-
-## 🚀 Quick Start
-
-```bash
-git clone ...
-
-cp backend/.env.example backend/.env
-
-docker-compose up -d
-```
-
-## ❤️ Acknowledgements
-
-RiceBall wouldn't exist without the contributions of the open-source community. Special thanks to the following excellent open-source projects:
-
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [FastAPI Users](https://frankie567.github.io/fastapi-users/)
-- [Nuxt](https://nuxt.com/)
-- [LangChain](https://www.langchain.com/)
-- [ChromaDB](https://www.trychroma.com/)
-- [Shadcn Vue](https://www.shadcn-vue.com/)
-- ...
-
-## 📄 License
-
-This project is open source under the [MIT License](LICENSE).

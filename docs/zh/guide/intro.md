@@ -1,6 +1,4 @@
-# RiceBall - 为团队和企业打造的私有化 AI 知识库与智能体（Agent）平台
-
-[English Documentation](../README.md)
+# 介绍
 
 ## 🍚 RiceBall 是什么？
 
@@ -31,29 +29,3 @@ RiceBall 是一个开源的、全栈式的 **AI 智能体与知识库平台**。
 ## 🐹 关于名字
 
 RiceBall （饭团）的名字来源于我养的一只仓鼠。它每次在小食盆里吃饭的时候团起来跟一个饭团似的，所以我给它起名叫饭团。
-
-## 🚀 快速开始
-
-```bash
-git clone ...
-
-cp backend/.env.example backend/.env
-
-docker-compose up -d
-```
-
-## ❤️ 致谢
-
-RiceBall 的诞生离不开开源社区的贡献，特别感谢以下优秀的开源项目：
-
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [FastAPI Users](https://frankie567.github.io/fastapi-users/)
-- [Nuxt](https://nuxt.com/)
-- [LangChain](https://www.langchain.com/)
-- [ChromaDB](https://www.trychroma.com/)
-- [Shadcn Vue](https://www.shadcn-vue.com/)
-- ...
-
-## 📄 协议
-
-本项目基于 [MIT 协议](LICENSE) 开源。

@@ -94,10 +94,5 @@ class Settings(BaseSettings):
     # MCP Configuration
     MCP_ENABLED: bool = True  # Whether to enable MCP features
     MCP_SERVERS_CONFIG_PATH: str = "/app/mcp_servers.json"  # MCP servers config file path
-    
-    # Stripe Configuration
-    STRIPE_SECRET_KEY: SecretStr = SecretStr("")  # Stripe secret key
-    STRIPE_WEBHOOK_SECRET: SecretStr = SecretStr("")  # Stripe Webhook secret
-    STRIPE_CURRENCY: str = "usd"  # Default currency
 
 settings = Settings()

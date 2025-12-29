@@ -24,7 +24,7 @@
 3. **Start Services**:
    Start all services (backend, frontend, database) using Docker Compose:
    ```bash
-   docker-compose up -d
+   docker compose -f docker-compose.prod.yml up
    ```
    The container will automatically run database migrations, initialize system configuration, and create a default superuser upon startup.
 

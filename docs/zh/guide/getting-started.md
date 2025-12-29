@@ -24,7 +24,7 @@
 3. **启动服务**:
    使用 Docker Compose 启动所有服务（后端、前端、数据库）：
    ```bash
-   docker-compose up -d
+   docker compose -f docker-compose.prod.yml up
    ```
    容器启动时会自动执行数据库迁移、初始化系统配置并创建默认超级管理员用户。
 

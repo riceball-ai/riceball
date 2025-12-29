@@ -10,7 +10,7 @@ RiceBall 提供了完整的 Docker 支持，包括开发环境快速启动和生
 
 ```bash
 # 启动所有服务
-docker-compose up -d
+docker compose -f docker-compose.prod.yml up
 
 # 查看日志
 docker-compose logs -f

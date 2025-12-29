@@ -42,7 +42,7 @@ git clone ...
 
 cp backend/.env.example backend/.env
 
-docker-compose up -d
+docker compose -f docker-compose.prod.yml up
 ```
 
 ## ❤️ Acknowledgements

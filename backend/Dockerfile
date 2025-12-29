@@ -26,6 +26,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Runtime stage
 FROM python:3.13-slim-trixie AS pro
 
+RUN apt-get update && apt-get install -y dos2unix && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --system --gid 999 nonroot \
  && useradd --system --gid 999 --uid 999 --create-home nonroot
 
@@ -40,7 +42,7 @@ USER nonroot
 
 WORKDIR /app
 
-RUN chmod +x /app/entrypoint.sh
+RUN dos2unix /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 ENTRYPOINT  ["/app/entrypoint.sh"]
 

@@ -29,7 +29,7 @@ FROM nginx:alpine AS pro
 
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
-COPY --from=build /app/.output/public /usr/share/nginx/html
+COPY --from=build-pwa /app/.output/public /usr/share/nginx/html
 
 
 # SSR

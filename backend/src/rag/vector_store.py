@@ -6,7 +6,7 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.documents import Document as VectorDocument
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from src.config import settings
+from src.config import settings, ChromaClientType
 
 
 logger = logging.getLogger(__name__)
@@ -18,6 +18,8 @@ class ChromaVectorStore:
     def __init__(self) -> None:
         self.host = settings.CHROMA_SERVER_HOST
         self.port = settings.CHROMA_SERVER_PORT
+        self.client_type = settings.CHROMA_CLIENT_TYPE
+        self.persist_directory = str(settings.CHROMA_PERSIST_DIRECTORY or (settings.STORAGE_DIR / "chroma_db"))
 
 
     def _get_collection(
@@ -27,9 +29,14 @@ class ChromaVectorStore:
     ) -> Chroma:
         kwargs: Dict[str, Any] = {
             "collection_name": collection_name,
-            "host": self.host,
-            "port": self.port
         }
+        
+        if self.client_type == ChromaClientType.PERSISTENT:
+            kwargs["persist_directory"] = self.persist_directory
+        else:
+            kwargs["host"] = self.host
+            kwargs["port"] = self.port
+            
         if embedding_function is not None:
             kwargs["embedding_function"] = embedding_function
 

@@ -9,3 +9,5 @@ htmlcov
 
 *.env
 *.db
+
+storage

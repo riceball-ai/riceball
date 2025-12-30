@@ -1,8 +1,11 @@
 import logging
 from fastapi import FastAPI, APIRouter, Depends, HTTPException, status
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi_pagination import add_pagination
+from pathlib import Path
 
-from .config import settings
+from .config import settings, StorageType
 from .auth import current_active_user, current_superuser
 from .auth.api.v1.user_router import router as auth_user_router
 from .auth.api.v1.refresh_router import router as auth_refresh_router
@@ -110,3 +113,36 @@ app.include_router(admin_router_v1)
 
 # Add pagination support
 add_pagination(app)
+
+# Static Files & SPA Serving
+# 1. Mount Local File Storage (if enabled)
+if settings.STORAGE_TYPE == StorageType.LOCAL:
+    local_storage_path = settings.LOCAL_STORAGE_PATH or (settings.STORAGE_DIR / "files")
+    local_storage_path.mkdir(parents=True, exist_ok=True)
+    # Mount at /api/v1/files/static to match the URL generation in storage.py
+    app.mount("/api/v1/files/static", StaticFiles(directory=local_storage_path), name="local_files")
+
+# 2. Serve Frontend Static Files (SPA)
+# We assume the frontend build is copied to /app/static in the container
+static_dir = Path("/app/static")
+
+if static_dir.exists():
+    # Mount Nuxt assets
+    if (static_dir / "_nuxt").exists():
+        app.mount("/_nuxt", StaticFiles(directory=static_dir / "_nuxt"), name="nuxt_assets")
+    
+    # Catch-all route for SPA
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        # Check if file exists in static dir (e.g. favicon.ico, robots.txt)
+        file_path = static_dir / full_path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(file_path)
+        
+        # Otherwise return index.html for client-side routing
+        index_path = static_dir / "index.html"
+        if index_path.exists():
+            return FileResponse(index_path)
+            
+        # If index.html is missing, return 404
+        raise HTTPException(status_code=404, detail="Frontend not found")

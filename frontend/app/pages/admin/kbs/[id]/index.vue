@@ -4,7 +4,7 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { FileText, Upload, Trash2, Eye, Split, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import type { ColumnDef, SortingState, PaginationState } from '@tanstack/vue-table'
-import type { ActionConfig } from '~/components/model-view/DataTable.vue'
+import DataTable, { type FilterConfig, type ActionConfig } from '~/components/model-view/DataTable.vue'
 import DocIcon from '~/components/file-type-icon/Doc.vue'
 import PdfIcon from '~/components/file-type-icon/Pdf.vue'
 import MdIcon from '~/components/file-type-icon/Md.vue'
@@ -50,7 +50,7 @@ const kbId = route.params.id as string
 
 // Page metadata
 definePageMeta({
-  breadcrumb: 'admin.pages.kbs.detail.breadcrumb',
+  breadcrumb: 'admin.pages.knowledgeBases.detail.breadcrumb',
   layout: 'admin'
 })
 
@@ -80,7 +80,7 @@ const loadKnowledgeBase = async () => {
     knowledgeBase.value = response as KnowledgeBase
   } catch (error) {
     console.error('Failed to load knowledge base info:', error)
-    toast.error(t('admin.pages.kbs.detail.loadFailed'))
+    toast.error(t('admin.pages.knowledgeBases.detail.loadFailed'))
     // Return to previous page if load failed
     router.push('/admin/kbs')
   } finally {
@@ -128,7 +128,7 @@ const loadData = async () => {
     
   } catch (error) {
     console.error('Failed to load data:', error)
-    toast.error(t('admin.pages.kbs.detail.loadDataFailed'))
+    toast.error(t('admin.pages.knowledgeBases.detail.loadDataFailed'))
   } finally {
     loading.value = false
   }
@@ -137,7 +137,7 @@ const loadData = async () => {
 const tableColumns: ColumnDef<Document>[] = [
     {
       accessorKey: 'title',
-      header: () => t('admin.pages.kbs.detail.columns.title'),
+      header: () => t('admin.pages.knowledgeBases.detail.columns.title'),
       cell: (context) => {
         const row = context.row.original
         
@@ -173,7 +173,7 @@ const tableColumns: ColumnDef<Document>[] = [
     },
     {
       accessorKey: 'file_size',
-      header: () => t('admin.pages.kbs.detail.columns.size'),
+      header: () => t('admin.pages.knowledgeBases.detail.columns.size'),
       cell: (context) => {
         const size = context.getValue() as number
         if (!size) return '-'
@@ -185,11 +185,11 @@ const tableColumns: ColumnDef<Document>[] = [
     },
     {
       accessorKey: 'file_type',
-      header: () => t('admin.pages.kbs.detail.columns.type')
+      header: () => t('admin.pages.knowledgeBases.detail.columns.type')
     },
     {
       accessorKey: 'status',
-      header: () => t('admin.pages.kbs.detail.columns.status'),
+      header: () => t('admin.pages.knowledgeBases.detail.columns.status'),
       cell: (context) => {
         const status = context.getValue() as string
         const variants = {
@@ -199,9 +199,9 @@ const tableColumns: ColumnDef<Document>[] = [
         } as const
         
         const labels = {
-          'PROCESSING': t('admin.pages.kbs.detail.status.processing'),
-          'COMPLETED': t('admin.pages.kbs.detail.status.completed'),
-          'FAILED': t('admin.pages.kbs.detail.status.failed')
+          'PROCESSING': t('admin.pages.knowledgeBases.detail.status.processing'),
+          'COMPLETED': t('admin.pages.knowledgeBases.detail.status.completed'),
+          'FAILED': t('admin.pages.knowledgeBases.detail.status.failed')
         } as const
         
         return h(Badge, {
@@ -211,7 +211,7 @@ const tableColumns: ColumnDef<Document>[] = [
     },
     {
       accessorKey: 'created_at',
-      header: () => t('admin.pages.kbs.detail.columns.createdAt'),
+      header: () => t('admin.pages.knowledgeBases.detail.columns.createdAt'),
       cell: (context) => {
         const date = new Date(context.getValue() as string)
         return date.toLocaleString()
@@ -227,12 +227,12 @@ const rowActions: ActionConfig[] = [
   // },
   {
     key: 'view-chunks',
-    label: () => t('admin.pages.kbs.detail.viewChunks'),
+    label: () => t('admin.pages.knowledgeBases.detail.viewChunks'),
     icon: Split,
   },
   {
     key: 'delete',
-    label: () => t('admin.pages.kbs.detail.delete'),
+    label: () => t('admin.pages.knowledgeBases.detail.delete'),
     icon: Trash2,
     variant: 'destructive',
   }
@@ -243,7 +243,7 @@ const handleUploadComplete = () => {
   showUploadDialog.value = false
   documentsKey.value++ // Refresh document list
   loadData()
-  toast.success(t('admin.pages.kbs.detail.uploadSuccess'))
+  toast.success(t('admin.pages.knowledgeBases.detail.uploadSuccess'))
 }
 
 // Handle document actions
@@ -278,12 +278,12 @@ const confirmDeleteDocument = async () => {
   deleteLoading.value = true
   try {
     await api.remove(documentToDelete.value.id)
-    toast.success(t('admin.pages.kbs.detail.deleteConfirm.success'))
+    toast.success(t('admin.pages.knowledgeBases.detail.deleteConfirm.success'))
     resetDeleteDialog()
     loadData()
   } catch (error) {
     console.error('Failed to delete document:', error)
-    toast.error(t('admin.pages.kbs.detail.deleteConfirm.failed'))
+    toast.error(t('admin.pages.knowledgeBases.detail.deleteConfirm.failed'))
   } finally {
     deleteLoading.value = false
   }
@@ -332,7 +332,7 @@ const loadDocumentChunks = async (documentId: string, page: number = 1) => {
     chunksPage.value = page
   } catch (error) {
     console.error('Failed to load document chunks:', error)
-    toast.error(t('admin.pages.kbs.detail.chunks.loadFailed'))
+    toast.error(t('admin.pages.knowledgeBases.detail.chunks.loadFailed'))
   } finally {
     chunksLoading.value = false
   }
@@ -375,7 +375,7 @@ const goToNextPage = () => {
 // Download document
 const downloadDocument = async (doc: Document) => {
   if (!doc.file_path) {
-    toast.error(t('admin.pages.kbs.detail.noFile'))
+    toast.error(t('admin.pages.knowledgeBases.detail.noFile'))
     return
   }
   
@@ -391,10 +391,10 @@ const downloadDocument = async (doc: Document) => {
     link.click()
     window.document.body.removeChild(link)
     
-    toast.success(t('admin.pages.kbs.detail.downloadStarted'))
+    toast.success(t('admin.pages.knowledgeBases.detail.downloadStarted'))
   } catch (error) {
     console.error('Failed to download document:', error)
-    toast.error(t('admin.pages.kbs.detail.downloadFailed'))
+    toast.error(t('admin.pages.knowledgeBases.detail.downloadFailed'))
   }
 }
 
@@ -410,21 +410,21 @@ onMounted(() => {
     <!-- Header Actions -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">{{ t('admin.pages.kbs.detail.title') }}</h1>
-        <p class="text-muted-foreground">{{ t('admin.pages.kbs.detail.kbName', { name: knowledgeBase?.name }) }}</p>
+        <h1 class="text-2xl font-bold">{{ t('admin.pages.knowledgeBases.detail.title') }}</h1>
+        <p class="text-muted-foreground">{{ t('admin.pages.knowledgeBases.detail.kbName', { name: knowledgeBase?.name }) }}</p>
       </div>
       <Dialog v-model:open="showUploadDialog">
           <DialogTrigger asChild>
             <Button>
               <Upload class="h-4 w-4 mr-2" />
-              {{ t('admin.pages.kbs.detail.upload') }}
+              {{ t('admin.pages.knowledgeBases.detail.upload') }}
             </Button>
           </DialogTrigger>
           <DialogContent class="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>{{ t('admin.pages.kbs.detail.uploadDialog.title') }}</DialogTitle>
+              <DialogTitle>{{ t('admin.pages.knowledgeBases.detail.uploadDialog.title') }}</DialogTitle>
               <DialogDescription>
-                {{ t('admin.pages.kbs.detail.uploadDialog.description', { name: knowledgeBase?.name }) }}
+                {{ t('admin.pages.knowledgeBases.detail.uploadDialog.description', { name: knowledgeBase?.name }) }}
               </DialogDescription>
             </DialogHeader>
             <FileUploadToKB 
@@ -445,7 +445,7 @@ onMounted(() => {
       :show-filters="true"
       :bulk-actions="[]"
       :row-actions="rowActions"
-      :empty-message="t('admin.pages.kbs.detail.noDocuments')"
+      :empty-message="t('admin.pages.knowledgeBases.detail.noDocuments')"
       @refresh="handleRefresh"
       @search="handleSearch"
       @filter="handleFilter"
@@ -456,9 +456,9 @@ onMounted(() => {
       <AlertDialog :open="showDeleteDialog" @update:open="handleDeleteDialogOpenChange">
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{{ t('admin.pages.kbs.detail.deleteConfirm.title') }}</AlertDialogTitle>
+            <AlertDialogTitle>{{ t('admin.pages.knowledgeBases.detail.deleteConfirm.title') }}</AlertDialogTitle>
             <AlertDialogDescription>
-              {{ t('admin.pages.kbs.detail.deleteConfirm.description', { title: documentToDelete?.title }) }}
+              {{ t('admin.pages.knowledgeBases.detail.deleteConfirm.description', { title: documentToDelete?.title }) }}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -478,33 +478,33 @@ onMounted(() => {
       <Dialog :open="showChunksDialog" @update:open="(open) => { if (!open) closeChunksDialog() }">
         <DialogContent class="max-w-4xl max-h-[80vh] grid-rows-[auto_minmax(0,1fr)_auto] p-0">
           <DialogHeader class="p-6 pb-0">
-            <DialogTitle>{{ t('admin.pages.kbs.detail.chunks.title') }}</DialogTitle>
+            <DialogTitle>{{ t('admin.pages.knowledgeBases.detail.chunks.title') }}</DialogTitle>
             <DialogDescription>
-              {{ t('admin.pages.kbs.detail.chunks.description', { title: currentDocument?.title, count: chunksTotal }) }}
+              {{ t('admin.pages.knowledgeBases.detail.chunks.description', { title: currentDocument?.title, count: chunksTotal }) }}
             </DialogDescription>
           </DialogHeader>
           <div class="gap-4 py-4 px-6 flex-1 overflow-y-auto">
             <div v-if="chunksLoading" class="flex items-center justify-center py-8">
-              <div class="text-muted-foreground">{{ t('admin.pages.kbs.detail.chunks.loading') }}</div>
+              <div class="text-muted-foreground">{{ t('admin.pages.knowledgeBases.detail.chunks.loading') }}</div>
             </div>
             <div v-else-if="chunks.length === 0" class="flex items-center justify-center py-8">
-              <div class="text-muted-foreground">{{ t('admin.pages.kbs.detail.chunks.empty') }}</div>
+              <div class="text-muted-foreground">{{ t('admin.pages.knowledgeBases.detail.chunks.empty') }}</div>
             </div>
             <div v-else class="space-y-4">
               <Card v-for="(chunk, index) in chunks" :key="chunk.id || index" class="w-full">
                 <CardHeader class="pb-3">
                   <CardTitle class="text-sm font-medium">
-                    {{ t('admin.pages.kbs.detail.chunks.chunkIndex', { index: index + 1 }) }}
+                    {{ t('admin.pages.knowledgeBases.detail.chunks.chunkIndex', { index: index + 1 }) }}
                   </CardTitle>
                   <CardDescription class="text-xs">
-                    <span v-if="chunk.metadata?.page">{{ t('admin.pages.kbs.detail.chunks.page', { page: chunk.metadata.page }) }}</span>
-                    {{ t('admin.pages.kbs.detail.chunks.chars', { count: chunk.content?.length || 0 }) }}
-                    <span v-if="chunk.score">{{ t('admin.pages.kbs.detail.chunks.similarity', { score: (chunk.score * 100).toFixed(1) }) }}</span>
+                    <span v-if="chunk.metadata?.page">{{ t('admin.pages.knowledgeBases.detail.chunks.page', { page: chunk.metadata.page }) }}</span>
+                    {{ t('admin.pages.knowledgeBases.detail.chunks.chars', { count: chunk.content?.length || 0 }) }}
+                    <span v-if="chunk.score">{{ t('admin.pages.knowledgeBases.detail.chunks.similarity', { score: (chunk.score * 100).toFixed(1) }) }}</span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent class="pt-0">
                   <div class="text-sm text-foreground whitespace-pre-wrap">
-                    {{ chunk.content || t('admin.pages.kbs.detail.chunks.noContent') }}
+                    {{ chunk.content || t('admin.pages.knowledgeBases.detail.chunks.noContent') }}
                   </div>
                 </CardContent>
               </Card>
@@ -513,7 +513,7 @@ onMounted(() => {
           <DialogFooter class="p-6 pt-0 border-t">
             <div class="flex items-center justify-between w-full">
               <div class="text-sm text-muted-foreground">
-                {{ t('admin.pages.kbs.detail.chunks.pagination', { page: chunksPage, totalPages: totalPages, total: chunksTotal }) }}
+                {{ t('admin.pages.knowledgeBases.detail.chunks.pagination', { page: chunksPage, totalPages: totalPages, total: chunksTotal }) }}
               </div>
               <div class="flex items-center space-x-2">
                 <Button
@@ -523,7 +523,7 @@ onMounted(() => {
                   @click="goToPreviousPage"
                 >
                   <ChevronLeft class="h-4 w-4 mr-1" />
-                  {{ t('admin.pages.kbs.detail.chunks.prev') }}
+                  {{ t('admin.pages.knowledgeBases.detail.chunks.prev') }}
                 </Button>
                 <Button
                   variant="outline"
@@ -531,7 +531,7 @@ onMounted(() => {
                   :disabled="!canGoNext || chunksLoading"
                   @click="goToNextPage"
                 >
-                  {{ t('admin.pages.kbs.detail.chunks.next') }}
+                  {{ t('admin.pages.knowledgeBases.detail.chunks.next') }}
                   <ChevronRight class="h-4 w-4 ml-1" />
                 </Button>
               </div>

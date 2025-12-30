@@ -12,13 +12,13 @@ from sqlalchemy import String, ForeignKey, Integer, Enum as SQLEnum, JSON
 from ..models import Base
 
 
-class FileType(enum.Enum):
+class FileType(str, enum.Enum):
     """File type enumeration for categorizing uploaded files."""
     AVATAR = "avatar"
     DOCUMENT = "document"
     IMAGE = "image"  # For chat image attachments
 
-class FileStatus(enum.Enum):
+class FileStatus(str, enum.Enum):
     """File processing status enumeration."""
     UPLOADING = "uploading"
     ACTIVE = "active"

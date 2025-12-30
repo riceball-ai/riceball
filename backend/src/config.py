@@ -14,6 +14,14 @@ class EnvironmentType(Enum):
     DEVELOPMENT = "development"
     PRODUCTION = "production"
 
+class StorageType(Enum):
+    S3 = "s3"
+    LOCAL = "local"
+
+class ChromaClientType(Enum):
+    HTTP = "http"
+    PERSISTENT = "persistent"
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file
@@ -22,10 +30,11 @@ class Settings(BaseSettings):
         env_ignore_empty=True,
         extra="ignore",
     )
-    PROJECT_NAME: str
+
+    PROJECT_NAME: str = "RiceBall"
 
     # Logging
-    LOG_LEVEL: str = "DEBUG"
+    LOG_LEVEL: str = "INFO"
 
     # Environment
     ENVIRONMENT: EnvironmentType = EnvironmentType.DEVELOPMENT
@@ -36,10 +45,10 @@ class Settings(BaseSettings):
     EXTERNAL_URL: AnyHttpUrl | None = None  # External API URL, used for OAuth callbacks etc.
 
     # Database
-    DATABASE_URL: str
+    DATABASE_URL: str = "sqlite+aiosqlite:///storage/database/riceball.db"
 
     # Auth
-    SECRET_KEY: str
+    SECRET_KEY: str = "insecure-secret-key-for-dev"
     
     # Token Configuration
     ACCESS_TOKEN_LIFETIME_SECONDS: int = 60 * 30  # 30 minutes
@@ -61,6 +70,13 @@ class Settings(BaseSettings):
     MAIL_SSL_TLS: bool = False
     MAIL_FROM: EmailStr = "noreply@example.com"
 
+    # Storage Directory
+    STORAGE_DIR: Path = BASE_DIR / "storage"
+
+    # File Storage
+    STORAGE_TYPE: StorageType = StorageType.LOCAL
+    LOCAL_STORAGE_PATH: Path | None = None  # Defaults to STORAGE_DIR / "files"
+
     # File Storage (S3 Configuration)
     S3_ENDPOINT_URL: str = "http://minio:9000"  # Set in environment
     S3_EXTERNAL_ENDPOINT_URL: str = "" # External URL for accessing S3, if different from internal
@@ -77,14 +93,16 @@ class Settings(BaseSettings):
     ALLOWED_IMAGE_EXTENSIONS: list[str] = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"]
     ALLOWED_DOCUMENT_EXTENSIONS: list[str] = [".pdf", ".doc", ".docx", ".txt", ".md", ".rtf"]
     
+    # Vector Store
+    CHROMA_CLIENT_TYPE: ChromaClientType = ChromaClientType.PERSISTENT
+    CHROMA_PERSIST_DIRECTORY: Path | None = None  # Defaults to STORAGE_DIR / "chroma_db"
+    CHROMA_SERVER_HOST: str = "chromadb"  # Chroma service address
+    CHROMA_SERVER_PORT: int = 8000
+    
     # OAuth Settings
     OAUTH_CREATE_USER_WITHOUT_EMAIL: bool = True  # Whether to create new user when email is missing
     OAUTH_REQUIRE_EMAIL_VERIFICATION: bool = False  # Whether OAuth users require email verification
     OAUTH_EMAIL_DOMAIN: str = "oauth.example.com"  # Domain used when generating virtual emails
-    
-    # Vector Store
-    CHROMA_SERVER_HOST: str = "chromadb"  # Chroma service address
-    CHROMA_SERVER_PORT: int = 8000
     
     # Agent Configuration
     AGENT_MAX_ITERATIONS: int = 10  # Agent max iterations

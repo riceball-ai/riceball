@@ -1,27 +1,109 @@
 """
-S3-compatible storage service for file upload and management.
+Storage service for file upload and management.
+Supports S3-compatible storage and local file system storage.
 """
 import logging
+import os
+from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from io import BytesIO
+from pathlib import Path
 from typing import BinaryIO, Optional, Tuple
 from uuid import UUID
 
 import aioboto3
+import aiofiles
 from botocore.exceptions import ClientError, NoCredentialsError
 from botocore.config import Config
 
-from src.config import settings
+from src.config import settings, StorageType
 
 logger = logging.getLogger(__name__)
 
 
-class S3StorageService:
+
+class BaseStorageService(ABC):
+    """Abstract base class for storage services."""
+
+    def _generate_file_key(self, file_type: str, file_id: UUID, filename: str) -> str:
+        """
+        Generate object key/path for file storage.
+        
+        Format: {file_type}/{year}/{month}/{day}/{file_id}.{ext}
+        This provides organized storage with date-based partitioning.
+        """
+        now = datetime.now(timezone.utc)
+        year = now.strftime("%Y")
+        month = now.strftime("%m")
+        day = now.strftime("%d")
+        
+        # Extract file extension from original filename
+        file_ext = filename.split('.')[-1] if '.' in filename else ''
+        file_name = f"{file_id}.{file_ext}" if file_ext else str(file_id)
+        
+        return f"{file_type}/{year}/{month}/{day}/{file_name}"
+
+    @abstractmethod
+    async def upload_file(
+        self,
+        file_data: BinaryIO | bytes,
+        file_type: str,
+        file_id: UUID,
+        filename: str,
+        content_type: str,
+        file_size: int,
+    ) -> str:
+        pass
+
+    @abstractmethod
+    async def download_file(self, file_key: str) -> Tuple[BytesIO, str]:
+        pass
+
+    @abstractmethod
+    async def delete_file(self, file_key: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def file_exists(self, file_key: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def get_public_url(self, file_key: str) -> str:
+        pass
+
+    @abstractmethod
+    async def generate_presigned_url(
+        self,
+        file_key: str,
+        expiration: int = 3600,
+        method: str = "get_object"
+    ) -> Optional[str]:
+        pass
+
+    @abstractmethod
+    async def get_file_metadata(self, file_key: str) -> Optional[dict]:
+        pass
+    
+    async def upload_public_file(
+        self,
+        file_data: BinaryIO | bytes,
+        file_type: str,
+        file_id: UUID,
+        filename: str,
+        content_type: str,
+        file_size: int,
+    ) -> str:
+        """
+        Upload file and return file_key.
+        """
+        return await self.upload_file(
+            file_data, file_type, file_id, filename, content_type, file_size
+        )
+
+
+class S3StorageService(BaseStorageService):
     """
     Service for handling file operations with S3-compatible storage.
-    
-    Supports AWS S3 and S3-compatible systems like MinIO, LocalStack, etc.
-    Provides async operations for upload, download, delete, and presigned URLs.
     """
     
     def __init__(self):
@@ -63,51 +145,15 @@ class S3StorageService:
             
         return session.client("s3", **client_config)
 
-    def _generate_file_key(self, file_type: str, file_id: UUID, filename: str) -> str:
-        """
-        Generate S3 object key for file storage.
-        
-        Format: {file_type}/{year}/{month}/{day}/{file_id}.{ext}
-        This provides organized storage with date-based partitioning.
-        """
-        now = datetime.now(timezone.utc)
-        year = now.strftime("%Y")
-        month = now.strftime("%m")
-        day = now.strftime("%d")
-        
-        # Extract file extension from original filename
-        file_ext = filename.split('.')[-1] if '.' in filename else ''
-        file_name = f"{file_id}.{file_ext}" if file_ext else str(file_id)
-        
-        return f"{file_type}/{year}/{month}/{day}/{file_name}"
-
     async def upload_file(
         self,
-        file_data: BinaryIO,
+        file_data: BinaryIO | bytes,
         file_type: str,
         file_id: UUID,
         filename: str,
         content_type: str,
         file_size: int,
     ) -> str:
-        """
-        Upload file to S3-compatible storage.
-        
-        Args:
-            file_data: Binary file data
-            file_type: Type of file (avatar, document, etc.)
-            file_id: Unique file identifier
-            filename: Original filename
-            content_type: MIME type of the file
-            file_size: Size of the file in bytes
-            
-        Returns:
-            S3 object key of uploaded file
-            
-        Raises:
-            ClientError: If S3 operation fails
-            NoCredentialsError: If S3 credentials are invalid
-        """
         file_key = self._generate_file_key(file_type, file_id, filename)
         
         try:
@@ -127,7 +173,7 @@ class S3StorageService:
                     },
                 )
                 
-                logger.info(f"File uploaded successfully: {file_key}")
+                logger.info(f"File uploaded successfully to S3: {file_key}")
                 return file_key
                 
         except ClientError as e:
@@ -137,53 +183,7 @@ class S3StorageService:
             logger.error(f"S3 credentials error: {e}")
             raise
 
-    async def upload_public_file(
-        self,
-        file_data: BinaryIO,
-        file_type: str,
-        file_id: UUID,
-        filename: str,
-        content_type: str,
-        file_size: int,
-    ) -> Tuple[str, str]:
-        """
-        Upload file to S3-compatible storage and return both file_key and public_url.
-        
-        Args:
-            file_data: Binary file data
-            file_type: Type of file (avatar, document, etc.)
-            file_id: Unique file identifier
-            filename: Original filename
-            content_type: MIME type of the file
-            file_size: Size of the file in bytes
-            
-        Returns:
-            Tuple of (file_key, public_url)
-            
-        Raises:
-            ClientError: If S3 operation fails
-            NoCredentialsError: If S3 credentials are invalid
-        """
-        # Upload file first
-        file_key = await self.upload_file(
-            file_data, file_type, file_id, filename, content_type, file_size
-        )
-    
-        return file_key
-
     async def download_file(self, file_key: str) -> Tuple[BytesIO, str]:
-        """
-        Download file from S3-compatible storage.
-        
-        Args:
-            file_key: S3 object key
-            
-        Returns:
-            Tuple of (file_data, content_type)
-            
-        Raises:
-            ClientError: If file not found or S3 operation fails
-        """
         try:
             async with await self._get_client() as s3_client:
                 response = await s3_client.get_object(
@@ -199,26 +199,17 @@ class S3StorageService:
                 
                 content_type = response.get("ContentType", "application/octet-stream")
                 
-                logger.info(f"File downloaded successfully: {file_key}")
+                logger.info(f"File downloaded successfully from S3: {file_key}")
                 return file_data, content_type
                 
         except ClientError as e:
             if e.response["Error"]["Code"] == "NoSuchKey":
-                logger.warning(f"File not found: {file_key}")
+                logger.warning(f"File not found in S3: {file_key}")
             else:
                 logger.error(f"Failed to download file {file_key}: {e}")
             raise
 
     async def delete_file(self, file_key: str) -> bool:
-        """
-        Delete file from S3-compatible storage.
-        
-        Args:
-            file_key: S3 object key
-            
-        Returns:
-            True if deletion successful, False otherwise
-        """
         try:
             async with await self._get_client() as s3_client:
                 await s3_client.delete_object(
@@ -226,7 +217,7 @@ class S3StorageService:
                     Key=file_key
                 )
                 
-                logger.info(f"File deleted successfully: {file_key}")
+                logger.info(f"File deleted successfully from S3: {file_key}")
                 return True
                 
         except ClientError as e:
@@ -234,15 +225,6 @@ class S3StorageService:
             return False
 
     async def file_exists(self, file_key: str) -> bool:
-        """
-        Check if file exists in S3-compatible storage.
-        
-        Args:
-            file_key: S3 object key
-            
-        Returns:
-            True if file exists, False otherwise
-        """
         try:
             async with await self._get_client() as s3_client:
                 await s3_client.head_object(
@@ -258,18 +240,9 @@ class S3StorageService:
             return False
 
     async def get_public_url(self, file_key: str) -> str:
-        """
-        Generate public URL for file access (requires bucket to have public read access).
-        
-        Args:
-            file_key: S3 object key
-            
-        Returns:
-            Public URL string
-        """
         base_url = self.external_endpoint_url if self.external_endpoint_url else self.endpoint_url
         base_url = base_url.rstrip('/')
-        return f"{base_url}/{file_key}"
+        return f"{base_url}/{self.bucket_name}/{file_key}"
 
     async def generate_presigned_url(
         self,
@@ -277,17 +250,6 @@ class S3StorageService:
         expiration: int = 3600,
         method: str = "get_object"
     ) -> Optional[str]:
-        """
-        Generate presigned URL for file access.
-        
-        Args:
-            file_key: S3 object key
-            expiration: URL expiration time in seconds (default: 1 hour)
-            method: S3 method (get_object, put_object, etc.)
-            
-        Returns:
-            Presigned URL string or None if generation fails
-        """
         try:
             async with await self._get_client(endpoint_url=self.external_endpoint_url) as s3_client:
                 url = await s3_client.generate_presigned_url(
@@ -304,15 +266,6 @@ class S3StorageService:
             return None
 
     async def get_file_metadata(self, file_key: str) -> Optional[dict]:
-        """
-        Get file metadata from S3-compatible storage.
-        
-        Args:
-            file_key: S3 object key
-            
-        Returns:
-            Dictionary containing file metadata or None if file not found
-        """
         try:
             async with await self._get_client() as s3_client:
                 response = await s3_client.head_object(
@@ -334,13 +287,10 @@ class S3StorageService:
             else:
                 logger.error(f"Failed to get metadata for {file_key}: {e}")
             return None
-
+            
     async def create_bucket_if_not_exists(self) -> bool:
         """
         Create S3 bucket if it doesn't exist.
-        
-        Returns:
-            True if bucket exists or was created successfully, False otherwise
         """
         try:
             async with await self._get_client() as s3_client:
@@ -371,5 +321,118 @@ class S3StorageService:
             return False
 
 
+class FileSystemStorageService(BaseStorageService):
+    """
+    Service for handling file operations with local file system.
+    """
+    
+    def __init__(self):
+        self.base_path = settings.LOCAL_STORAGE_PATH or (settings.STORAGE_DIR / "files")
+        self.base_path.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Initialized FileSystemStorageService at {self.base_path}")
+
+    def _get_full_path(self, file_key: str) -> Path:
+        return self.base_path / file_key
+
+    async def upload_file(
+        self,
+        file_data: BinaryIO | bytes,
+        file_type: str,
+        file_id: UUID,
+        filename: str,
+        content_type: str,
+        file_size: int,
+    ) -> str:
+        file_key = self._generate_file_key(file_type, file_id, filename)
+        full_path = self._get_full_path(file_key)
+        
+        # Ensure directory exists
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        try:
+            async with aiofiles.open(full_path, 'wb') as f:
+                if isinstance(file_data, bytes):
+                    await f.write(file_data)
+                else:
+                    await f.write(file_data.read())
+            
+            logger.info(f"File uploaded successfully to local storage: {file_key}")
+            return file_key
+        except Exception as e:
+            logger.error(f"Failed to upload file {filename} to local storage: {e}")
+            raise
+
+    async def download_file(self, file_key: str) -> Tuple[BytesIO, str]:
+        full_path = self._get_full_path(file_key)
+        
+        if not full_path.exists():
+            logger.warning(f"File not found in local storage: {file_key}")
+            raise FileNotFoundError(f"File not found: {file_key}")
+            
+        try:
+            async with aiofiles.open(full_path, 'rb') as f:
+                content = await f.read()
+                
+            # Simple content type guessing or default
+            # In a real app, we might store metadata in a sidecar file or DB
+            content_type = "application/octet-stream" 
+            
+            return BytesIO(content), content_type
+        except Exception as e:
+            logger.error(f"Failed to download file {file_key} from local storage: {e}")
+            raise
+
+    async def delete_file(self, file_key: str) -> bool:
+        full_path = self._get_full_path(file_key)
+        
+        try:
+            if full_path.exists():
+                os.remove(full_path)
+                logger.info(f"File deleted successfully from local storage: {file_key}")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Failed to delete file {file_key} from local storage: {e}")
+            return False
+
+    async def file_exists(self, file_key: str) -> bool:
+        return self._get_full_path(file_key).exists()
+
+    async def get_public_url(self, file_key: str) -> str:
+        # Assuming we mount the static files at /static/files
+        # This needs to be coordinated with main.py
+        base_url = str(settings.EXTERNAL_URL or settings.FRONTEND_URL).rstrip('/')
+        return f"{base_url}/api/v1/files/static/{file_key}"
+
+    async def generate_presigned_url(
+        self,
+        file_key: str,
+        expiration: int = 3600,
+        method: str = "get_object"
+    ) -> Optional[str]:
+        # For local storage, we just return the public URL
+        return await self.get_public_url(file_key)
+
+    async def get_file_metadata(self, file_key: str) -> Optional[dict]:
+        full_path = self._get_full_path(file_key)
+        
+        if not full_path.exists():
+            return None
+            
+        stat = full_path.stat()
+        return {
+            "size": stat.st_size,
+            "content_type": "application/octet-stream", # Placeholder
+            "last_modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
+            "etag": "",
+            "metadata": {},
+        }
+
+
+def get_storage_service() -> BaseStorageService:
+    if settings.STORAGE_TYPE == StorageType.LOCAL:
+        return FileSystemStorageService()
+    return S3StorageService()
+
 # Global storage service instance
-storage_service = S3StorageService()
+storage_service = get_storage_service()

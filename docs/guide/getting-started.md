@@ -6,7 +6,29 @@
 - Python 3.10+ (if not using Docker)
 - Node.js 18+ (if not using Docker)
 
-## Installation
+## Quick Start (All-in-One Docker)
+
+> **Note**: This setup is for **preview and testing purposes only**. Please use with caution in production environments.
+
+Run RiceBall with a single command using our All-in-One Docker image (includes SQLite & Local Storage):
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -v riceball_storage:/app/storage \
+  --name riceball \
+  ghcr.io/riceball-ai/riceball:all-in-one-latest
+```
+
+Visit [http://localhost:8000](http://localhost:8000) to start using RiceBall.
+
+Default Admin Credentials:
+- Email: `admin@admin.com`
+- Password: `admin123456`
+
+## Production Deployment (Source Code)
+
+For production environments requiring PostgreSQL and S3, you can deploy from source:
 
 1. **Clone the repository**:
    ```bash

@@ -6,7 +6,29 @@
 - Python 3.10+ (如果不使用 Docker)
 - Node.js 18+ (如果不使用 Docker)
 
-## 安装步骤
+## 快速开始 (All-in-One Docker)
+
+> **注意**: 此设置仅用于**预览和测试目的**。生产环境请谨慎使用。
+
+使用我们的 All-in-One Docker 镜像（包含 SQLite 和本地存储）一键运行 RiceBall：
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -v riceball_storage:/app/storage \
+  --name riceball \
+  ghcr.io/riceball-ai/riceball:all-in-one-latest
+```
+
+访问 [http://localhost:8000](http://localhost:8000) 即可开始使用 RiceBall。
+
+默认管理员账号：
+- 邮箱：`admin@admin.com`
+- 密码：`admin123456`
+
+## 生产环境部署 (源码)
+
+对于需要 PostgreSQL 和 S3 的生产环境，你可以从源码部署：
 
 1. **克隆仓库**:
    ```bash

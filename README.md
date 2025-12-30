@@ -37,12 +37,31 @@ The name RiceBall comes from a hamster I own. Every time it eats in its little f
 
 ## 🚀 Quick Start
 
+> **Note**: This setup is for **preview and testing purposes only**. Please use with caution in production environments.
+
+Run RiceBall with a single command using our All-in-One Docker image (includes SQLite & Local Storage):
+
 ```bash
-git clone ...
+docker run -d \
+  -p 8000:8000 \
+  -v riceball_storage:/app/storage \
+  --name riceball \
+  ghcr.io/riceball-ai/riceball:all-in-one-latest
+```
+
+Visit http://localhost:8000 to start using RiceBall. Default admin credentials are `admin@admin.com` / `admin123456`.
+
+## 🛠️ Production Deployment (Source Code)
+
+For production environments requiring PostgreSQL and S3, you can deploy from source:
+
+```bash
+git clone https://github.com/riceball-ai/riceball.git
+cd riceball
 
 cp backend/.env.example backend/.env
 
-docker compose -f docker-compose.prod.yml up
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ## ❤️ Acknowledgements

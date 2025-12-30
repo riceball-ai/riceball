@@ -51,11 +51,14 @@ RiceBall wouldn't exist without the contributions of the open-source community. 
 
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [FastAPI Users](https://frankie567.github.io/fastapi-users/)
+- [Vue.js](https://vuejs.org/)
 - [Nuxt](https://nuxt.com/)
 - [LangChain](https://www.langchain.com/)
 - [ChromaDB](https://www.trychroma.com/)
 - [Shadcn Vue](https://www.shadcn-vue.com/)
 - ...
+
+It is impossible to list all projects. If your project is used but not listed here, please contact us to add it.
 
 ## 📄 License
 

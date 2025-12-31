@@ -13,9 +13,6 @@ interface Conversation {
   status: string
   last_message_at: string | null
   message_count: number
-  input_tokens?: number
-  output_tokens?: number
-  total_tokens?: number
   created_at: string
   updated_at: string
   assistant_name?: string
@@ -106,33 +103,6 @@ const conversationConfig = computed((): ModelViewConfig<Conversation> => ({
       }
     },
     {
-      accessorKey: 'input_tokens',
-      header: t('admin.pages.conversations.columns.inputTokens'),
-      cell: (ctx) => {
-        const tokens = ctx.getValue() as number | undefined
-        if (!tokens) return '-'
-        return tokens.toLocaleString()
-      }
-    },
-    {
-      accessorKey: 'output_tokens',
-      header: t('admin.pages.conversations.columns.outputTokens'),
-      cell: (ctx) => {
-        const tokens = ctx.getValue() as number | undefined
-        if (!tokens) return '-'
-        return tokens.toLocaleString()
-      }
-    },
-    {
-      accessorKey: 'total_tokens',
-      header: t('admin.pages.conversations.columns.totalTokens'),
-      cell: (ctx) => {
-        const tokens = ctx.getValue() as number | undefined
-        if (!tokens) return '-'
-        return tokens.toLocaleString()
-      }
-    },
-    {
       accessorKey: 'status',
       header: t('admin.pages.conversations.columns.status'),
       cell: (ctx) => {
@@ -202,24 +172,6 @@ const conversationConfig = computed((): ModelViewConfig<Conversation> => ({
       render: (val: number) => val.toLocaleString()
     },
     {
-      name: 'input_tokens',
-      label: t('admin.pages.conversations.columns.inputTokens'),
-      type: 'text',
-      render: (val?: number) => val ? val.toLocaleString() : '-'
-    },
-    {
-      name: 'output_tokens',
-      label: t('admin.pages.conversations.columns.outputTokens'),
-      type: 'text',
-      render: (val?: number) => val ? val.toLocaleString() : '-'
-    },
-    {
-      name: 'total_tokens',
-      label: t('admin.pages.conversations.columns.totalTokens'),
-      type: 'text',
-      render: (val?: number) => val ? val.toLocaleString() : '-'
-    },
-    {
       name: 'last_message_at',
       label: t('admin.pages.conversations.columns.lastMessageAt'),
       type: 'datetime',
@@ -284,8 +236,5 @@ const handleRowAction = (action: any, item: Conversation) => {
     v-model:open="showMessagesDialog"
     :conversation-id="selectedConversation?.id || null"
     :conversation-title="selectedConversation?.title || t('admin.pages.conversations.untitledConversation')"
-    :input-tokens="selectedConversation?.input_tokens"
-    :output-tokens="selectedConversation?.output_tokens"
-    :total-tokens="selectedConversation?.total_tokens"
   />
 </template>

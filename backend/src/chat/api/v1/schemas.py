@@ -127,9 +127,6 @@ class ConversationResponse(ConversationBase):
     status: ConversationStatusEnum
     last_message_at: Optional[datetime]
     message_count: int
-    input_tokens: Optional[int] = None
-    output_tokens: Optional[int] = None
-    total_tokens: Optional[int] = None
     extra_data: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime
@@ -164,10 +161,6 @@ class MessageResponse(MessageBase):
     message_type: MessageTypeEnum
     conversation_id: uuid.UUID
     user_id: Optional[uuid.UUID] = None
-    token_count: Optional[int] = None
-    input_tokens: Optional[int] = None
-    output_tokens: Optional[int] = None
-    total_tokens: Optional[int] = None
     extra_data: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime

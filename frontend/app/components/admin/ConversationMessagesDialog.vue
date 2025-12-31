@@ -12,9 +12,6 @@ interface Message {
   message_type: string
   created_at: string
   user_id?: string
-  input_tokens?: number
-  output_tokens?: number
-  total_tokens?: number
   extra_data?: Record<string, any>
 }
 
@@ -22,9 +19,6 @@ interface Props {
   open: boolean
   conversationId: string | null
   conversationTitle: string
-  inputTokens?: number
-  outputTokens?: number
-  totalTokens?: number
 }
 
 const props = defineProps<Props>()
@@ -174,12 +168,6 @@ const totalStats = computed(() => {
                   <div class="flex flex-wrap gap-3 text-xs text-muted-foreground">
                     <span v-if="message.extra_data?.model">
                       {{ t('components.conversationMessages.model') }}: {{ message.extra_data.model }}
-                    </span>
-                    <span v-if="message.total_tokens">
-                      {{ t('components.conversationMessages.tokens') }}: {{ message.total_tokens.toLocaleString() }}
-                      <span v-if="message.input_tokens && message.output_tokens">
-                        ({{ message.input_tokens.toLocaleString() }} + {{ message.output_tokens.toLocaleString() }})
-                      </span>
                     </span>
                   </div>
                 </div>

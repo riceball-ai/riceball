@@ -43,9 +43,6 @@ class ModelProvider(Base):
     """Model provider table"""
     __tablename__ = "model_providers"
 
-    # Provider name, e.g. OpenAI, Anthropic, Google, etc.
-    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    
     # Provider display name
     display_name: Mapped[str] = mapped_column(String(200), nullable=False)
     

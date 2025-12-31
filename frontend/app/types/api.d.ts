@@ -156,7 +156,6 @@ export interface ModelViewBulkOperation {
 
 interface Provider {
   id: string
-  name: string
   display_name: string
   description: string
   website: string

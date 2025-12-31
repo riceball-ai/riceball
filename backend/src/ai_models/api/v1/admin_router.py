@@ -42,7 +42,7 @@ async def list_all_providers(
 @router.get("/providers", response_model=Page[ModelProviderResponse], summary="List model providers")
 async def list_providers(
     status: Optional[ProviderStatusEnum] = Query(None, description="Filter by status"),
-    search: Optional[str] = Query(None, description="Search in name or display_name"),
+    search: Optional[str] = Query(None, description="Search in display_name"),
     session: AsyncSession = Depends(get_async_session)
 ):
     """List model providers with pagination and filtering"""
@@ -55,7 +55,6 @@ async def list_providers(
     if search:
         search_term = f"%{search}%"
         query = query.where(
-            (ModelProvider.name.ilike(search_term)) |
             (ModelProvider.display_name.ilike(search_term))
         )
     
@@ -68,12 +67,6 @@ async def create_provider(
     session: AsyncSession = Depends(get_async_session)
 ):
     """Create a new model provider"""
-    # Check if provider with same name already exists
-    existing = await session.execute(
-        select(ModelProvider).where(ModelProvider.name == provider_data.name)
-    )
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Provider with this name already exists")
     
     provider = ModelProvider(**provider_data.model_dump())
     session.add(provider)

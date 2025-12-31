@@ -22,7 +22,6 @@ ALLOWED_MODEL_CAPABILITIES = [
 
 # Provider Schemas
 class ModelProviderBase(BaseModel):
-    name: str = Field(..., max_length=100, description="Provider name")
     display_name: str = Field(..., max_length=200, description="Provider display name")
     description: Optional[str] = Field(None, description="Provider description")
     website: Optional[str] = Field(None, max_length=500, description="Provider website")

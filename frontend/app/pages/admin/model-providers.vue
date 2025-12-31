@@ -53,11 +53,6 @@ const providerConfig = computed((): ModelViewConfig<Provider> => ({
 
   detailFields: [
     {
-      name: 'name',
-      label: t('admin.pages.modelProviders.fields.providerId'),
-      type: 'text'
-    },
-    {
       name: 'display_name',
       label: t('admin.pages.modelProviders.fields.displayName'),
       type: 'text'
@@ -96,13 +91,6 @@ const providerConfig = computed((): ModelViewConfig<Provider> => ({
 
   formFields: [
     {
-      name: 'name',
-      label: t('admin.pages.modelProviders.fields.providerId'),
-      type: 'text',
-      required: true,
-      placeholder: t('admin.pages.modelProviders.fields.providerIdPlaceholder')
-    },
-    {
       name: 'display_name',
       label: t('admin.pages.modelProviders.fields.displayName'),
       type: 'text',
@@ -130,7 +118,7 @@ const providerConfig = computed((): ModelViewConfig<Provider> => ({
     {
       name: 'api_key',
       label: t('admin.pages.modelProviders.fields.apiKey'),
-      type: 'password',
+      type: 'text',
       required: true,
       placeholder: t('admin.pages.modelProviders.fields.apiKeyPlaceholder')
     },

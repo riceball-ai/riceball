@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, h } from 'vue'
 import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
-import type { ModelViewConfig } from '~/components/model-view/ModelView.vue'
+import type { ModelViewConfig } from '~/components/model-view/types'
 import type { User } from '~/types/api'
 
 definePageMeta({
@@ -36,19 +35,6 @@ const userConfig = computed((): ModelViewConfig<User> => ({
       accessorKey: 'name',
       header: t('admin.pages.users.name'),
       cell: (ctx) => ctx.getValue() || '-'
-    },
-    {
-      id: 'balance',
-      header: t('admin.pages.users.balance'),
-      cell: (ctx) => {
-        const balance = ctx.row.original.balance
-        const totalRecharged = ctx.row.original.total_recharged
-        
-        return h('div', { class: 'text-sm' }, [
-          h('div', { class: 'font-medium' }, `$${balance ?? 0}`),
-          h('div', { class: 'text-xs text-muted-foreground' }, t('admin.pages.users.recharged', { amount: totalRecharged ?? 0 }))
-        ])
-      }
     },
     {
       accessorKey: 'is_active',

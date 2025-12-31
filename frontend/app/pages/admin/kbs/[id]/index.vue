@@ -4,7 +4,8 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { FileText, Upload, Trash2, Eye, Split, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import type { ColumnDef, SortingState, PaginationState } from '@tanstack/vue-table'
-import DataTable, { type FilterConfig, type ActionConfig } from '~/components/model-view/DataTable.vue'
+import DataTable from '~/components/model-view/DataTable.vue'
+import type { ActionConfig } from '~/components/model-view/types'
 import DocIcon from '~/components/file-type-icon/Doc.vue'
 import PdfIcon from '~/components/file-type-icon/Pdf.vue'
 import MdIcon from '~/components/file-type-icon/Md.vue'
@@ -137,7 +138,7 @@ const loadData = async () => {
 const tableColumns: ColumnDef<Document>[] = [
     {
       accessorKey: 'title',
-      header: () => t('admin.pages.knowledgeBases.detail.columns.title'),
+      header: t('admin.pages.knowledgeBases.detail.columns.title'),
       cell: (context) => {
         const row = context.row.original
         
@@ -173,7 +174,7 @@ const tableColumns: ColumnDef<Document>[] = [
     },
     {
       accessorKey: 'file_size',
-      header: () => t('admin.pages.knowledgeBases.detail.columns.size'),
+      header: t('admin.pages.knowledgeBases.detail.columns.size'),
       cell: (context) => {
         const size = context.getValue() as number
         if (!size) return '-'
@@ -185,11 +186,11 @@ const tableColumns: ColumnDef<Document>[] = [
     },
     {
       accessorKey: 'file_type',
-      header: () => t('admin.pages.knowledgeBases.detail.columns.type')
+      header: t('admin.pages.knowledgeBases.detail.columns.type')
     },
     {
       accessorKey: 'status',
-      header: () => t('admin.pages.knowledgeBases.detail.columns.status'),
+      header: t('admin.pages.knowledgeBases.detail.columns.status'),
       cell: (context) => {
         const status = context.getValue() as string
         const variants = {
@@ -211,7 +212,7 @@ const tableColumns: ColumnDef<Document>[] = [
     },
     {
       accessorKey: 'created_at',
-      header: () => t('admin.pages.knowledgeBases.detail.columns.createdAt'),
+      header: t('admin.pages.knowledgeBases.detail.columns.createdAt'),
       cell: (context) => {
         const date = new Date(context.getValue() as string)
         return date.toLocaleString()
@@ -227,12 +228,12 @@ const rowActions: ActionConfig[] = [
   // },
   {
     key: 'view-chunks',
-    label: () => t('admin.pages.knowledgeBases.detail.viewChunks'),
+    label: t('admin.pages.knowledgeBases.detail.viewChunks'),
     icon: Split,
   },
   {
     key: 'delete',
-    label: () => t('admin.pages.knowledgeBases.detail.delete'),
+    label: t('admin.pages.knowledgeBases.detail.delete'),
     icon: Trash2,
     variant: 'destructive',
   }

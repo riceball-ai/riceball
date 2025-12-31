@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, h } from 'vue'
 import { NuxtLink } from '#components'
-import { Database, FileText, Upload, Trash2, Edit, Eye } from 'lucide-vue-next'
-import type { ModelViewConfig } from '~/components/model-view/ModelView.vue'
-import type { KnowledgeBase, Document, Model } from '~/types/api'
+import { FileText } from 'lucide-vue-next'
+import type { ModelViewConfig } from '~/components/model-view/types'
+import type { KnowledgeBase, Model } from '~/types/api'
 
 const { t } = useI18n()
 

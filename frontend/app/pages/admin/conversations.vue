@@ -3,6 +3,7 @@ import { computed, h, ref } from 'vue'
 import { Badge } from '~/components/ui/badge'
 import { MessageSquare } from 'lucide-vue-next'
 import ConversationMessagesDialog from '~/components/admin/ConversationMessagesDialog.vue'
+import type { ModelViewConfig } from '~/components/model-view/types'
 
 interface Conversation {
   id: string

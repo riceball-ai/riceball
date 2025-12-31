@@ -3,8 +3,6 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { Save, Loader2 } from 'lucide-vue-next'
 
-const { t } = useI18n()
-
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
@@ -18,46 +16,7 @@ import {
 } from '~/components/ui/select'
 import { ImageUpload } from '~/components/ui/image-upload'
 import { Switch } from '~/components/ui/switch'
-
-export interface FieldOption {
-  label: string
-  value: string | number
-}
-
-export interface FormField {
-  name: string
-  label: string
-  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'multiselect' | 'radio' | 'switch' | 'date' | 'datetime' | 'file' | 'image' | 'avatar' | 'json'
-  required?: boolean
-  disabled?: boolean
-  placeholder?: string
-  help?: string
-  description?: string
-  defaultValue?: any
-  
-  // Number field
-  min?: number
-  max?: number
-  step?: number
-  
-  // Textarea field
-  rows?: number
-  
-  // Select field
-  options?: FieldOption[]
-  
-  // File field
-  accept?: string
-  multiple?: boolean
-  
-  // Validation rules
-  validation?: {
-    minLength?: number
-    maxLength?: number
-    pattern?: RegExp
-    custom?: (value: any) => string | null
-  }
-}
+import type { FormField, FieldOption } from './types'
 
 interface Props {
   fields: FormField[]
@@ -74,6 +33,8 @@ const props = withDefaults(defineProps<Props>(), {
   showCancel: false,
   cancelText: ''
 })
+
+const { t } = useI18n()
 
 // Computed i18n defaults
 const computedSubmitText = computed(() => props.submitText || t('components.dynamicForm.save'))

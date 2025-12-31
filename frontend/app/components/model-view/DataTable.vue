@@ -2,7 +2,6 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 
-const { t } = useI18n()
 import {
   useVueTable,
   getCoreRowModel,
@@ -57,20 +56,7 @@ import {
   Collapsible,
   CollapsibleContent,
 } from '~/components/ui/collapsible'
-
-export interface FilterConfig {
-  type: 'text' | 'select' | 'daterange'
-  label: string
-  placeholder?: string
-  options?: Array<{ label: string; value: string }>
-}
-
-export interface ActionConfig {
-  key: string
-  label: string
-  icon?: any
-  variant?: 'default' | 'destructive'
-}
+import type { FilterConfig, ActionConfig } from './types'
 
 interface Props {
   data: T[]
@@ -111,6 +97,8 @@ const emit = defineEmits<{
   bulkAction: [action: ActionConfig, rows: T[]]
   rowAction: [action: ActionConfig, row: T]
 }>()
+
+const { t } = useI18n()
 
 const searchQuery = ref('')
 const filterValues = ref<Record<string, any>>({})

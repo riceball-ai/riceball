@@ -23,61 +23,10 @@ import { toast } from 'vue-sonner'
 
 import DataTable from './DataTable.vue'
 import DynamicForm from './DynamicForm.vue'
-import type { FilterConfig, ActionConfig } from './DataTable.vue'
-import type { FormField } from './DynamicForm.vue'
-import { useModelViewAPI, type ModelViewApiEndpointOverrides } from '~/composables/useModelViewAPI'
+import { useModelViewAPI } from '~/composables/useModelViewAPI'
+import type { ModelViewConfig, ActionConfig } from './types'
 
 const { t } = useI18n()
-
-export interface DetailField {
-  name: string
-  label: string
-  type?: string
-  render?: (value: any, record: Record<string, any>) => any
-}
-
-export type ModelViewApiEndpoints = ModelViewApiEndpointOverrides
-
-export interface ModelViewConfig<T> {
-  // Basic config
-  title: string
-  description?: string
-  
-  // API config
-  apiEndpoint: string
-  apiEndpoints?: ModelViewApiEndpoints
-  
-  // Table config
-  columns: ColumnDef<T>[]
-  selectable?: boolean
-  
-  // Form config
-  formFields?: FormField[]
-  formDescription?: string
-  
-  // Detail config
-  detailFields?: DetailField[]
-  
-  // Feature switches
-  canCreate?: boolean
-  canEdit?: boolean
-  canDelete?: boolean
-  canView?: boolean
-  canDuplicate?: boolean
-  showFilters?: boolean
-  showExport?: boolean
-  showImport?: boolean
-  
-  // Filter config
-  filters?: Record<string, FilterConfig>
-  
-  // Action config
-  customActions?: ActionConfig[]
-  
-  // Other config
-  emptyMessage?: string
-  pageSize?: number
-}
 
 interface Props {
   config: ModelViewConfig<T>

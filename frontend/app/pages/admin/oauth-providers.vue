@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, h } from 'vue'
 import { Badge } from '~/components/ui/badge'
-import type { ModelViewConfig } from '~/components/model-view/ModelView.vue'
+import type { ModelViewConfig } from '~/components/model-view/types'
 import { Eye, Star, Shield } from 'lucide-vue-next'
 
 const { t } = useI18n()

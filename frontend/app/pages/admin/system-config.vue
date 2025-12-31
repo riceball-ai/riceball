@@ -14,7 +14,7 @@ const REGISTRATION_ENABLED_KEY = 'registration_enabled'
 
 definePageMeta({
 	layout: 'admin',
-	breadcrumb: () => useI18n().t('admin.systemConfig.title')
+	breadcrumb: 'admin.systemConfig.title'
 })
 
 const { t } = useI18n()

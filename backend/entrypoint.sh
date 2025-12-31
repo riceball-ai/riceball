@@ -32,14 +32,17 @@ else
 fi
 
 # 3. Create default superuser (if environment variables are provided)
-echo "👤 Creating default superuser..."
+if [ -n "$SUPERUSER_EMAIL" ] && [ -n "$SUPERUSER_PASSWORD" ]; then
+    echo "👤 Creating default superuser..."
+    python scripts/create_superuser.py
 
-SUPERUSER_EMAIL=admin@admin.com SUPERUSER_PASSWORD=admin123456 python scripts/create_superuser.py
-
-if [ $? -eq 0 ]; then
-    echo "✅ Default superuser created/updated successfully"
+    if [ $? -eq 0 ]; then
+        echo "✅ Default superuser created/updated successfully"
+    else
+        echo "⚠️  Warning: Default superuser creation failed, you may need to create one manually"
+    fi
 else
-    echo "⚠️  Warning: Default superuser creation failed, you may need to create one manually"
+    echo "ℹ️  Skipping default superuser creation (SUPERUSER_EMAIL or SUPERUSER_PASSWORD not set)"
 fi
 
 echo "✨ Application initialization completed!"

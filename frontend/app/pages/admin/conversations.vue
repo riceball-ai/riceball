@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { computed, h, ref } from 'vue'
 import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
 import { MessageSquare } from 'lucide-vue-next'
-import type { ModelViewConfig } from '~/components/model-view/ModelView.vue'
 import ConversationMessagesDialog from '~/components/admin/ConversationMessagesDialog.vue'
 
 interface Conversation {
@@ -23,7 +21,7 @@ interface Conversation {
 }
 
 definePageMeta({
-  breadcrumb: () => useI18n().t('admin.pages.conversations.title'),
+  breadcrumb: 'admin.pages.conversations.title',
   layout: 'admin'
 })
 

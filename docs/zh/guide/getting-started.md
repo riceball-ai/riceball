@@ -15,16 +15,14 @@
 ```bash
 docker run -d \
   -p 8000:8000 \
+  -e SUPERUSER_EMAIL=admin@admin.com \
+  -e SUPERUSER_PASSWORD=admin123456 \
   -v riceball_storage:/app/storage \
   --name riceball \
   ghcr.io/riceball-ai/riceball:all-in-one-latest
 ```
 
-访问 [http://localhost:8000](http://localhost:8000) 即可开始使用 RiceBall。
-
-默认管理员账号：
-- 邮箱：`admin@admin.com`
-- 密码：`admin123456`
+访问 [http://localhost:8000](http://localhost:8000) 即可开始使用 RiceBall。您可以通过 `SUPERUSER_EMAIL` 和 `SUPERUSER_PASSWORD` 环境变量配置初始超级用户凭据。
 
 ## 生产环境部署 (源码)
 

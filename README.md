@@ -44,12 +44,14 @@ Run RiceBall with a single command using our All-in-One Docker image (includes S
 ```bash
 docker run -d \
   -p 8000:8000 \
+  -e SUPERUSER_EMAIL=admin@admin.com \
+  -e SUPERUSER_PASSWORD=admin123456 \
   -v riceball_storage:/app/storage \
   --name riceball \
   ghcr.io/riceball-ai/riceball:all-in-one-latest
 ```
 
-Visit http://localhost:8000 to start using RiceBall. Default admin credentials are `admin@admin.com` / `admin123456`.
+Visit http://localhost:8000 to start using RiceBall. You can configure the initial superuser credentials via the `SUPERUSER_EMAIL` and `SUPERUSER_PASSWORD` environment variables.
 
 ## 🛠️ Production Deployment (Source Code)
 
@@ -59,9 +61,8 @@ For production environments requiring PostgreSQL and S3, you can deploy from sou
 git clone https://github.com/riceball-ai/riceball.git
 cd riceball
 
-cp backend/.env.example backend/.env
-
 docker compose -f docker-compose.prod.yml up -d
+
 ```
 
 ## ❤️ Acknowledgements

@@ -65,6 +65,8 @@ services:
       S3_EXTERNAL_ENDPOINT_URL: ${S3_EXTERNAL_ENDPOINT_URL:-http://localhost:9000/public-bucket}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-riceball}:${POSTGRES_PASSWORD:-RiceBall999}@postgres:5432/${POSTGRES_DB:-riceball}
       CHROMA_CLIENT_TYPE: http
+      SUPERUSER_EMAIL: admin@admin.com
+      SUPERUSER_PASSWORD: admin123456
     depends_on:
       - minio
       - postgres

@@ -108,14 +108,6 @@ async def update_provider(
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
     
-    # Check for name conflicts if name is being updated
-    if provider_data.name and provider_data.name != provider.name:
-        existing = await session.execute(
-            select(ModelProvider).where(ModelProvider.name == provider_data.name)
-        )
-        if existing.scalar_one_or_none():
-            raise HTTPException(status_code=400, detail="Provider with this name already exists")
-    
     # Update fields
     update_data = provider_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():

@@ -3,6 +3,7 @@ import type { ConfigResponse, PublicConfig } from "~/types/api"
 export const useConfigStore = defineStore('config', () => {
   const config = ref<PublicConfig>({
     registration_enabled: true,
+    allow_user_create_assistants: true,
   })
 
   const isLoaded = ref(false)
@@ -14,7 +15,28 @@ export const useConfigStore = defineStore('config', () => {
     try {
       const { $api } = useNuxtApp()
       const response = await $api<ConfigResponse>('/v1/config/public')
-      config.value = response.configs
+      
+      // Process config values to ensure booleans are correct
+      const processedConfig = { ...response.configs }
+      
+      // Helper to convert string boolean to actual boolean
+      const toBool = (val: any) => {
+        if (typeof val === 'string') {
+          return val.toLowerCase() !== 'false'
+        }
+        return Boolean(val)
+      }
+
+      // Explicitly convert known boolean keys
+      if (processedConfig.registration_enabled !== undefined) {
+        processedConfig.registration_enabled = toBool(processedConfig.registration_enabled)
+      }
+      
+      if (processedConfig.allow_user_create_assistants !== undefined) {
+        processedConfig.allow_user_create_assistants = toBool(processedConfig.allow_user_create_assistants)
+      }
+
+      config.value = processedConfig
       isLoaded.value = true
     } catch (error) {
       console.error('Failed to load config:', error)

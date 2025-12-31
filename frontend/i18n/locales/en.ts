@@ -1316,6 +1316,12 @@ export default defineI18nLocale(async locale => {
       },
     },
 
+    // Error Messages
+    error: {
+      registrationClosed: 'Registration Closed',
+      registrationClosedMessage: 'New user registration is currently disabled.',
+    },
+
     // Page Titles
     pageTitle: {
       signIn: 'Sign In',

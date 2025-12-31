@@ -29,17 +29,17 @@ DEFAULT_CONFIGS = [
     },
     {
         "key": "conversation_title_model_id",
-        "value": None,
+        "value": '',
         "description": "Model ID for generating conversation titles, uses conversation assistant model if empty",
         "is_public": False,
         "is_enabled": True
     },
     {
         "key": "allow_user_create_assistants",
-        "value": True,
+        "value": False,
         "description": "Whether to allow users to create assistants",
         "is_public": True,
-        "is_enabled": False
+        "is_enabled": True
     }
 ]
 

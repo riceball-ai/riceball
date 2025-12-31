@@ -1315,6 +1315,12 @@ export default defineI18nLocale(async locale => {
       },
     },
 
+    // 错误信息
+    error: {
+      registrationClosed: '注册已关闭',
+      registrationClosedMessage: '当前未开放新用户注册。',
+    },
+
     // 页面标题
     pageTitle: {
       signIn: '登录',

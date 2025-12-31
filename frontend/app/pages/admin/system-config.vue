@@ -127,10 +127,6 @@ const handleSwitchChange = (config: typeof BOOLEAN_CONFIGS[number], value: boole
 
 const handleSaveTitleModel = () => {
   const value = (configState[TITLE_MODEL_KEY] as string).trim()
-  if (!value) {
-    showError(t('admin.systemConfig.messages.modelIdRequired'))
-    return
-  }
   
   updateConfig(TITLE_MODEL_KEY, value, {
     description: t('admin.systemConfig.titleModel.heading'),

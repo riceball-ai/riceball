@@ -31,7 +31,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    PROJECT_NAME: str = "RiceBall"
+    APP_NAME: str = "RiceBall"
 
     # Logging
     LOG_LEVEL: str = "INFO"

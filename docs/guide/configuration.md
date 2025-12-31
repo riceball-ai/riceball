@@ -14,7 +14,7 @@ Copy `backend/.env.example` to `backend/.env` and modify the following values:
 |----------|-------------|-------------------|
 | `ENVIRONMENT` | Runtime environment | `development` or `production` |
 | `LOG_LEVEL` | Logging verbosity | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
-| `PROJECT_NAME` | Name of the project | `RiceBall` |
+| `APP_NAME` | Name of the project | `RiceBall` |
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql+asyncpg://user:pass@host:5432/db` |
 | `SECRET_KEY` | Secret key for encryption and JWT | **Change this in production!** |
 | `EXTERNAL_URL` | Public URL of the backend API | `http://localhost:8000` |

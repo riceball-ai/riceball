@@ -14,7 +14,7 @@ RiceBall 支持通过 `.env` 文件或直接设置系统环境变量来进行配
 |--------|------|---------------|
 | `ENVIRONMENT` | 运行环境 | `development` 或 `production` |
 | `LOG_LEVEL` | 日志级别 | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
-| `PROJECT_NAME` | 项目名称 | `RiceBall` |
+| `APP_NAME` | 项目名称 | `RiceBall` |
 | `DATABASE_URL` | PostgreSQL 数据库连接字符串 | `postgresql+asyncpg://user:pass@host:5432/db` |
 | `SECRET_KEY` | 用于加密和 JWT 的密钥 | **生产环境请务必修改！** |
 | `EXTERNAL_URL` | 后端 API 的外部访问 URL | `http://localhost:8000` |

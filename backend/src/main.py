@@ -48,7 +48,7 @@ async def require_admin(current_superuser = Depends(current_superuser)):
 
 
 app_config = {
-    "title": settings.PROJECT_NAME
+    "title": settings.APP_NAME
 }
 
 if settings.ENVIRONMENT not in settings.SHOW_DOCS_ENVIRONMENT:

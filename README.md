@@ -6,7 +6,7 @@
 
 RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. It aims to help teams and enterprises quickly build and deploy LLM-based intelligent applications in a private environment.
 
-![Client Interface](docs/.vuepress/public/client.png)
+![Client Interface](docs/.vuepress/public/client.gif)
 ![Dashboard Interface](docs/.vuepress/public/dashboard.png)
 
 **Core Capabilities:**

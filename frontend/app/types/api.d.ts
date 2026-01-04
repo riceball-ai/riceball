@@ -197,7 +197,7 @@ interface Assistant {
   system_prompt: string
   temperature: number
   max_tokens: number
-  max_history_messages?: number
+  max_history_messages?: number | null
   status: 'ACTIVE' | 'INACTIVE' | 'DRAFT'
   is_public: boolean
   category?: string

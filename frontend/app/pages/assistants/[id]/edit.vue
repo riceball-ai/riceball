@@ -1,16 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Save, X } from 'lucide-vue-next'
-import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
-import { Textarea } from '~/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { toast } from 'vue-sonner'
-import type { Assistant, Model } from '~/types/api'
-import { ASSISTANT_CATEGORIES } from '~/constants/assistants'
+import AssistantForm from '~/components/assistants/AssistantForm.vue'
+import type { Assistant } from '~/types/api'
 
 const { t } = useI18n()
 
@@ -27,34 +20,10 @@ const router = useRouter()
 const route = useRoute()
 const assistantId = route.params.id as string
 
-// Fetch model list
-const { data: models } = useAPI<Model[]>('/v1/models', { server: false })
-
-const modelOptions = computed(() =>
-  (models.value ?? []).filter(m => m.status === 'ACTIVE').map(m => ({ label: m.display_name, value: m.id }))
-)
-
 // State management
 const loading = ref(false)
 const fetching = ref(true)
-
-// Form data
-const formData = ref<Partial<Assistant>>({
-  name: '',
-  avatar_file_path: '',
-  description: '',
-  system_prompt: '',
-  model_id: '',
-  temperature: 0.7,
-  max_history_messages: 10,
-  is_public: false,
-  status: 'ACTIVE',
-  category: 'general',
-  tags: [],
-  enable_agent: false,
-  knowledge_base_ids: [],
-  mcp_server_ids: []
-})
+const assistant = ref<Assistant | null>(null)
 
 // Fetch assistant details
 const fetchAssistant = async () => {
@@ -62,18 +31,7 @@ const fetchAssistant = async () => {
   try {
     const { $api } = useNuxtApp()
     const data = await $api<Assistant>(`/v1/assistants/${assistantId}`)
-    
-    // Fill form data
-    formData.value = {
-      ...data,
-      // Ensure correct number types
-      temperature: Number(data.temperature),
-      max_history_messages: Number(data.max_history_messages),
-      // Ensure correct array types
-      tags: data.tags || [],
-      knowledge_base_ids: data.knowledge_base_ids || [],
-      mcp_server_ids: data.mcp_server_ids || []
-    }
+    assistant.value = data
   } catch (error) {
     console.error('Failed to fetch assistant details:', error)
     toast.error(t('assistantForm.fetchFailed'))
@@ -87,50 +45,15 @@ onMounted(() => {
   fetchAssistant()
 })
 
-// Tag input handling
-const tagsInput = computed({
-  get: () => formData.value.tags?.join(', ') || '',
-  set: (val: string) => {
-    formData.value.tags = val.split(/[,，]/).map(t => t.trim()).filter(Boolean)
-  }
-})
-
-// Form validation errors
-const errors = ref<Record<string, string>>({})
-
-// Form validation
-const validateForm = (): boolean => {
-  const newErrors: Record<string, string> = {}
-  
-  if (!formData.value.name || formData.value.name.length < 2) {
-    newErrors.name = t('assistantForm.nameError')
-  }
-  // description is optional now
-  if (!formData.value.system_prompt || formData.value.system_prompt.length < 10) {
-    newErrors.system_prompt = t('assistantForm.systemPromptError')
-  }
-  if (!formData.value.model_id) {
-    newErrors.model_id = t('assistantForm.modelError')
-  }
-  
-  errors.value = newErrors
-  return Object.keys(newErrors).length === 0
-}
-
 // Update assistant
-const updateAssistant = async () => {
-  if (!validateForm()) {
-    toast.error(t('assistantForm.validationError'))
-    return
-  }
-  
+const updateAssistant = async (data: Partial<Assistant>) => {
   loading.value = true
   try {
     const { $api } = useNuxtApp()
     
     await $api(`/v1/assistants/${assistantId}`, {
       method: 'PUT',
-      body: formData.value
+      body: data
     })
     
     toast.success(t('assistantForm.updateSuccess'))
@@ -173,248 +96,17 @@ const handleCancel = () => {
     <div class="flex-1 overflow-y-auto">
       <div class="container mx-auto py-6 space-y-6 max-w-4xl">
         <div v-if="fetching" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
 
-    <template v-else>
-      <!-- Form card -->
-      <Card>
-        <CardHeader>
-          <CardTitle>{{ t('assistantForm.basicInfo') }}</CardTitle>
-          <CardDescription>
-            {{ t('assistantForm.basicInfoDesc') }}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form @submit.prevent="updateAssistant" class="space-y-6">
-            <!-- Basic info -->
-            <div class="space-y-4">
-              <!-- Avatar -->
-              <div class="space-y-2">
-                <Label for="avatar">{{ t('assistantForm.avatar') }}</Label>
-                <AvatarUpload
-                  id="avatar"
-                  v-model="formData.avatar_file_path"
-                  :disabled="loading"
-                />
-                <div class="text-sm text-muted-foreground">
-                  {{ t('assistantForm.avatarHelp') }}
-                </div>
-              </div>
-       
-              <!-- Name -->
-              <div class="space-y-2">
-                <Label for="name">
-                  {{ t('assistantForm.name') }} <span class="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  v-model="formData.name"
-                  :placeholder="t('assistantForm.namePlaceholder')"
-                  :class="{ 'border-destructive': errors.name }"
-                  :disabled="loading"
-                />
-                <div v-if="errors.name" class="text-sm text-destructive">
-                  {{ errors.name }}
-                </div>
-              </div>
-              <!-- Description -->
-              <div class="space-y-2">
-                <Label for="description">
-                  {{ t('assistantForm.description') }}
-                </Label>
-                <Textarea
-                  id="description"
-                  v-model="formData.description"
-                  :placeholder="t('assistantForm.descriptionPlaceholder')"
-                  :rows="3"
-                  :class="{ 'border-destructive': errors.description }"
-                  :disabled="loading"
-                />
-                <div v-if="errors.description" class="text-sm text-destructive">
-                  {{ errors.description }}
-                </div>
-              </div>
-
-              <!-- Category -->
-              <div class="space-y-2">
-                <Label for="category">{{ t('assistantForm.category') }}</Label>
-                <Select v-model="formData.category" :disabled="loading">
-                  <SelectTrigger>
-                    <SelectValue :placeholder="t('assistantForm.categoryPlaceholder')" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem
-                      v-for="category in ASSISTANT_CATEGORIES"
-                      :key="category.value"
-                      :value="category.value"
-                    >
-                      {{ t(`assistants.categories.${category.value}`) }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <div class="text-sm text-muted-foreground">
-                  {{ t('assistantForm.categoryHelp') }}
-                </div>
-              </div>
-
-              <!-- Tags -->
-              <div class="space-y-2">
-                <Label for="tags">{{ t('assistantForm.tags') }}</Label>
-                <Input
-                  id="tags"
-                  v-model="tagsInput"
-                  :placeholder="t('assistantForm.tagsPlaceholder')"
-                  :disabled="loading"
-                />
-                <div class="text-sm text-muted-foreground">
-                  {{ t('assistantForm.tagsHelp') }}
-                </div>
-              </div>
-            </div>
-
-            <!-- Model config -->
-            <div class="space-y-4">
-              <h3 class="text-lg font-medium">{{ t('assistantForm.modelConfig') }}</h3>
-              
-              <!-- System prompt -->
-              <div class="space-y-2">
-                <Label for="system_prompt">
-                  {{ t('assistantForm.systemPrompt') }} <span class="text-destructive">*</span>
-                </Label>
-                <Textarea
-                  id="system_prompt"
-                  v-model="formData.system_prompt"
-                  :placeholder="t('assistantForm.systemPromptPlaceholder')"
-                  :rows="5"
-                  :class="{ 'border-destructive': errors.system_prompt }"
-                  :disabled="loading"
-                />
-                <div v-if="errors.system_prompt" class="text-sm text-destructive">
-                  {{ errors.system_prompt }}
-                </div>
-                <div class="text-sm text-muted-foreground">
-                  {{ t('assistantForm.systemPromptHelp') }}
-                </div>
-              </div>
-
-              <!-- Model selection -->
-              <div class="space-y-2">
-                <Label for="model_id">
-                  {{ t('assistantForm.model') }} <span class="text-destructive">*</span>
-                </Label>
-                <Select v-model="formData.model_id" :disabled="loading">
-                  <SelectTrigger :class="{ 'border-destructive': errors.model_id }">
-                    <SelectValue :placeholder="t('assistantForm.modelPlaceholder')" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem
-                      v-for="model in modelOptions"
-                      :key="model.value"
-                      :value="model.value"
-                    >
-                      {{ model.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <div v-if="errors.model_id" class="text-sm text-destructive">
-                  {{ errors.model_id }}
-                </div>
-                <div class="text-sm text-muted-foreground">
-                  {{ t('assistantForm.modelHelp') }}
-                </div>
-              </div>
-
-              <!-- Parameter config -->
-              <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-2">
-                  <Label for="temperature">{{ t('assistantForm.temperature') }}</Label>
-                  <Input
-                    id="temperature"
-                    v-model.number="formData.temperature"
-                    type="number"
-                    placeholder="0.7"
-                    min="0"
-                    max="2"
-                    step="0.1"
-                    :disabled="loading"
-                  />
-                  <div class="text-sm text-muted-foreground">
-                    {{ t('assistantForm.temperatureHelp') }}
-                  </div>
-                </div>
-                <div class="space-y-2">
-                  <Label for="max_history_messages">{{ t('assistantForm.maxHistory') }}</Label>
-                  <Input
-                    id="max_history_messages"
-                    v-model.number="formData.max_history_messages"
-                    type="number"
-                    placeholder="10"
-                    min="0"
-                    max="100"
-                    :disabled="loading"
-                  />
-                  <div class="text-sm text-muted-foreground">
-                    {{ t('assistantForm.maxHistoryHelp') }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Publish settings -->
-            <div class="space-y-4">
-              <h3 class="text-lg font-medium">{{ t('assistantForm.publishSettings') }}</h3>
-              
-              <!-- Is public -->
-              <div class="flex items-center space-x-2">
-                <input
-                  id="is_public"
-                  type="checkbox"
-                  v-model="formData.is_public"
-                  :disabled="loading"
-                  class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                />
-                <Label for="is_public" class="text-sm cursor-pointer">
-                  {{ t('assistantForm.isPublic') }}
-                </Label>
-              </div>
-
-              <!-- Status -->
-              <div class="space-y-2">
-                <Label for="status">
-                  {{ t('assistantForm.status') }} <span class="text-destructive">*</span>
-                </Label>
-                <Select v-model="formData.status" :disabled="loading">
-                  <SelectTrigger>
-                    <SelectValue :placeholder="t('assistantForm.statusPlaceholder')" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ACTIVE">{{ t('assistantForm.statusActive') }}</SelectItem>
-                    <SelectItem value="DRAFT">{{ t('assistantForm.statusDraft') }}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      <!-- Action buttons -->
-      <Card>
-        <CardContent class="pt-6">
-          <div class="flex justify-end gap-3">
-            <Button variant="outline" @click="handleCancel" :disabled="loading">
-              <X class="h-4 w-4 mr-2" />
-              {{ t('common.cancel') }}
-            </Button>
-            <Button @click="updateAssistant" :disabled="loading">
-              <Save class="h-4 w-4 mr-2" />
-              {{ t('assistantForm.saveButton') }}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </template>
+        <AssistantForm
+          v-else-if="assistant"
+          :initial-data="assistant"
+          :is-admin="false"
+          :loading="loading"
+          @submit="updateAssistant"
+          @cancel="handleCancel"
+        />
       </div>
     </div>
   </div>

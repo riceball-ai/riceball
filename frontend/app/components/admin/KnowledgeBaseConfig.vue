@@ -5,6 +5,7 @@ import { Label } from '~/components/ui/label'
 import { Input } from '~/components/ui/input'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
+import { Switch } from '~/components/ui/switch'
 import { RefreshCw, Database } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { KnowledgeBase, RagConfig } from '~/types/api'
@@ -31,40 +32,10 @@ const emit = defineEmits<{
 const knowledgeBases = ref<KnowledgeBase[]>([])
 const loading = ref(false)
 
-// Independent state to control whether to enable knowledge base (not dependent on whether a knowledge base is selected)
+// Independent state to control whether to enable knowledge base
 const useKnowledgeBase = ref(false)
 
-// Computed properties
-const localValue = computed({
-  get: () => {
-    return {
-      use_knowledge_base: useKnowledgeBase.value,
-      knowledge_base_ids: props.modelValue.knowledge_base_ids || [],
-      retrieval_count: props.modelValue.rag_config?.retrieval_count || 5,
-      similarity_threshold: props.modelValue.rag_config?.similarity_threshold || 0.7
-    }
-  },
-  set: (value) => {
-    // Construct data based on whether knowledge base is enabled
-    if (value.use_knowledge_base) {
-      emit('update:modelValue', {
-        knowledge_base_ids: value.knowledge_base_ids,
-        rag_config: {
-          retrieval_count: value.retrieval_count,
-          similarity_threshold: value.similarity_threshold
-        }
-      })
-    } else {
-      // Clear all related config when knowledge base is not enabled
-      emit('update:modelValue', {
-        knowledge_base_ids: [],
-        rag_config: undefined
-      })
-    }
-  }
-})
-
-const selectedCount = computed(() => localValue.value.knowledge_base_ids.length)
+const selectedCount = computed(() => props.modelValue.knowledge_base_ids?.length || 0)
 
 // Methods
 const loadKnowledgeBases = async () => {
@@ -82,32 +53,29 @@ const loadKnowledgeBases = async () => {
   }
 }
 
-const toggleKnowledgeBase = (event: Event) => {
-  const checked = (event.target as HTMLInputElement).checked
+const toggleKnowledgeBase = (checked: boolean) => {
   useKnowledgeBase.value = checked
   
-  if (!checked) {
-    // Clear all related config when disabling knowledge base
-    localValue.value = {
-      use_knowledge_base: false,
-      knowledge_base_ids: [],
-      retrieval_count: 5,
-      similarity_threshold: 0.7
-    }
+  if (checked) {
+    // When enabling, set default config if not present
+    emit('update:modelValue', {
+      knowledge_base_ids: props.modelValue.knowledge_base_ids || [],
+      rag_config: props.modelValue.rag_config || {
+        retrieval_count: 5,
+        similarity_threshold: 0.7
+      }
+    })
   } else {
-    // When enabling knowledge base, keep current config unchanged, only update enable state
-    localValue.value = {
-      use_knowledge_base: true,
-      knowledge_base_ids: localValue.value.knowledge_base_ids,
-      retrieval_count: localValue.value.retrieval_count,
-      similarity_threshold: localValue.value.similarity_threshold
-    }
+    // When disabling, clear config
+    emit('update:modelValue', {
+      knowledge_base_ids: [],
+      rag_config: undefined
+    })
   }
 }
 
-const toggleKnowledgeBaseSelection = (kbId: string, event: Event) => {
-  const checked = (event.target as HTMLInputElement).checked
-  const currentIds = [...localValue.value.knowledge_base_ids]
+const toggleKnowledgeBaseSelection = (kbId: string, checked: boolean) => {
+  const currentIds = [...(props.modelValue.knowledge_base_ids || [])]
   
   if (checked) {
     if (!currentIds.includes(kbId)) {
@@ -120,44 +88,45 @@ const toggleKnowledgeBaseSelection = (kbId: string, event: Event) => {
     }
   }
   
-  localValue.value = {
-    ...localValue.value,
+  emit('update:modelValue', {
+    ...props.modelValue,
     knowledge_base_ids: currentIds
-  }
+  })
 }
 
-const updateRetrievalCount = (event: Event) => {
-  const value = parseInt((event.target as HTMLInputElement).value)
-  if (!isNaN(value)) {
-    localValue.value = {
-      ...localValue.value,
+const updateRetrievalCount = (value: number) => {
+  emit('update:modelValue', {
+    ...props.modelValue,
+    rag_config: {
+      similarity_threshold: 0.7,
+      ...props.modelValue.rag_config,
       retrieval_count: value
     }
-  }
+  })
 }
 
-const updateSimilarityThreshold = (event: Event) => {
-  const value = parseFloat((event.target as HTMLInputElement).value)
-  if (!isNaN(value)) {
-    localValue.value = {
-      ...localValue.value,
+const updateSimilarityThreshold = (value: number) => {
+  emit('update:modelValue', {
+    ...props.modelValue,
+    rag_config: {
+      retrieval_count: 5,
+      ...props.modelValue.rag_config,
       similarity_threshold: value
     }
-  }
+  })
 }
 
 // Watch props changes, sync enable state
 watch(() => props.modelValue, (newValue) => {
-  const hasKnowledgeBase = newValue.knowledge_base_ids && newValue.knowledge_base_ids.length > 0
-  useKnowledgeBase.value = hasKnowledgeBase
-}, { immediate: true })
+  // If rag_config is present, or we have selected IDs, consider it enabled
+  const hasConfig = !!newValue.rag_config || (newValue.knowledge_base_ids && newValue.knowledge_base_ids.length > 0)
+  if (hasConfig !== useKnowledgeBase.value) {
+    useKnowledgeBase.value = hasConfig
+  }
+}, { immediate: true, deep: true })
 
 // Lifecycle
 onMounted(() => {
-  // Initialize enable state based on incoming data
-  const hasKnowledgeBase = props.modelValue.knowledge_base_ids && props.modelValue.knowledge_base_ids.length > 0
-  useKnowledgeBase.value = hasKnowledgeBase
-  
   loadKnowledgeBases()
 })
 </script>
@@ -176,13 +145,11 @@ onMounted(() => {
     <CardContent class="space-y-6">
       <!-- Enable knowledge base switch -->
       <div class="flex items-center space-x-3">
-        <input
+        <Switch
           id="use-knowledge-base"
-          type="checkbox"
-          :checked="useKnowledgeBase"
+          :model-value="useKnowledgeBase"
           :disabled="disabled || loading"
-          @change="toggleKnowledgeBase"
-          class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+          @update:model-value="toggleKnowledgeBase"
         />
         <Label for="use-knowledge-base" class="text-sm font-medium cursor-pointer">
           {{ t('components.knowledgeBaseConfig.enable') }}
@@ -228,9 +195,9 @@ onMounted(() => {
               <input
                 :id="`kb-${kb.id}`"
                 type="checkbox"
-                :checked="localValue.knowledge_base_ids.includes(kb.id)"
+                :checked="props.modelValue.knowledge_base_ids?.includes(kb.id)"
                 :disabled="disabled"
-                @change="(e) => toggleKnowledgeBaseSelection(kb.id, e)"
+                @change="(e) => toggleKnowledgeBaseSelection(kb.id, (e.target as HTMLInputElement).checked)"
                 class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary mt-1"
               />
               <Label :for="`kb-${kb.id}`" class="flex-1 cursor-pointer space-y-1">
@@ -250,12 +217,12 @@ onMounted(() => {
             <Input
               id="retrieval-count"
               type="number"
-              :value="localValue.retrieval_count"
+              :model-value="props.modelValue.rag_config?.retrieval_count || 5"
               :disabled="disabled"
               :min="1"
               :max="20"
               placeholder="5"
-              @input="updateRetrievalCount"
+              @update:model-value="(val) => updateRetrievalCount(Number(val))"
             />
             <div class="text-xs text-muted-foreground">
               {{ t('components.knowledgeBaseConfig.retrievalCountHelp') }}
@@ -269,13 +236,13 @@ onMounted(() => {
             <Input
               id="similarity-threshold"
               type="number"
-              :value="localValue.similarity_threshold"
+              :model-value="props.modelValue.rag_config?.similarity_threshold || 0.7"
               :disabled="disabled"
               :min="0"
               :max="1"
               :step="0.01"
               placeholder="0.7"
-              @input="updateSimilarityThreshold"
+              @update:model-value="(val) => updateSimilarityThreshold(Number(val))"
             />
             <div class="text-xs text-muted-foreground">
               {{ t('components.knowledgeBaseConfig.similarityThresholdHelp') }}

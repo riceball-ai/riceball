@@ -406,7 +406,7 @@ export default defineI18nLocale(async locale => {
       temperature: '创意程度',
       temperatureHelp: '数值越高(如 0.8)，回答越天马行空，适合创作；数值越低(如 0.2)，回答越严谨准确，适合逻辑分析。',
       maxHistory: '记忆长度',
-      maxHistoryHelp: '助理能“记住”的前文对话数量。设置太大会消耗更多费用，设置太小会导致它忘记之前的对话。',
+      maxHistoryHelp: '开启后限制携带的历史消息数量。关闭则不限制（受模型上下文长度限制）。',
       publishSettings: '发布设置',
       isPublic: '公开这个助理',
       status: '状态',

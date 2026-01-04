@@ -406,7 +406,7 @@ export default defineI18nLocale(async locale => {
       temperature: 'Creativity',
       temperatureHelp: 'Higher values (e.g., 0.8) make answers more creative; lower values (e.g., 0.2) make answers more precise and logical.',
       maxHistory: 'Memory Length',
-      maxHistoryHelp: 'The number of previous messages the assistant can "remember". Too large will consume more tokens, too small will make it forget context.',
+      maxHistoryHelp: 'Enable to limit the number of history messages. If disabled, no limit is applied (subject to model context length).',
       publishSettings: 'Publish Settings',
       isPublic: 'Make this assistant public',
       status: 'Status',

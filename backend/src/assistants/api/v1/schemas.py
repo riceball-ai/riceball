@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict, computed_field
 
-from src.config import settings
+from src.config import settings, StorageType
 from src.assistants.models import AssistantStatusEnum
 from src.ai_models.api.v1.schemas import ModelBase
 
@@ -188,9 +188,14 @@ class AssistantResponse(AssistantBase):
         """Full avatar URL"""
         if not self.avatar_file_path:
             return None
+            
+        if settings.STORAGE_TYPE == StorageType.LOCAL:
+            base_url = str(settings.EXTERNAL_URL or settings.FRONTEND_URL).rstrip('/')
+            return f"{base_url}/api/v1/files/static/{self.avatar_file_path}"
+            
         base_url = settings.S3_EXTERNAL_ENDPOINT_URL or settings.S3_ENDPOINT_URL
         base_url = str(base_url).rstrip('/')
-        return f"{base_url}/{self.avatar_file_path}"
+        return f"{base_url}/{settings.S3_BUCKET_NAME}/{self.avatar_file_path}"
 
     model_config = ConfigDict(from_attributes=True)
 

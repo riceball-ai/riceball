@@ -1,17 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { Upload, Trash2 } from 'lucide-vue-next'
 import { Button } from '~/components/ui/button'
-import { Label } from '~/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/ui/select'
 import { toast } from 'vue-sonner'
-import type { KnowledgeBase, FileUploadResponse } from '~/types/api'
+import type { FileUploadResponse } from '~/types/api'
 
 const { $api } = useNuxtApp()
 const { t } = useI18n()
@@ -23,27 +15,24 @@ interface UploadProgress {
 }
 
 interface Props {
-  defaultKnowledgeBaseId?: string
+  knowledgeBaseId: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  defaultKnowledgeBaseId: ''
-})
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   'upload-complete': []
 }>()
 
 // State
-const selectedKbId = ref(props.defaultKnowledgeBaseId)
+const selectedKbId = ref(props.knowledgeBaseId)
 const selectedFiles = ref<File[]>([])
 const uploading = ref(false)
 const uploadProgress = ref<UploadProgress[]>([])
-const knowledgeBases = ref<KnowledgeBase[]>([])
 const fileInput = ref<HTMLInputElement>()
 
 // Watch props changes
-watch(() => props.defaultKnowledgeBaseId, (newId) => {
+watch(() => props.knowledgeBaseId, (newId) => {
   selectedKbId.value = newId
 }, { immediate: true })
 
@@ -62,15 +51,15 @@ const removeFile = (index: number) => {
 }
 
 // Load knowledge base list
-const loadKnowledgeBases = async () => {
-  try {
-    const response = await $api('/v1/admin/rag/knowledge-bases') as any
-    knowledgeBases.value = response.items || response || []
-  } catch (error) {
-    console.error('Failed to load knowledge base list:', error)
-    toast.error(t('components.fileUpload.loadKnowledgeBasesFailed'))
-  }
-}
+// const loadKnowledgeBases = async () => {
+//   try {
+//     const response = await $api('/v1/admin/rag/knowledge-bases') as any
+//     knowledgeBases.value = response.items || response || []
+//   } catch (error) {
+//     console.error('Failed to load knowledge base list:', error)
+//     toast.error(t('components.fileUpload.loadKnowledgeBasesFailed'))
+//   }
+// }
 
 // Upload files
 const uploadFiles = async () => {
@@ -151,34 +140,12 @@ const uploadFiles = async () => {
   }
 }
 
-onMounted(() => {
-  loadKnowledgeBases()
-})
 </script>
 
 <template>
   <div class="space-y-4">
     <div>
-      <Label for="kb-select">{{ t('components.fileUpload.selectKnowledgeBase') }}</Label>
-      <Select v-model="selectedKbId" required>
-        <SelectTrigger>
-          <SelectValue :placeholder="t('components.fileUpload.selectKnowledgeBasePlaceholder')" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem
-            v-for="kb in knowledgeBases"
-            :key="kb.id"
-            :value="kb.id"
-          >
-            {{ kb.name }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-
-    <div>
-      <Label for="file-upload">{{ t('components.fileUpload.uploadFiles') }}</Label>
-      <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+      <div class="text-center">
         <input
           ref="fileInput"
           type="file"
@@ -248,7 +215,7 @@ onMounted(() => {
       >
         <div class="flex justify-between text-sm">
           <span>{{ progress.fileName }}</span>
-          <span>{{ progress.status }}</span>
+          <span>{{ t(`components.fileUpload.status.${progress.status}`) }}</span>
         </div>
         <div class="w-full bg-gray-200 rounded-full h-2">
           <div

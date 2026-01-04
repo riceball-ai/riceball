@@ -40,7 +40,10 @@ const knowledgeBaseConfig = computed((): ModelViewConfig<KnowledgeBase> => ({
       header: t('admin.pages.knowledgeBases.columns.name'),
       cell: (context) => {
         const row = context.row.original
-        return h(NuxtLink, {to: `/admin/kbs/${row.id}`}, () => row.name)
+        return h(NuxtLink, {
+          to: `/admin/kbs/${row.id}`,
+          class: 'font-medium text-primary underline underline-offset-4'
+        }, () => row.name)
       }
     },
     {

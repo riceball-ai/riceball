@@ -242,7 +242,7 @@ class S3StorageService(BaseStorageService):
     async def get_public_url(self, file_key: str) -> str:
         base_url = self.external_endpoint_url if self.external_endpoint_url else self.endpoint_url
         base_url = base_url.rstrip('/')
-        return f"{base_url}/{self.bucket_name}/{file_key}"
+        return f"{base_url}/{file_key}"
 
     async def generate_presigned_url(
         self,

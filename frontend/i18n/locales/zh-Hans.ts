@@ -246,7 +246,7 @@ export default defineI18nLocale(async locale => {
       verifyEmailFirst: '请先验证邮箱',
       gettingAuthUrl: '获取授权URL失败',
       pleaseCaptcha: '请完成验证码验证',
-      agreeTerms: '继续即表示您同意 @:common.app_name 的{terms}和{privacy}',
+      agreeTerms: '继续即表示您同意 {siteName} 的{terms}和{privacy}',
       termsOfUse: '服务条款',
       privacyPolicy: '隐私政策',
     },
@@ -278,7 +278,7 @@ export default defineI18nLocale(async locale => {
     },
 
     share: {
-      tagline: '来自 @:common.app_name 的对话分享',
+      tagline: '来自 {siteName} 的对话分享',
       defaultTitle: '对话分享',
       metaTitle: '{title}｜对话分享',
       chatWithAssistant: '与助手对话',

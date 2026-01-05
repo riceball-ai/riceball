@@ -1,14 +1,19 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const runtimeConfig = useRuntimeConfig()
+const configStore = useConfigStore()
 const typewriterText = ref('')
-const fullText = t('common.slogan')
+
+const fullText = computed(() => configStore.config.site_slogan || t('common.slogan'))
+const siteTitle = computed(() => configStore.config.site_title || runtimeConfig.public.appName)
+const siteLogo = computed(() => configStore.config.site_logo || '/logo.png')
 
 onMounted(() => {
   let index = 0
+  const text = fullText.value
   const typeInterval = setInterval(() => {
-    if (index < fullText.length) {
-      typewriterText.value += fullText.charAt(index)
+    if (index < text.length) {
+      typewriterText.value += text.charAt(index)
       index++
     } else {
       clearInterval(typeInterval)
@@ -23,9 +28,9 @@ onMounted(() => {
       <div class="flex justify-center gap-2 md:justify-start">
         <div class="flex items-center gap-2 font-medium">
           <div class="flex size-10 items-center justify-center rounded-md">
-             <img src="/logo.png" alt="Logo"/>
+             <img :src="siteLogo" alt="Logo" class="max-w-full max-h-full"/>
           </div>
-          <span class="font-bold">{{ runtimeConfig.public.appName }}</span>
+          <span class="font-bold">{{ siteTitle }}</span>
         </div>
       </div>
       <div class="flex flex-1 items-center justify-center">

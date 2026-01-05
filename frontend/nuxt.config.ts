@@ -30,8 +30,26 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxtjs/color-mode',
     '@nuxt/scripts',
-    '@nuxt/content'
+    '@nuxt/content',
+    '@vite-pwa/nuxt'
   ],
+
+  pwa: {
+    manifest: false, // Disable auto-generated manifest to use dynamic one
+    registerType: 'autoUpdate',
+    workbox: {
+      navigateFallback: '/',
+      // Optimization: Only precache essential files (JS, CSS, HTML)
+      // Exclude images, fonts, and media to reduce initial bandwidth usage
+      globPatterns: ['**/*.{js,css,html}'],
+      // Optional: Clean up old caches automatically
+      cleanupOutdatedCaches: true,
+    },
+    devOptions: {
+      enabled: false,
+      type: 'module',
+    },
+  },
 
   content: {
     experimental: { sqliteConnector: 'native' },
@@ -54,12 +72,15 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    devProxy: {
-      '/api': { 
-        target: process.env.API_BASE_URL || 'http://localhost:8000/api',
-        changeOrigin: true
-      },
-    }
+    routeRules: {
+      '/api/**': { proxy: (process.env.API_BASE_URL || 'http://localhost:8000') + '/api/**' },
+    },
+    // devProxy: {
+    //   '/api': { 
+    //     target: process.env.API_BASE_URL || 'http://localhost:8000/api',
+    //     changeOrigin: true
+    //   },
+    // }
   },
 
   i18n: {

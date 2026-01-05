@@ -246,7 +246,7 @@ export default defineI18nLocale(async locale => {
       verifyEmailFirst: 'Please verify your email first',
       gettingAuthUrl: 'Failed to get authorization URL',
       pleaseCaptcha: 'Please complete the captcha verification',
-      agreeTerms: "By continuing, you are agreeing to @:common.app_name's {terms} and {privacy}",
+      agreeTerms: "By continuing, you are agreeing to {siteName}'s {terms} and {privacy}",
       termsOfUse: 'Terms of Use',
       privacyPolicy: 'Privacy Policy',
     },
@@ -278,7 +278,7 @@ export default defineI18nLocale(async locale => {
     },
 
     share: {
-      tagline: 'Conversation shared from @:common.app_name',
+      tagline: 'Conversation shared from {siteName}',
       defaultTitle: 'Conversation Share',
       metaTitle: '{title} | Conversation Share',
       chatWithAssistant: 'Chat with Assistant',

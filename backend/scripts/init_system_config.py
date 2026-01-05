@@ -32,6 +32,16 @@ DEFAULT_CONFIGS = [
         "label": "Site Title"
     },
     {
+        "key": "site_slogan",
+        "value": "Boost your productivity with AI",
+        "description": "Site Slogan",
+        "is_public": True,
+        "is_enabled": True,
+        "config_type": "text",
+        "config_group": "branding",
+        "label": "Site Slogan"
+    },
+    {
         "key": "site_logo",
         "value": settings.APP_LOGO or "",
         "description": "Site Logo URL",
@@ -50,6 +60,83 @@ DEFAULT_CONFIGS = [
         "config_type": "image",
         "config_group": "branding",
         "label": "Site Favicon"
+    },
+    # PWA Configuration
+    {
+        "key": "pwa_enabled",
+        "value": False,
+        "description": "Enable PWA features",
+        "is_public": True,
+        "is_enabled": True,
+        "config_type": "boolean",
+        "config_group": "pwa",
+        "label": "Enable PWA"
+    },
+    {
+        "key": "pwa_short_name",
+        "value": settings.APP_NAME,
+        "description": "PWA Short Name",
+        "is_public": True,
+        "is_enabled": True,
+        "config_type": "text",
+        "config_group": "pwa",
+        "label": "Short Name"
+    },
+    {
+        "key": "pwa_description",
+        "value": "RiceBall AI Agent Platform",
+        "description": "PWA Description",
+        "is_public": True,
+        "is_enabled": True,
+        "config_type": "text",
+        "config_group": "pwa",
+        "label": "Description"
+    },
+    {
+        "key": "pwa_theme_color",
+        "value": "#ffffff",
+        "description": "PWA Theme Color",
+        "is_public": True,
+        "is_enabled": True,
+        "config_type": "text",
+        "config_group": "pwa",
+        "label": "Theme Color"
+    },
+    {
+        "key": "pwa_background_color",
+        "value": "#ffffff",
+        "description": "PWA Background Color",
+        "is_public": True,
+        "is_enabled": True,
+        "config_type": "text",
+        "config_group": "pwa",
+        "label": "Background Color"
+    },
+    {
+        "key": "pwa_icon",
+        "value": "",
+        "description": "PWA Icon URL (512x512 recommended)",
+        "is_public": True,
+        "is_enabled": True,
+        "config_type": "image",
+        "config_group": "pwa",
+        "label": "App Icon"
+    },
+    {
+        "key": "pwa_display",
+        "value": "standalone",
+        "description": "PWA Display Mode",
+        "is_public": True,
+        "is_enabled": True,
+        "config_type": "select",
+        "config_group": "pwa",
+        "label": "Display Mode",
+        "options": [
+            {"label": "Standalone", "value": "standalone"},
+            {"label": "Minimal UI", "value": "minimal-ui"},
+            {"label": "Browser", "value": "browser"},
+            {"label": "Fullscreen", "value": "fullscreen"}
+        ]
     },
     {
         "key": "registration_enabled",

@@ -11,6 +11,10 @@ const props = defineProps<{
 }>()
 
 const { $api } = useNuxtApp()
+const configStore = useConfigStore()
+const runtimeConfig = useRuntimeConfig()
+
+const siteName = computed(() => configStore.config.site_title || runtimeConfig.public.appName)
 
 // Form data
 const formData = reactive({
@@ -162,8 +166,6 @@ const toggleMode = () => {
   }
 }
 
-const configStore = useConfigStore()
-
 const loadingConfig = computed(() => !configStore.isLoaded)
 
 const { data: authProviders } = useAPI<OAuthProvider[]>('/v1/oauth/providers')
@@ -241,7 +243,10 @@ const isFormValid = computed(() => {
 
           <!-- Show terms agreement when signing up -->
           <div v-if="props.scene === 'sign-up'" class="text-xs text-center text-muted-foreground">
-            <i18n-t keypath="auth.agreeTerms" tag="span">
+            <i18n-t keypath="auth.agreeTerms" tag="span" scope="global">
+              <template #siteName>
+                {{ siteName }}
+              </template>
               <template #terms>
                 <NuxtLink to="/terms" target="_blank" class="text-primary hover:underline">
                   {{ $t('auth.termsOfUse') }}

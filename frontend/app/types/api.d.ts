@@ -110,8 +110,10 @@ export interface PublicConfig {
   registration_enabled: boolean
   allow_user_create_assistants?: boolean
   site_title?: string
+  site_slogan?: string
   site_logo?: string
   site_favicon?: string
+  pwa_enabled?: boolean
 }
 
 export interface ConfigResponse {

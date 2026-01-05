@@ -14,11 +14,12 @@ await configStore.getConfig()
 
 useHead(() => ({
   titleTemplate: (titleChunk?: string): string => {
-    const siteName = configStore.config.site_title || appName.value || ''
-    const siteSlogan = t('common.slogan')
+    const siteName = configStore.config.site_title || appName.value || t('common.app_name')
+    const siteSlogan = configStore.config.site_slogan || t('common.slogan')
     return titleChunk ? `${titleChunk} | ${siteName} - ${siteSlogan}` : `${siteName} - ${siteSlogan}`
   },
   link: [
+    ...(configStore.config.pwa_enabled ? [{ rel: 'manifest', href: '/api/v1/config/manifest.json' }] : []),
     ...(configStore.config.site_favicon ? [{ rel: 'icon', href: configStore.config.site_favicon }] : [])
   ],
   htmlAttrs: {

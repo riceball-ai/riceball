@@ -13,6 +13,7 @@ from .auth.api.v1.oauth_user_router import router as oauth_user_router
 from .auth.api.v1.oauth_admin_router import router as oauth_admin_router_v1
 from .system_config.api.v1.user_router import router as configs_user_router_v1
 from .system_config.api.v1.admin_router import router as configs_admin_router_v1
+from .system_config.api.v1.manifest_router import router as manifest_router
 from .users.api.v1.user_router import router as users_user_router_v1
 from .users.api.v1.admin_router import router as users_admin_router_v1
 from .ai_models.api.v1.admin_router import router as models_admin_router_v1
@@ -57,6 +58,7 @@ if settings.ENVIRONMENT not in settings.SHOW_DOCS_ENVIRONMENT:
 app = FastAPI(**app_config)
 
 app.include_router(configs_user_router_v1, prefix="/api/v1", tags=["Public Configs"])
+app.include_router(manifest_router, prefix="/api/v1/config", tags=["Public Configs"])
 
 app.include_router(auth_user_router, prefix="/api/v1", tags=["Auth"])
 app.include_router(auth_refresh_router, prefix="/api/v1", tags=["Auth"])

@@ -8,6 +8,10 @@ import type { Assistant, ConversationSharePublicResponse } from '~/types/api'
 const route = useRoute()
 const shareId = computed(() => route.params.id as string)
 const { t } = useI18n()
+const configStore = useConfigStore()
+const runtimeConfig = useRuntimeConfig()
+
+const siteName = computed(() => configStore.config.site_title || runtimeConfig.public.appName)
 
 const { data, pending, error, refresh } = await useAPI<ConversationSharePublicResponse>(
   () => `/v1/share-links/${shareId.value}`
@@ -75,7 +79,7 @@ const goToAssistantChat = () => {
     <div class="max-w-3xl mx-auto py-10 px-4 space-y-8">
       <header class="space-y-4">
         <div class="text-center space-y-2">
-          <p class="text-sm text-muted-foreground uppercase tracking-wide">{{ t('share.tagline') }}</p>
+          <p class="text-sm text-muted-foreground uppercase tracking-wide">{{ t('share.tagline', { siteName }) }}</p>
           <h1 class="text-2xl font-semibold">
             {{ conversationTitle || t('share.defaultTitle') }}
           </h1>

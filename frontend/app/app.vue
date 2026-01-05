@@ -7,13 +7,20 @@ const runtimeConfig = useRuntimeConfig()
 const { t } = useI18n()
 const i18nHead = useLocaleHead()
 const appName = computed(() => runtimeConfig.public.appName as string)
+const configStore = useConfigStore()
+
+// Ensure config is loaded
+await configStore.getConfig()
 
 useHead(() => ({
   titleTemplate: (titleChunk?: string): string => {
-    const siteName = appName.value || 'RiceBall'
+    const siteName = configStore.config.site_title || appName.value || ''
     const siteSlogan = t('common.slogan')
     return titleChunk ? `${titleChunk} | ${siteName} - ${siteSlogan}` : `${siteName} - ${siteSlogan}`
   },
+  link: [
+    ...(configStore.config.site_favicon ? [{ rel: 'icon', href: configStore.config.site_favicon }] : [])
+  ],
   htmlAttrs: {
     lang: i18nHead.value.htmlAttrs.lang
   }

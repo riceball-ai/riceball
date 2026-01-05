@@ -10,6 +10,7 @@ export default defineI18nLocale(async locale => {
       loading: '加载中...',
       error: '错误',
       success: '成功',
+      saveSuccess: '保存成功',
       save: '保存',
       cancel: '取消',
       delete: '删除',

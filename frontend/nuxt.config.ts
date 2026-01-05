@@ -18,12 +18,6 @@ export default defineNuxtConfig({
     ],
   },
 
-  app: {
-    head: {
-      title: appName
-    },
-  },
-
   runtimeConfig: {
     public: {
       appName: appName,

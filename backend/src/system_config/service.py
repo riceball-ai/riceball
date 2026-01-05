@@ -87,7 +87,11 @@ class ConfigService:
                 key=config_data.key,
                 description=config_data.description,
                 is_public=config_data.is_public,
-                is_enabled=config_data.is_enabled
+                is_enabled=config_data.is_enabled,
+                config_type=config_data.config_type,
+                config_group=config_data.config_group,
+                label=config_data.label,
+                options=config_data.options
             )
             config.set_value(config_data.value)
             
@@ -128,6 +132,18 @@ class ConfigService:
         
         if config_data.is_enabled is not None:
             update_data["is_enabled"] = config_data.is_enabled
+        
+        if config_data.config_type is not None:
+            update_data["config_type"] = config_data.config_type
+            
+        if config_data.config_group is not None:
+            update_data["config_group"] = config_data.config_group
+            
+        if config_data.label is not None:
+            update_data["label"] = config_data.label
+            
+        if config_data.options is not None:
+            update_data["options"] = config_data.options
         
         if update_data:
             await session.execute(

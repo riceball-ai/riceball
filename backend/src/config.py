@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     )
 
     APP_NAME: str = "RiceBall"
+    APP_LOGO: str | None = None
+    APP_FAVICON: str | None = None
 
     # Logging
     LOG_LEVEL: str = "INFO"

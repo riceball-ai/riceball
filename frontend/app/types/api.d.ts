@@ -109,6 +109,9 @@ type ConversationsResponse = PaginatedResponse<Conversation>;
 export interface PublicConfig {
   registration_enabled: boolean
   allow_user_create_assistants?: boolean
+  site_title?: string
+  site_logo?: string
+  site_favicon?: string
 }
 
 export interface ConfigResponse {
@@ -122,6 +125,10 @@ export interface SystemConfigItem {
   description?: string | null
   is_public: boolean
   is_enabled: boolean
+  config_type: 'text' | 'boolean' | 'number' | 'select' | 'image'
+  config_group: string
+  label?: string
+  options?: string
   created_at: string
   updated_at: string
 }

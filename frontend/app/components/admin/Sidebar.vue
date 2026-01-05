@@ -16,6 +16,7 @@ import {
 const route = useRoute()
 
 const runtimeConfig = useRuntimeConfig()
+const configStore = useConfigStore()
 </script>
 
 <template>
@@ -25,11 +26,11 @@ const runtimeConfig = useRuntimeConfig()
                 class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                 <div
                     class="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
-                    <img src="/logo.png" alt="Logo" />
+                    <img :src="configStore.config.site_logo || '/logo.png'" alt="Logo" />
                 </div>
                 <div class="grid flex-1 text-left text-sm leading-tight">
                     <span class="truncate font-bold">
-                        {{ runtimeConfig.public.appName }}
+                        {{ configStore.config.site_title || runtimeConfig.public.appName }}
                     </span>
                     <span class="truncate text-xs">{{ $t('admin.dashboard') }}</span>
                 </div>

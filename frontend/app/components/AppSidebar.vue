@@ -16,6 +16,7 @@ const isActive = computed(() => {
 })
 
 const userStore = useUserStore()
+const configStore = useConfigStore()
 const { state, toggleSidebar } = useSidebar()
 const isCollapsed = computed(() => state.value === 'collapsed')
 
@@ -30,7 +31,7 @@ const handleSignUp = () => navigateTo('/sign-up')
                 class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                 <div
                     class="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
-                    <img src="/logo.png" alt="Logo" />
+                    <img :src="configStore.config.site_logo || '/logo.png'" alt="Logo" />
                 </div>
             </SidebarMenuButton>
             <SidebarMenu>

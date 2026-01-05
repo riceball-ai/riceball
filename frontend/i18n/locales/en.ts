@@ -10,6 +10,7 @@ export default defineI18nLocale(async locale => {
       loading: 'Loading...',
       error: 'Error',
       success: 'Success',
+      saveSuccess: 'Saved successfully',
       save: 'Save',
       cancel: 'Cancel',
       delete: 'Delete',

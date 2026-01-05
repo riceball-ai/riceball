@@ -49,6 +49,35 @@ class SystemConfig(Base):
         nullable=False,
         comment="Whether this configuration item is enabled"
     )
+
+    # UI Rendering Metadata
+    config_type: Mapped[str] = mapped_column(
+        String(50),
+        default="text",
+        server_default="text",
+        nullable=False,
+        comment="UI component type (text, boolean, number, select, image, etc.)"
+    )
+
+    config_group: Mapped[str] = mapped_column(
+        String(50),
+        default="general",
+        server_default="general",
+        nullable=False,
+        comment="Configuration group for UI grouping"
+    )
+
+    label: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True,
+        comment="Display label for UI"
+    )
+
+    options: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Options for select type (JSON format)"
+    )
     
     def get_value(self) -> Any:
         """Get parsed configuration value"""

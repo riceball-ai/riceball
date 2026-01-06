@@ -17,7 +17,7 @@ from sqlalchemy.orm import selectinload
 from .oauth_models import OAuthProvider, OAuthUserLink, OAuthState
 from .oauth_utils import token_encryption, generate_state, calculate_token_expiry, safe_get_nested_value
 # Import custom provider handlers (will register automatically)
-from .oauth_providers import get_provider_handler, has_custom_handler
+from .oauth_providers import get_provider_handler, has_custom_handler, get_token_fetcher, get_auth_url_builder
 from . import oauth_providers  # Trigger registration of all provider handlers
 
 logger = logging.getLogger(__name__)
@@ -77,22 +77,41 @@ class OAuthService:
         
         # Store state info in database (redirect_uri is backend callback URL)
         await self.store_oauth_state(state, provider.name, redirect_uri, extra_data)
+
+        # Check for custom auth url builder
+        custom_builder = get_auth_url_builder(provider.name)
+        if custom_builder:
+            logger.info(f"Using custom auth url builder for provider {provider.name}")
+            return custom_builder(provider, redirect_uri, state, extra_params), state
         
-        # Build authorization parameters
-        params = {
+        # Parse existing query parameters from auth_url
+        from urllib.parse import urlparse, parse_qsl, urlunparse
+        
+        parsed_url = urlparse(provider.auth_url)
+        existing_params = dict(parse_qsl(parsed_url.query))
+        
+        # Build authorization parameters (override existing if collision)
+        params = existing_params.copy()
+        params.update({
             'response_type': 'code',
             'client_id': provider.client_id,
             'redirect_uri': redirect_uri,
             'scope': ' '.join(provider.scopes),
             'state': state,
-        }
+        })
         
         # Add extra parameters
         if extra_params:
             params.update(extra_params)
         
-        # Build authorization URL
-        auth_url = f"{provider.auth_url}?{urlencode(params)}"
+        # Build authorization URL (reconstruct without query first, then add)
+        # Handle case where auth_url might have fragment
+        url_without_query = urlunparse(parsed_url._replace(query=''))
+        auth_url = f"{url_without_query}?{urlencode(params)}"
+        
+        # Restore fragment if it was lost (though usually auth endpoints don't have fragments, but WeCom has #wechat_redirect)
+        if parsed_url.fragment:
+             auth_url = f"{auth_url}#{parsed_url.fragment}"
         
         logger.info(f"Created authorization URL for provider {provider.name}")
         return auth_url, state
@@ -135,7 +154,8 @@ class OAuthService:
             
             # Get user info
             logger.info(f"Fetching user info from provider: {provider.name}")
-            user_info = await self.fetch_user_info(provider, token_data['access_token'])
+            # Pass code to fetch_user_info if supported (e.g. for WeCom which needs code + app_token)
+            user_info = await self.fetch_user_info(provider, token_data['access_token'], code=code)
             user_identifier = user_info.get('email') or user_info.get('login') or user_info.get('id')
             logger.info(f"User info received successfully from provider: {provider.name}, user: {user_identifier}")
             
@@ -169,6 +189,12 @@ class OAuthService:
         redirect_uri: str
     ) -> Dict[str, Any]:
         """Fetch access token"""
+        # Check for custom token fetcher
+        custom_fetcher = get_token_fetcher(provider.name)
+        if custom_fetcher:
+            logger.info(f"Using custom token fetcher for provider {provider.name}")
+            return await custom_fetcher(provider, code, redirect_uri)
+
         token_data = {
             'grant_type': 'authorization_code',
             'client_id': provider.client_id,
@@ -200,7 +226,12 @@ class OAuthService:
             
             return token_response
     
-    async def fetch_user_info(self, provider: OAuthProvider, access_token: str) -> Dict[str, Any]:
+    async def fetch_user_info(
+        self, 
+        provider: OAuthProvider, 
+        access_token: str,
+        code: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Fetch user info
         
         Prefer using custom provider handler (e.g., GitHub), otherwise use generic logic
@@ -211,7 +242,12 @@ class OAuthService:
             
             if custom_handler:
                 logger.info(f"Using custom handler for provider: {provider.name}")
-                raw_user_data = await custom_handler(provider, access_token, client)
+                try:
+                    # Support passing code for providers like WeCom
+                    raw_user_data = await custom_handler(provider, access_token, client, code=code)
+                except TypeError:
+                    # Fallback for handlers not accepting kwargs
+                    raw_user_data = await custom_handler(provider, access_token, client)
             else:
                 # Generic processing logic
                 headers = {

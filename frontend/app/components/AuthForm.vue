@@ -210,9 +210,15 @@ const isFormValid = computed(() => {
           <Button v-for="provider in authProviders || []" :key="provider.id" type="button"
             :disabled="!!socialLoginLoadingProvider"
             variant="outline" class="w-full h-12 text-base" @click="handleSocialLogin(provider.name)">
-            <div v-if="socialLoginLoadingProvider === provider.name" class="w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            <img v-else-if="provider.icon_url" :src="provider.icon_url" alt="icon" class="w-4 h-4 mr-2 rounded" />
-            {{ $t(props.scene === 'sign-up' ? 'auth.signUpWithProvider' : 'auth.signInWithProvider', { provider: provider.display_name }) }}
+            <i18n-t :keypath="props.scene === 'sign-up' ? 'auth.signUpWithProvider' : 'auth.signInWithProvider'" tag="span" class="inline-flex items-center line-clamp-1">
+              <template #provider>
+                <span class="inline-flex items-center mx-1">
+                  <div v-if="socialLoginLoadingProvider === provider.name" class="w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  <img v-else-if="provider.icon_url" :src="provider.icon_url" alt="icon" class="w-4 h-4 mr-1 rounded" />
+                  {{ provider.display_name }}
+                </span>
+              </template>
+            </i18n-t>
           </Button>
         </div>
 

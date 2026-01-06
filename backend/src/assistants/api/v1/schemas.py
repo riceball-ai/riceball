@@ -195,7 +195,7 @@ class AssistantResponse(AssistantBase):
             
         base_url = settings.S3_EXTERNAL_ENDPOINT_URL or settings.S3_ENDPOINT_URL
         base_url = str(base_url).rstrip('/')
-        return f"{base_url}/{settings.S3_BUCKET_NAME}/{self.avatar_file_path}"
+        return f"{base_url}/{self.avatar_file_path}"
 
     model_config = ConfigDict(from_attributes=True)
 

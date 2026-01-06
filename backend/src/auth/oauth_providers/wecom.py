@@ -114,64 +114,59 @@ async def fetch_wecom_user_info(
     """
     Fetch WeCom User Info
     
-    Requires:
-    1. access_token (App Token)
-    2. code (from callback)
+    Flow (Hardcoded as per requirement):
+    1. Get UserID: https://qyapi.weixin.qq.com/cgi-bin/auth/getuserinfo
+    2. Get Details: https://qyapi.weixin.qq.com/cgi-bin/user/get
     """
     if not code:
         raise ValueError("WeCom user info fetching requires 'code'")
         
-    # 1. Get User Identity (UserId) using code and app token
-    # https://qyapi.weixin.qq.com/cgi-bin/user/getuserinfo?access_token=ACCESS_TOKEN&code=CODE
+    # 1. Get User Identity (UserId)
+    # Note: User specifically requested /auth/getuserinfo
+    identity_url = "https://qyapi.weixin.qq.com/cgi-bin/auth/getuserinfo"
     
-    # Construct URL manually or use provider.user_info_url if it points to getuserinfo
-    base_url = provider.user_info_url
+    # Some legacy/specific docs might mention user/getuserinfo, we try the one requested first.
+    # If 404 and not working, one might consider falling back to /user/getuserinfo
     
-    response = await client.get(base_url, params={
-        "access_token": access_token,
-        "code": code
-    })
-    response.raise_for_status()
-    identity_data = response.json()
+    try:
+        response = await client.get(identity_url, params={
+            "access_token": access_token,
+            "code": code
+        })
+        response.raise_for_status()
+        identity_data = response.json()
+    except httpx.HTTPStatusError as e:
+        # Fallback to standard URL if the requested one is 404 (just in case)
+        if e.response.status_code == 404:
+             logger.warning("WeCom /auth/getuserinfo failed (404), trying /user/getuserinfo")
+             identity_url = "https://qyapi.weixin.qq.com/cgi-bin/user/getuserinfo"
+             response = await client.get(identity_url, params={
+                "access_token": access_token,
+                "code": code
+             })
+             response.raise_for_status()
+             identity_data = response.json()
+        else:
+            raise e
     
     if identity_data.get("errcode") != 0:
         raise ValueError(f"WeCom identity error: {identity_data.get('errmsg')}")
         
-    user_id = identity_data.get("userid")
+    # API usually returns 'UserId', but user sample showed 'userid'
+    user_id = identity_data.get("userid") or identity_data.get("UserId")
     
     if user_id:
         # Internal User
         logger.info(f"WeCom user identified: {user_id}")
         
-        # 2. Get User Details
-        # https://qyapi.weixin.qq.com/cgi-bin/user/get?access_token=ACCESS_TOKEN&userid=USERID
-        # We assume we can construct this URL based on the base URL logic or hardcode
-        # Typically base_url is .../getuserinfo. We need .../user/get
+        # Step 2 logic removed:
+        # /user/get interface often requires extra permissions or is redundant if it only returns userid.
+        # We rely on the identity data and setting a default name.
         
-        detail_url = base_url.replace("getuserinfo", "get")
-        if detail_url == base_url:
-             # Fallback if URL structure doesn't match expectation
-             detail_url = "https://qyapi.weixin.qq.com/cgi-bin/user/get"
-             
-        detail_response = await client.get(detail_url, params={
-            "access_token": access_token,
-            "userid": user_id
-        })
-        detail_response.raise_for_status()
-        user_detail = detail_response.json()
+        user_detail = identity_data.copy()
+        user_detail["name"] = f"WecomID_{user_id}"
         
-        if user_detail.get("errcode") == 0:
-            # Merge identity info (like DeviceId) with user details
-            user_detail.update(identity_data)
-            
-            # Since 2022-06-20, API might not return name clearly or user wants a fallback
-            if not user_detail.get("name"):
-                user_detail["name"] = 'WecomID_' + user_id
-                
-            return user_detail
-        else:
-            logger.warning(f"Failed to fetch WeCom user details: {user_detail.get('errmsg')}")
-            return identity_data
+        return user_detail
             
     elif identity_data.get("OpenId"):
         # External User (not in corp)

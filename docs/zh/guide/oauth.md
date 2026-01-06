@@ -117,7 +117,7 @@ GitHub 需要特殊处理，因为用户的邮箱可能不公开，或者默认�
 - **字段映射**:
   ```json
   {
-    "id": "UserId",
+    "id": "userid",
     "name": "name",
     "email": "email",
     "avatar": "avatar"
@@ -127,4 +127,4 @@ GitHub 需要特殊处理，因为用户的邮箱可能不公开，或者默认�
 **工作原理:**
 1. **授权**: 重定向用户到企业微信扫码登录页 (qrConnect 或 SSO)。
 2. **获取 Token**: 使用 `client_credentials` 模式 (CorpID + Secret) 获取全局的 **App Access Token**。
-3. **获取用户信息**: 使用 App Access Token 和回调中的 `code` 换取用户的身份 (`UserId`)，然后进一步获取详细信息。
+3. **获取用户信息**: 使用 App Access Token 和回调中的 `code` 换取用户的身份 (`userid`)，然后进一步获取详细信息。

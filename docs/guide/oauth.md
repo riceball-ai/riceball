@@ -117,7 +117,7 @@ Enterprise WeChat uses a non-standard OAuth flow. RiceBall provides a dedicated 
 - **User Mapping**:
   ```json
   {
-    "id": "UserId",
+    "id": "userid",
     "name": "name",
     "email": "email",
     "avatar": "avatar"
@@ -127,6 +127,6 @@ Enterprise WeChat uses a non-standard OAuth flow. RiceBall provides a dedicated 
 **How it works:**
 1. **Authorization**: Redirects user to WeCom Scan Login (qrConnect/SSO) page.
 2. **Token Exchange**: Uses `client_credentials` flow (CorpID + Secret) to get a global **App Access Token**.
-3. **User Info**: Uses the App Access Token and the `code` from the callback to fetch the user's identity (`UserId`) and then their detailed profile.
+3. **User Info**: Uses the App Access Token and the `code` from the callback to fetch the user's identity (`userid`) and then their detailed profile.
 
 ---

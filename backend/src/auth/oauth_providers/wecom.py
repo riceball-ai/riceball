@@ -137,7 +137,7 @@ async def fetch_wecom_user_info(
     if identity_data.get("errcode") != 0:
         raise ValueError(f"WeCom identity error: {identity_data.get('errmsg')}")
         
-    user_id = identity_data.get("UserId")
+    user_id = identity_data.get("userid")
     
     if user_id:
         # Internal User
@@ -163,6 +163,11 @@ async def fetch_wecom_user_info(
         if user_detail.get("errcode") == 0:
             # Merge identity info (like DeviceId) with user details
             user_detail.update(identity_data)
+            
+            # Since 2022-06-20, API might not return name clearly or user wants a fallback
+            if not user_detail.get("name"):
+                user_detail["name"] = 'WecomID_' + user_id
+                
             return user_detail
         else:
             logger.warning(f"Failed to fetch WeCom user details: {user_detail.get('errmsg')}")

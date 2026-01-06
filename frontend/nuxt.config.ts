@@ -39,6 +39,8 @@ export default defineNuxtConfig({
     registerType: 'autoUpdate',
     workbox: {
       navigateFallback: '/',
+      // Prevent SW from handling API requests (OAuth callbacks are navigation requests)
+      navigateFallbackDenylist: [/^\/api\//],
       // Optimization: Only precache essential files (JS, CSS, HTML)
       // Exclude images, fonts, and media to reduce initial bandwidth usage
       globPatterns: ['**/*.{js,css,html}'],
@@ -75,12 +77,13 @@ export default defineNuxtConfig({
     routeRules: {
       '/api/**': { proxy: (process.env.API_BASE_URL || 'http://localhost:8000') + '/api/**' },
     },
-    // devProxy: {
-    //   '/api': { 
-    //     target: process.env.API_BASE_URL || 'http://localhost:8000/api',
-    //     changeOrigin: true
-    //   },
-    // }
+    // Explicitly configure devProxy to ensure stable proxying in development
+    devProxy: {
+      '/api': {
+        target: process.env.API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      }
+    }
   },
 
   i18n: {

@@ -136,6 +136,10 @@ if static_dir.exists():
     # Catch-all route for SPA
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_spa(full_path: str):
+        # Exclude API routes from SPA serving to prevent 404s returning HTML
+        if full_path.startswith("api/"):
+             raise HTTPException(status_code=404, detail="Not Found")
+
         # Check if file exists in static dir (e.g. favicon.ico, robots.txt)
         file_path = static_dir / full_path
         if file_path.exists() and file_path.is_file():

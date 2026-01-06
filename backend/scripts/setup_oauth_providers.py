@@ -70,34 +70,42 @@ async def create_github_provider():
     return provider
 
 
-async def create_custom_sso_provider():
-    """Create custom enterprise SSO provider configuration example"""
+async def create_wecom_provider():
+    """Create WeCom (Enterprise WeChat) OAuth provider configuration"""
+    # Note: WeCom requires special configuration in auth_url (agentid)
+    # and uses a different flow (client_credentials for app token)
     provider = OAuthProvider(
-        name="company_sso",
-        display_name="Company SSO",
-        description="Login with Company SSO",
-        client_id="company-sso-client-id",
-        client_secret=token_encryption.encrypt("company-sso-client-secret"),
-        auth_url="https://sso.company.com/oauth/authorize",
-        token_url="https://sso.company.com/oauth/token",
-        user_info_url="https://sso.company.com/api/userinfo",
-        scopes=["openid", "profile", "email", "groups"],
+        name="wecom",
+        display_name="Enterprise WeChat",
+        description="Login with WeCom",
+        client_id="your-corp-id",  # CorpID
+        client_secret=token_encryption.encrypt("your-app-secret"), # App Secret
+        # Scan Login URL (Recommended)
+        auth_url="https://login.work.weixin.qq.com/wwlogin/sso/login", 
+        # Token URL
+        token_url="https://qyapi.weixin.qq.com/cgi-bin/gettoken",
+        # User Info URL
+        user_info_url="https://qyapi.weixin.qq.com/cgi-bin/user/getuserinfo",
+        scopes=[], # Not used for scan login
         user_mapping={
-            "id": "sub",  # Standard OpenID Connect User ID
+            "id": "UserId",
             "email": "email",
-            "username": "preferred_username",
-            "avatar": "picture"
+            "username": "name", 
+            "avatar": "avatar"
         },
-        icon_url="https://company.com/logo.png",
-        button_color="#007acc",
-        sort_order=3,
-        is_active=False  # Default disabled, requires admin configuration to enable
+        icon_url="https://wwcdn.weixin.qq.com/node/wework/images/icon_3_1.c1539fc8.png",
+        button_color="#2475b6",
+        sort_order=4,
+        is_active=False
     )
     return provider
 
 
 async def setup_oauth_providers():
     """Setup OAuth providers"""
+    async with async_session_maker() as session:
+        # Check and create Google provider
+        # ... (logic to create providers)
     print("=== Setup OAuth Providers ===")
     
     async with async_session_maker() as session:
@@ -127,16 +135,16 @@ async def setup_oauth_providers():
             else:
                 print("⚠️ GitHub OAuth provider already exists")
             
-            # Custom SSO
+            # WeCom (Enterprise WeChat)
             result = await session.execute(
-                select(OAuthProvider).where(OAuthProvider.name == "company_sso")
+                select(OAuthProvider).where(OAuthProvider.name == "wecom")
             )
             if not result.scalar_one_or_none():
-                custom_provider = await create_custom_sso_provider()
-                session.add(custom_provider)
-                print("✅ Custom SSO provider added")
+                wecom_provider = await create_wecom_provider()
+                session.add(wecom_provider)
+                print("✅ WeCom provider added")
             else:
-                print("⚠️ Custom SSO provider already exists")
+                print("⚠️ WeCom provider already exists")
             
             await session.commit()
             print("\n🎉 OAuth providers configuration completed!")

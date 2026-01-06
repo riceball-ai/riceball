@@ -7,8 +7,6 @@ const PUBLIC_ROUTE_NAMES = new Set([
   'verify-email',
   'forgot-password',
   'reset-password',
-  'assistants',
-  'chatwith-id',
   'share-id',
   'test-md'
 ])

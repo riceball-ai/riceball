@@ -109,6 +109,8 @@ async def oauth_authorize(
         raise HTTPException(status_code=500, detail="Failed to create authorization URL")
 
 
+# Support both trailing slash and no trailing slash for callback
+@router.get("/oauth/{provider_name}/callback/", response_model=OAuthCallbackResponse, include_in_schema=False)
 @router.get("/oauth/{provider_name}/callback", response_model=OAuthCallbackResponse)
 async def oauth_callback(
     provider_name: str,

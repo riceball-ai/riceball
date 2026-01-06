@@ -164,8 +164,17 @@ const sendMessage = async (images?: any[]) => {
 }
 
 // Reset state when component is mounted (e.g., when user navigates back)
-onMounted(() => {
+onMounted(async () => {
   resetPageState()
+  
+  // Check for auto-send prompt from URL
+  const queryPrompt = route.query.prompt
+  if (queryPrompt && typeof queryPrompt === 'string') {
+    newMessage.value = queryPrompt
+    // Wait for next tick to ensure state is ready
+    await nextTick()
+    await sendMessage()
+  }
 })
 
 // Reset state when component is unmounted

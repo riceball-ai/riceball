@@ -13,6 +13,7 @@ RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. I
 
 - **Private RAG Knowledge Base**: Supports document upload, automatic chunking, and vectorization, enabling AI to answer questions based on your private data.
 - **Agent Engine**: Based on LangChain, supports tool calling and **MCP (Model Context Protocol)** (🚧 In Progress), empowering AI to execute tasks.
+- **OpenAI Compatible Assistant API**: Provides an API interface compatible with OpenAI format, allowing you to seamlessly integrate your configured assistants into third-party apps or scripts using standard tools (e.g. OpenAI SDK).
 - **Multi-Model Aggregation**: Supports mainstream interface protocols like OpenAI and Anthropic, avoiding vendor lock-in.
 - **Modern Full-Stack Architecture**: Backend uses FastAPI (Python), frontend uses Nuxt 3 (Vue), with built-in OAuth authentication.
 

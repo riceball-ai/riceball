@@ -11,7 +11,8 @@ import {
     Key,
     Settings,
     LayoutDashboard,
-    Files
+    Files,
+    Shield
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -108,8 +109,16 @@ const configStore = useConfigStore()
                         <SidebarMenuItem>
                             <SidebarMenuButton as-child :is-active="route.path.startsWith('/admin/oauth-providers')">
                                 <NuxtLink to="/admin/oauth-providers">
-                                    <Key />
+                                    <Shield />
                                     <span>{{ $t('admin.sidebar.oauthProviders') }}</span>
+                                </NuxtLink>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton as-child :is-active="route.path.startsWith('/admin/api-keys')">
+                                <NuxtLink to="/admin/api-keys">
+                                    <Key />
+                                    <span>{{ $t('admin.sidebar.apiKeys') }}</span>
                                 </NuxtLink>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

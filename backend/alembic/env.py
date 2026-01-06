@@ -17,6 +17,7 @@ from src.files import models  # noqa: F811
 from src.rag import models  # noqa: F811
 from src.auth import oauth_models  # noqa: F811
 from src.auth import refresh_token_models  # noqa: F811
+from src.auth import api_key_models  # noqa: F811
 from src.agents import models  # noqa: F811
 
 # this is the Alembic Config object, which provides

@@ -132,7 +132,7 @@ class PromptBuilder:
             system_parts.append(system_prompt)
 
         if not conversation.assistant.enable_agent:
-            rag_context = await self._get_rag_context_content(
+            rag_context = await self.get_rag_context_content(
                 conversation.assistant, 
                 user_input,
                 language=lang_code
@@ -676,7 +676,7 @@ class PromptBuilder:
             result["url"] = storage_url
         return result
 
-    async def _get_rag_context_content(
+    async def get_rag_context_content(
         self,
         assistant: Assistant,
         user_query: str,

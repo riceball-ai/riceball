@@ -49,6 +49,8 @@ export default defineI18nLocale(async locale => {
       copy: 'Copy',
       copied: 'Copied',
       id: 'ID',
+      createdAt: 'Created At',
+      updatedAt: 'Updated At',
       description: 'Description',
       confirmDelete: 'Confirm Delete',
     },
@@ -604,9 +606,23 @@ export default defineI18nLocale(async locale => {
         modelProviders: 'Model Providers',
         knowledgeBases: 'Knowledge Bases',
         files: 'Files',
+        apiKeys: 'API Keys',
         oauthProviders: 'OAuth Providers',
         systemConfig: 'System Config',
         backToUser: 'Back to User Area'
+      },
+      apiKeys: {
+        name: 'Name',
+        namePlaceholder: 'Enter key name',
+        create: 'Create Key',
+        createNew: 'Create New API Key',
+        createDescription: 'Create a new API key to access the RiceBall API programmatically.',
+        keyGenerated: 'API Key Generated',
+        saveWarning: 'Please save this key now. It will not be shown again.',
+        done: 'Done',
+        createSuccess: 'API Key created successfully',
+        lastUsedAt: 'Last Used',
+        description: 'Manage your personal API keys'
       },
       systemConfig: {
         title: 'System Configuration',

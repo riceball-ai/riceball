@@ -11,6 +11,7 @@ from .auth.api.v1.user_router import router as auth_user_router
 from .auth.api.v1.refresh_router import router as auth_refresh_router
 from .auth.api.v1.oauth_user_router import router as oauth_user_router
 from .auth.api.v1.oauth_admin_router import router as oauth_admin_router_v1
+from .auth.api.v1.api_key_router import router as api_key_router
 from .system_config.api.v1.user_router import router as configs_user_router_v1
 from .system_config.api.v1.admin_router import router as configs_admin_router_v1
 from .system_config.api.v1.manifest_router import router as manifest_router
@@ -26,6 +27,7 @@ from .rag.api.v1.admin_router import router as rag_admin_router_v1
 from .chat.api.v1.user_router import router as chat_user_router_v1
 from .chat.api.v1.admin_router import router as chat_admin_router_v1
 from .chat.api.v1.share_router import router as chat_share_router_v1
+from .chat.api.v1.openai_router import router as chat_openai_router_v1
 from .agents.api.v1.admin_router import router as agents_admin_router_v1
 
 logging.basicConfig(level=settings.LOG_LEVEL)
@@ -67,6 +69,7 @@ app.include_router(oauth_user_router, prefix="/api/v1", tags=["OAuth"])
 # Assistants (public endpoints)
 app.include_router(assistants_user_router_v1, prefix="/api/v1", tags=["Assistants"])
 app.include_router(chat_share_router_v1, prefix="/api/v1", tags=["Chat Shares"])
+app.include_router(chat_openai_router_v1, prefix="/api/v1")
 
 
 # User routes
@@ -76,6 +79,8 @@ user_route_v1 = APIRouter(
 )
 
 user_route_v1.include_router(users_user_router_v1, tags=["Users"])
+
+user_route_v1.include_router(api_key_router, tags=["API Keys"])
 
 user_route_v1.include_router(models_user_router_v1, tags=["AI Models"])
 

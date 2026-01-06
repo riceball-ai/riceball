@@ -372,7 +372,7 @@ onUnmounted(() => {
       <div class="flex-shrink-0 space-y-6 mb-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 class="text-2xl font-bold">
-            {{ selectedCategory ? t(`assistants.categories.${selectedCategory}`) : t('assistants.categories.all') }}
+            {{ t('assistants.selectPrompt') }}
           </h1>
           <div class="flex items-center gap-2 w-full md:w-auto">
             <div class="relative w-full max-w-sm">

@@ -13,6 +13,7 @@ import AgentConfig from '~/components/admin/AgentConfig.vue'
 import AvatarUpload from '~/components/AvatarUpload.vue'
 import type { Assistant, Model, RagConfig, AvailableAgentTools } from '~/types/api'
 import { ASSISTANT_CATEGORIES } from '~/constants/assistants'
+import { useConfigStore } from '~/stores/config'
 
 const props = withDefaults(defineProps<{
   initialData?: Partial<Assistant>
@@ -30,6 +31,16 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+// Config
+const configStore = useConfigStore()
+const enableCategories = ref(false)
+
+onMounted(async () => {
+  const config = await configStore.getConfig()
+  const val = config.enable_assistant_categories
+  enableCategories.value = String(val).toLowerCase() !== 'false'
+})
 
 // Fetch model list
 const modelEndpoint = props.isAdmin ? '/v1/admin/all-models?capabilities=chat' : '/v1/models'
@@ -245,7 +256,7 @@ const handleSubmit = () => {
             </div>
 
             <!-- Category -->
-            <div class="space-y-2">
+            <div class="space-y-2" v-if="enableCategories">
               <Label for="category">{{ t('assistantForm.category') }}</Label>
               <Select v-model="formData.category" :disabled="loading">
                 <SelectTrigger>

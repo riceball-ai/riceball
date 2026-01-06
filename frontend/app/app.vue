@@ -5,7 +5,9 @@ import 'vue-sonner/style.css' // vue-sonner v2 requires this import
 
 const runtimeConfig = useRuntimeConfig()
 const { t } = useI18n()
-const i18nHead = useLocaleHead()
+const i18nHead = import.meta.server 
+  ? useLocaleHead({ addSeoAttributes: true }) 
+  : ref({ htmlAttrs: {} })
 const appName = computed(() => runtimeConfig.public.appName as string)
 const configStore = useConfigStore()
 
@@ -23,7 +25,7 @@ useHead(() => ({
     ...(configStore.config.site_favicon ? [{ rel: 'icon', href: configStore.config.site_favicon }] : [])
   ],
   htmlAttrs: {
-    lang: i18nHead.value.htmlAttrs.lang
+    lang: i18nHead.value.htmlAttrs?.lang
   }
 }))
 

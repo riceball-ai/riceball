@@ -9,6 +9,7 @@ such as registration switch, email verification, etc.
 import asyncio
 import sys
 import os
+import json
 
 # Add project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -139,6 +140,16 @@ DEFAULT_CONFIGS = [
         ]
     },
     {
+        "key": "enable_assistant_categories",
+        "value": False,
+        "description": "Whether to enable assistant categories",
+        "is_public": True,
+        "is_enabled": True,
+        "config_type": "boolean",
+        "config_group": "assistants",
+        "label": "Enable Assistant Categories"
+    },
+    {
         "key": "registration_enabled",
         "value": True,
         "description": "Whether user registration is enabled",
@@ -165,7 +176,7 @@ DEFAULT_CONFIGS = [
         "is_public": True,
         "is_enabled": True,
         "config_type": "boolean",
-        "config_group": "security",
+        "config_group": "assistants",
         "label": "Allow User Create Assistants"
     }
 ]
@@ -184,6 +195,11 @@ async def init_default_configs():
             
             for config_data in DEFAULT_CONFIGS:
                 try:
+                    # JSON serialization for options field
+                    options = config_data.get("options")
+                    if options is not None and not isinstance(options, str):
+                        config_data["options"] = json.dumps(options, ensure_ascii=False)
+
                     # Check if configuration item already exists
                     existing_config = await config_service.get_config(session, config_data["key"])
                     

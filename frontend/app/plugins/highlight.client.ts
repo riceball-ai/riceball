@@ -3,7 +3,7 @@ import 'highlight.js/styles/github.css'
 
 export default defineNuxtPlugin(() => {
   // Client initialization logic
-  if (process.client) {
+  if (import.meta.client) {
     // Add custom styles to override highlight.js background color
     const style = document.createElement('style')
     style.textContent = `

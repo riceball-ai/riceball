@@ -35,6 +35,10 @@ export const useConfigStore = defineStore('config', () => {
       if (processedConfig.allow_user_create_assistants !== undefined) {
         processedConfig.allow_user_create_assistants = toBool(processedConfig.allow_user_create_assistants)
       }
+      
+      if (processedConfig.enable_assistant_categories !== undefined) {
+        processedConfig.enable_assistant_categories = toBool(processedConfig.enable_assistant_categories)
+      }
 
       config.value = processedConfig
       isLoaded.value = true

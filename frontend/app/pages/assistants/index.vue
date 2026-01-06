@@ -62,12 +62,18 @@ const currentUser = computed(() => userStore.currentUser)
 
 // Config
 const allowCreate = ref(true)
+const enableCategories = ref(false)
+
 onMounted(async () => {
   const config = await configStore.getConfig()
   const val = config.allow_user_create_assistants
   // Robustly handle various truthy/falsy values
   allowCreate.value = String(val).toLowerCase() !== 'false'
+  
+  const categoriesVal = config.enable_assistant_categories
+  enableCategories.value = String(categoriesVal).toLowerCase() !== 'false'
 })
+
 
 // Filter state
 const selectedCategory = ref<string | undefined>(undefined)
@@ -433,21 +439,23 @@ onUnmounted(() => {
               {{ t('assistants.myAssistants') }}
             </Button>
 
-            <Button
-              v-for="category in ASSISTANT_CATEGORIES"
-              :key="category.value"
-              variant="ghost"
-              :class="[
-                'rounded-full px-4 flex-shrink-0 h-9 transition-all',
-                selectedCategory === category.value 
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground' 
-                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-              ]"
-              @click="handleCategorySelect(category.value)"
-            >
-              <component :is="categoryIcons[category.value] || MoreHorizontal" class="mr-2 h-4 w-4" />
-              {{ t(`assistants.categories.${category.value}`) }}
-            </Button>
+            <template v-if="enableCategories">
+              <Button
+                v-for="category in ASSISTANT_CATEGORIES"
+                :key="category.value"
+                variant="ghost"
+                :class="[
+                  'rounded-full px-4 flex-shrink-0 h-9 transition-all',
+                  selectedCategory === category.value 
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground' 
+                    : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                ]"
+                @click="handleCategorySelect(category.value)"
+              >
+                <component :is="categoryIcons[category.value] || MoreHorizontal" class="mr-2 h-4 w-4" />
+                {{ t(`assistants.categories.${category.value}`) }}
+              </Button>
+            </template>
           </div>
 
           <div 

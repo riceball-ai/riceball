@@ -114,6 +114,7 @@ export interface PublicConfig {
   site_logo?: string
   site_favicon?: string
   pwa_enabled?: boolean
+  enable_assistant_categories?: boolean
 }
 
 export interface ConfigResponse {

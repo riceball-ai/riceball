@@ -603,6 +603,7 @@ export default defineI18nLocale(async locale => {
         models: 'Models',
         modelProviders: 'Model Providers',
         knowledgeBases: 'Knowledge Bases',
+        files: 'Files',
         oauthProviders: 'OAuth Providers',
         systemConfig: 'System Config',
         backToUser: 'Back to User Area'

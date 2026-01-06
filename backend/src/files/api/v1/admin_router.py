@@ -25,8 +25,7 @@ class FileResponse(BaseModel):
     file_type: FileType
     file_path: str
     uploaded_by: UUID
-    created_at: str
-    metadata: dict
+    url: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -34,8 +33,61 @@ class FileResponse(BaseModel):
 
 class FileListResponse(BaseModel):
     """Response model for file list."""
-    files: List[FileResponse]
+    items: List[FileResponse]
     total: int
+
+
+@router.post("/files/upload", response_model=FileResponse)
+async def upload_file(
+    file: UploadFile = File(...),
+    file_type: FileType = Form(...),
+    metadata: Optional[str] = Form(None),
+    current_user: User = Depends(current_user),
+    file_service: FileService = Depends(get_file_service()),
+):
+    """
+    Upload a file (Admin).
+    
+    - **file**: The file to upload
+    - **file_type**: Type of file (avatar, document)
+    - **metadata**: Optional JSON string with additional file metadata
+    - **Returns**: File information including ID and storage details
+    """
+    import json
+    
+    # Parse metadata if provided
+    parsed_metadata = {}
+    if metadata:
+        try:
+            parsed_metadata = json.loads(metadata)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid metadata JSON")
+    
+    # Upload file
+    file_record = await file_service.upload_file(
+        file=file,
+        file_type=file_type,
+        user_id=current_user.id,
+        metadata=parsed_metadata
+    )
+    
+    # Generate download URL for the uploaded file
+    download_url = await file_service.get_public_url(
+        file_path=file_record.file_path
+    )
+    
+    return FileResponse(
+        id=file_record.id,
+        filename=file_record.filename,
+        content_type=file_record.content_type,
+        file_size=file_record.file_size,
+        file_type=file_record.file_type,
+        file_path=file_record.file_path,
+        uploaded_by=file_record.uploaded_by,
+        created_at=file_record.created_at.isoformat(),
+        metadata=file_record.file_metadata,
+        url=download_url
+    )
 
 
 @router.get("/files/{file_id}", response_model=FileResponse)
@@ -116,7 +168,7 @@ async def get_download_url(
 
 
 @router.get("/files", response_model=FileListResponse)
-async def list_user_files(
+async def list_files(
     file_type: Optional[FileType] = None,
     limit: int = 50,
     offset: int = 0,
@@ -124,39 +176,45 @@ async def list_user_files(
     file_service: FileService = Depends(get_file_service()),
 ):
     """
-    List files uploaded by the current user.
+    List all files (Admin).
     
     - **file_type**: Optional filter by file type
     - **limit**: Maximum number of files to return (default: 50, max: 100)
     - **offset**: Pagination offset (default: 0)
-    - **Returns**: List of user's files
+    - **Returns**: List of all files
     """
     # Limit the maximum number of files that can be requested
     limit = min(limit, 100)
     
-    files = await file_service.get_user_files(
-        user_id=current_user.id,
+    files = await file_service.get_all_files(
         file_type=file_type,
         limit=limit,
         offset=offset
     )
     
-    file_responses = [
-        FileResponse(
-            id=file_record.id,
-            filename=file_record.filename,
-            content_type=file_record.content_type,
-            file_size=file_record.file_size,
-            file_type=file_record.file_type,
-            file_path=file_record.file_path,
-            uploaded_by=file_record.uploaded_by,
-            created_at=file_record.created_at.isoformat(),
-            metadata=file_record.file_metadata
+    file_responses = []
+    for file_record in files:
+        # Generate download URL for each file
+        download_url = await file_service.get_public_url(
+            file_path=file_record.file_path
         )
-        for file_record in files
-    ]
+        
+        file_responses.append(
+            FileResponse(
+                id=file_record.id,
+                filename=file_record.filename,
+                content_type=file_record.content_type,
+                file_size=file_record.file_size,
+                file_type=file_record.file_type,
+                file_path=file_record.file_path,
+                uploaded_by=file_record.uploaded_by,
+                created_at=file_record.created_at.isoformat(),
+                metadata=file_record.file_metadata,
+                url=download_url
+            )
+        )
     
-    return FileListResponse(files=file_responses, total=len(file_responses))
+    return FileListResponse(items=file_responses, total=len(file_responses))
 
 
 @router.delete("/files/{file_id}")

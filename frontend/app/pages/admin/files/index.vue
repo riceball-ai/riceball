@@ -128,12 +128,11 @@ const handleUpload = async () => {
 
   uploading.value = true
   try {
-    const { error } = await useFetch('/api/v1/admin/files/upload', {
+    const { $api } = useNuxtApp()
+    await $api('/v1/admin/files/upload', {
       method: 'POST',
       body: formData
     })
-    
-    if (error.value) throw error.value
     
     toast.success('File uploaded successfully')
     showUploadDialog.value = false
@@ -152,7 +151,7 @@ const handleUpload = async () => {
 </script>
 
 <template>
-  <div class="container py-8">
+  <div class="space-y-6">
     <ModelView 
       ref="modelViewRef"
       :config="config" 

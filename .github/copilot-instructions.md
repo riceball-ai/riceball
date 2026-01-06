@@ -61,7 +61,10 @@ You are an expert AI developer working on **RiceBall**, an open-source AI Agent 
 - **Composition API**: Always use `<script setup lang="ts">`.
 - **Styling**: Use Tailwind CSS utility classes. Avoid custom CSS files where possible.
 - **Components**: Prefer Shadcn Vue components.
-- **Data Fetching**: Use `useFetch` or `$fetch` for API calls.
+- **Data Fetching**:
+  - Use `useAPI` (composable wrapper) for reactive data fetching (e.g., page loads, stateful requests).
+  - Use `$api` (via `useNuxtApp()`) for imperative calls (e.g., event handlers, actions, form submissions).
+  - **Avoid** raw `useFetch` or `$fetch` for backend calls to ensure auth token refresh logic is handled.
 - **Validation**: Use `zod` and `vee-validate` for forms.
 - **Icons**: Use `lucide-vue-next`.
 

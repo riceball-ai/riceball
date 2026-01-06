@@ -10,7 +10,8 @@ import {
     Users,
     Key,
     Settings,
-    LayoutDashboard
+    LayoutDashboard,
+    Files
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -93,6 +94,14 @@ const configStore = useConfigStore()
                                 <NuxtLink to="/admin/kbs">
                                     <Database />
                                     <span>{{ $t('admin.sidebar.knowledgeBases') }}</span>
+                                </NuxtLink>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton as-child :is-active="route.path.startsWith('/admin/files')">
+                                <NuxtLink to="/admin/files">
+                                    <Files />
+                                    <span>{{ $t('admin.sidebar.files') }}</span>
                                 </NuxtLink>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

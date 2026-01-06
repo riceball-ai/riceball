@@ -302,6 +302,35 @@ class FileService:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
+    async def get_all_files(
+        self,
+        file_type: Optional[FileType] = None,
+        limit: int = 100,
+        offset: int = 0
+    ) -> List[FileRecord]:
+        """
+        Get all files (Admin only).
+        
+        Args:
+            file_type: Optional file type filter
+            limit: Maximum number of files to return
+            offset: Pagination offset
+            
+        Returns:
+            List of FileRecord instances
+        """
+        stmt = select(FileRecord).where(
+            FileRecord.status == FileStatus.ACTIVE
+        )
+        
+        if file_type:
+            stmt = stmt.where(FileRecord.file_type == file_type)
+        
+        stmt = stmt.order_by(FileRecord.created_at.desc()).limit(limit).offset(offset)
+        
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
     async def download_file(self, file_id: UUID) -> tuple[BinaryIO, str, str]:
         """
         Download file content from storage.
@@ -352,6 +381,31 @@ class FileService:
         if file_record.uploaded_by != user_id:
             raise HTTPException(status_code=403, detail="Not authorized to delete this file")
         
+        return await self._perform_delete(file_record)
+
+    async def admin_delete_file(self, file_id: UUID) -> bool:
+        """
+        Delete file as admin (can delete any file).
+        
+        Args:
+            file_id: File identifier
+            
+        Returns:
+            True if deletion successful, False otherwise
+            
+        Raises:
+            HTTPException: If file not found
+        """
+        file_record = await self.get_file_by_id(file_id)
+        if not file_record:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        return await self._perform_delete(file_record)
+
+    async def _perform_delete(self, file_record: FileRecord) -> bool:
+        """
+        Internal method to perform file deletion.
+        """
         try:
             # Delete from S3
             if file_record.s3_key:
@@ -361,12 +415,12 @@ class FileService:
             file_record.status = FileStatus.DELETED
             await self.db.commit()
             
-            logger.info(f"File deleted successfully: {file_id}")
+            logger.info(f"File deleted successfully: {file_record.id}")
             return True
             
         except Exception as e:
             await self.db.rollback()
-            logger.error(f"File deletion failed for {file_id}: {e}")
+            logger.error(f"File deletion failed for {file_record.id}: {e}")
             return False
 
     async def generate_download_url(

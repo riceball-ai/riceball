@@ -603,6 +603,7 @@ export default defineI18nLocale(async locale => {
         models: '模型管理',
         modelProviders: '模型提供商',
         knowledgeBases: 'RAG管理',
+        files: '文件管理',
         oauthProviders: 'OAuth提供商管理',
         systemConfig: '系统配置',
         backToUser: '返回用户区'

@@ -71,7 +71,7 @@ const pagination = ref<PaginationState>({
 const tableColumns = computed(() => props.config.columns)
 const formFields = computed(() => props.config.formFields)
 const detailFields = computed(() => props.config.detailFields || [])
-const canCreate = computed(() => props.config.formFields && props.config.canCreate !== false)
+const canCreate = computed(() => !!(props.config.formFields && props.config.canCreate !== false))
 const canEdit = computed(() => props.config.canEdit !== false)
 const canDelete = computed(() => props.config.canDelete !== false)
 const canView = computed(() => props.config.canView !== false)
@@ -395,6 +395,11 @@ watch(() => [props.config.apiEndpoint, props.config.apiEndpoints], (newVal, oldV
     loadData()
   }
 }, { deep: true })
+
+defineExpose({
+  loadData,
+  openCreateForm
+})
 </script>
 
 <template>

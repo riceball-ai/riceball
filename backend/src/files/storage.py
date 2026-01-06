@@ -68,6 +68,11 @@ class BaseStorageService(ABC):
         pass
 
     @abstractmethod
+    def get_public_url_sync(self, file_key: str) -> str:
+        """Synchronous version of get_public_url for use in Pydantic models."""
+        pass
+
+    @abstractmethod
     async def get_public_url(self, file_key: str) -> str:
         pass
 
@@ -239,10 +244,13 @@ class S3StorageService(BaseStorageService):
             logger.error(f"Error checking file existence {file_key}: {e}")
             return False
 
-    async def get_public_url(self, file_key: str) -> str:
+    def get_public_url_sync(self, file_key: str) -> str:
         base_url = self.external_endpoint_url if self.external_endpoint_url else self.endpoint_url
         base_url = base_url.rstrip('/')
         return f"{base_url}/{file_key}"
+
+    async def get_public_url(self, file_key: str) -> str:
+        return self.get_public_url_sync(file_key)
 
     async def generate_presigned_url(
         self,
@@ -398,11 +406,14 @@ class FileSystemStorageService(BaseStorageService):
     async def file_exists(self, file_key: str) -> bool:
         return self._get_full_path(file_key).exists()
 
-    async def get_public_url(self, file_key: str) -> str:
+    def get_public_url_sync(self, file_key: str) -> str:
         # Assuming we mount the static files at /static/files
         # This needs to be coordinated with main.py
         base_url = str(settings.EXTERNAL_URL or settings.FRONTEND_URL).rstrip('/')
         return f"{base_url}/api/v1/files/static/{file_key}"
+
+    async def get_public_url(self, file_key: str) -> str:
+        return self.get_public_url_sync(file_key)
 
     async def generate_presigned_url(
         self,

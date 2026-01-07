@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {
-  MoreHorizontal,
+  MoreVertical,
   Trash2,
   ChevronDown,
   Pencil,
@@ -136,7 +136,7 @@ const handleLoadMore = async () => {
         <DropdownMenu v-if="editingId !== item.id">
           <DropdownMenuTrigger as-child>
             <SidebarMenuAction show-on-hover>
-              <MoreHorizontal />
+              <MoreVertical />
               <span class="sr-only">More</span>
             </SidebarMenuAction>
           </DropdownMenuTrigger>

@@ -24,7 +24,7 @@ class User(Base, SQLAlchemyBaseUserTableUUID):
     avatar_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     
     # User language preference (en, zh, etc.)
-    language: Mapped[Optional[str]] = mapped_column(String(10), nullable=True, default='en')
+    language: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
     
     # Email sending rate limit timestamp
     last_verification_email_sent_at: Mapped[Optional[datetime]] = mapped_column(

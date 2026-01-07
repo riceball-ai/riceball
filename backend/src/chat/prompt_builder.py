@@ -679,8 +679,7 @@ class PromptBuilder:
     async def get_rag_context_content(
         self,
         assistant: Assistant,
-        user_query: str,
-        language: str = "zh",
+        user_query: str
     ) -> Optional[str]:
         knowledge_base_ids = getattr(assistant, "knowledge_base_ids", None) or []
         if not knowledge_base_ids:

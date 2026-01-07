@@ -62,6 +62,10 @@ app = FastAPI(**app_config)
 app.include_router(configs_user_router_v1, prefix="/api/v1", tags=["Public Configs"])
 app.include_router(manifest_router, prefix="/api/v1/config", tags=["Public Configs"])
 
+@app.get("/health", include_in_schema=False)
+async def health_check():
+    return {"status": "ok"}
+
 app.include_router(auth_user_router, prefix="/api/v1", tags=["Auth"])
 app.include_router(auth_refresh_router, prefix="/api/v1", tags=["Auth"])
 app.include_router(oauth_user_router, prefix="/api/v1", tags=["OAuth"])

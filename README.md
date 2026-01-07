@@ -4,33 +4,87 @@
 
 ## 🍚 What is RiceBall?
 
-RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. It aims to help teams and enterprises quickly build and deploy LLM-based intelligent applications in a private environment.
+RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. It empowers teams to secure their data while leveraging cutting-edge AI capabilities through a private, customizable environment.
 
 ![Client Interface](docs/.vuepress/public/client.gif)
 ![Dashboard Interface](docs/.vuepress/public/dashboard.png)
 
-**Core Capabilities:**
+## 🏗️ System Architecture
 
-- **Private RAG Knowledge Base**: Supports document upload, automatic chunking, and vectorization, enabling AI to answer questions based on your private data.
-- **Agent Engine**: Based on LangChain, supports tool calling and **MCP (Model Context Protocol)** (🚧 In Progress), empowering AI to execute tasks.
-- **OpenAI Compatible Assistant API**: Provides an API interface compatible with OpenAI format, allowing you to seamlessly integrate your configured assistants into third-party apps or scripts using standard tools (e.g. OpenAI SDK).
-- **Multi-Model Aggregation**: Supports mainstream interface protocols like OpenAI and Anthropic, avoiding vendor lock-in.
-- **Modern Full-Stack Architecture**: Backend uses FastAPI (Python), frontend uses Nuxt 3 (Vue), with built-in OAuth authentication.
+```mermaid
+graph LR
+    subgraph Client ["Client Side"]
+        Browser[Browser]
+        UI["UI Components<br/>(Shadcn Vue)"]
+        State["State Management<br/>(Pinia)"]
+    end
+
+    subgraph Backend ["Backend Services"]
+        API[API Router]
+        Auth["Auth Module<br/>(FastAPI Users)"]
+        RAG[RAG Engine]
+        Agent["Agent Engine<br/>(LangChain + Tools)"]
+    end
+
+    subgraph Infrastructure ["Storage & External"]
+        DB[(PostgreSQL / SQLite)]
+        VectorDB[(ChromaDB)]
+        FileStore["S3 / Local"]
+        LLM["LLM Providers"]
+        MCPServers["MCP Servers (🚧)"]
+    end
+
+    Browser -->|HTTP| UI
+    UI <--> State
+    UI -->|API| API
+    
+    API --> Auth
+    API --> RAG
+    API --> Agent
+
+    Agent <--> LLM
+    Agent <--> MCPServers
+    RAG <--> VectorDB
+    RAG <--> LLM
+
+    Auth --> DB
+    RAG --> FileStore
+```
+
+## ✨ Core Capabilities
+
+- **🔐 Private RAG Knowledge Base**: 
+  - Upload documents (PDF, DOCX, XLSX, PPTX, Markdown) securely.
+  - Automatic chunking and vectorization using **ChromaDB**.
+  - Citations and reference tracking.
+- **🤖 Agent Engine**: 
+  - Built on **LangChain**, utilizing robust **Tool Calling** capabilities to execute tasks.
+  - **Model Context Protocol (MCP)** support is in active development (🚧), aiming to provide standardized connections to your ecosystem.
+- **🔌 Multi-Model Support**: 
+  - **Vendor Agnostic**: Switch between OpenAI, Anthropic, Google Gemini, XAI (Grok), and any OpenAI-compatible provider (e.g., DeepSeek, DashScope).
+  - **Cost Optimization**: Route simple queries to cheaper models and complex reasoning to high-performance models.
+- **🚀 OpenAI Compatible API**: 
+  - Expose your configured Assistant as a standard OpenAI API endpoint.
+  - Integrate easily with existing tools like VS Code extensions or third-party wrappers.
+
+## 🛠️ Tech Stack
+
+- **Frontend**: [Nuxt 4](https://nuxt.com/) (Vue 3), [Shadcn Vue](https://www.shadcn-vue.com/), [TailwindCSS v4](https://tailwindcss.com/), [Pinia](https://pinia.vuejs.org/)
+- **Backend**: [FastAPI](https://fastapi.tiangolo.com/), [SQLAlchemy](https://www.sqlalchemy.org/) (Async), [Alembic](https://alembic.sqlalchemy.org/)
+- **AI & Data**: [LangChain](https://www.langchain.com/), [ChromaDB](https://www.trychroma.com/), [Pydantic](https://docs.pydantic.dev/)
+- **Storage**: PostgreSQL / SQLite, Redis, S3 (MinIO/AWS)
 
 ## 💡 Why Choose RiceBall?
 
-In the process of AI adoption, enterprises often face the dilemma of balancing data security and flexibility. RiceBall provides best practices:
-
-1. **Complete Data Control**: Supports local deployment (Docker); all data (knowledge base, chat history) is stored on your private server.
-2. **Deep Business Integration**: Through tool calling and the MCP protocol (🚧 In Progress), RiceBall can connect to your databases, APIs, and internal tools, becoming a true business assistant.
-3. **Flexible Model Strategy**: Choose models based on scenarios—use high-performance models for complex reasoning, and cost-effective models for daily conversation to optimize costs.
-4. **Developer Friendly**: Provides a clear modular architecture and comprehensive APIs, facilitating secondary development and customization.
+1. **Security First**: Self-hosted solution ensures your IP and user data remain on your infrastructure.
+2. **Business Native**: Through **Tool Calling** (with upcoming **MCP** support), RiceBall isn't just a chatbot—it's an operator that can interact with your business systems.
+3. **Developer Ready**: Clean, modular architecture (Frontend/Backend separation) makes it an excellent starter kit for custom AI solutions.
 
 ## 👥 Target Audience
 
-- **Enterprises & Teams**: Building internal knowledge base assistants, intelligent customer service, and R&D efficiency tools.
-- **Full-Stack Developers**: Developers looking for a mature RAG + Agent architecture as a starting point.
-- **System Integrators**: Service providers delivering private AI solutions to clients.
+- **Enterprises**: Private knowledge assistants and internal tooling.
+- **Developers**: A robust, modern foundation for RAG/Agent applications.
+- **Integrators**: Deploy tailored AI solutions for clients.
 
 ## 🐹 About the Name
 

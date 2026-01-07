@@ -354,7 +354,7 @@ onUnmounted(() => {
                   <Edit class="h-4 w-4" />
                 </Button>
                 <Button 
-                  v-if="currentUser && assistant.owner_id !== currentUser.id"
+                  v-if="allowCreate && currentUser && assistant.owner_id !== currentUser.id"
                   variant="ghost" 
                   size="icon" 
                   class="h-8 w-8 text-muted-foreground hover:text-primary"
@@ -573,7 +573,7 @@ onUnmounted(() => {
                 <Edit class="h-4 w-4" />
               </Button>
               <Button 
-                v-if="currentUser && assistant.owner_id !== currentUser.id"
+                v-if="allowCreate && currentUser && assistant.owner_id !== currentUser.id"
                 variant="ghost" 
                 size="icon" 
                 class="h-8 w-8 text-muted-foreground hover:text-primary"

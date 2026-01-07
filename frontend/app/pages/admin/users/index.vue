@@ -25,16 +25,16 @@ const userConfig = computed((): ModelViewConfig<User> => ({
   
   columns: [
     {
+      accessorKey: 'name',
+      header: t('admin.pages.users.name'),
+      cell: (ctx) => ctx.getValue() || '-'
+    },
+    {
       accessorKey: 'email',
       header: t('admin.pages.users.email'),
       cell: (ctx) => {
         return h('div', { class: 'font-medium' }, ctx.getValue() as string)
       }
-    },
-    {
-      accessorKey: 'name',
-      header: t('admin.pages.users.name'),
-      cell: (ctx) => ctx.getValue() || '-'
     },
     {
       accessorKey: 'is_active',

@@ -32,21 +32,20 @@ You are an expert AI developer working on **RiceBall**, an open-source AI Agent 
 
 ## 3. Development Workflow & Commands
 
-**ALWAYS** use `just` or `docker compose` for running commands. Do not run `uv` or `pnpm` directly on the host unless specified.
+Navigate to the specific directory (`backend/` or `frontend/`) to run commands directly.
 
-- **Root Commands** (`justfile`):
-  - `just dev`: Start the full stack (backend + frontend) via Docker Compose.
-  - `just backend <cmd>`: Run command in backend container.
-  - `just frontend <cmd>`: Run command in frontend container.
+**ALWAYS** use **absolute paths** for file arguments when running terminal commands (e.g., `/home/user/project/file.py` instead of `file.py`). Do not rely on relative paths, as the terminal's active directory may have changed in previous steps.
 
-- **Backend Specific**:
-  - `just uv add <package>`: Add Python dependency.
-  - `just migrate`: Run Alembic migrations (`upgrade head`).
-  - `just alembic revision --autogenerate -m "message"`: Create migration.
+- **Backend Commands** (run in `backend/`):
+  - Start Server: `uv run fastapi dev src/main.py`
+  - Add Dependency: `uv add <package>`
+  - Run Migrations: `uv run alembic upgrade head`
+  - Create Migration: `uv run alembic revision --autogenerate -m "message"`
 
-- **Frontend Specific**:
-  - `pnpm add <package>`: Add Node dependency.
-  - `nuxt <cmd>`: Run Nuxt commands.
+- **Frontend Commands** (run in `frontend/`):
+  - Start Server: `pnpm dev`
+  - Add Dependency: `pnpm add <package>`
+  - Nuxt Commands: `npx nuxt <cmd>`
 
 ## 4. Coding Conventions
 

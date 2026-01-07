@@ -348,6 +348,9 @@ class Message(Base):
     # Message metadata (custom data, model response info, etc.)
     extra_data: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
     
+    # User feedback for the message (like/dislike)
+    feedback: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    
     # Associated conversation
     conversation: Mapped["Conversation"] = relationship(
         "Conversation",

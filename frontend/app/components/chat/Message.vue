@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted } from 'vue'
 import { useMarkdown } from '~/composables/useMarkdown'
-import { Copy, Share, Check, Quote } from 'lucide-vue-next'
+import { Copy, Share, Check, Quote, ThumbsUp, ThumbsDown } from 'lucide-vue-next'
 import type { Assistant, Message } from '~/types/api'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 
@@ -64,6 +64,27 @@ const copyMessage = async () => {
 
 const handleShare = () => {
   emit('share', props.message)
+}
+
+const handleFeedback = async (type: 'like' | 'dislike') => {
+  const { $api } = useNuxtApp()
+  const original = props.message.feedback
+  const newVal = original === type ? null : type
+  
+  // Optimistic update
+  // @ts-ignore
+  props.message.feedback = newVal
+  
+  try {
+    await $api(`/api/v1/messages/${props.message.id}/feedback`, {
+        method: 'POST',
+        body: { feedback: newVal }
+    })
+  } catch (error) {
+    // @ts-ignore
+    props.message.feedback = original
+    console.error('Feedback failed:', error)
+  }
 }
 
 const decodeAttr = (value: string | null): string => {
@@ -339,6 +360,31 @@ watch(
         >
           <Share class="w-4 h-4" />
         </Button>
+
+        <!-- Feedback Buttons -->
+        <template v-if="message.message_type === 'ASSISTANT'">
+          <div class="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+          
+          <Button 
+            @click="handleFeedback('like')"
+            class="w-8 h-8 p-0 rounded-full transition-colors"
+            :class="message.feedback === 'like' ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+            :title="t('chat.feedback.like')"
+            variant="ghost"
+          >
+            <ThumbsUp class="w-4 h-4" :class="{ 'fill-current': message.feedback === 'like' }" />
+          </Button>
+          
+          <Button 
+            @click="handleFeedback('dislike')"
+            class="w-8 h-8 p-0 rounded-full transition-colors"
+            :class="message.feedback === 'dislike' ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+            :title="t('chat.feedback.dislike')"
+            variant="ghost"
+          >
+            <ThumbsDown class="w-4 h-4" :class="{ 'fill-current': message.feedback === 'dislike' }" />
+          </Button>
+        </template>
       </div>
     </div>
   </div>

@@ -459,6 +459,10 @@ export default defineI18nLocale(async locale => {
       fetchHistoryFailed: 'Failed to fetch conversation history',
       loadingHistory: 'Loading conversation history...',
       assistantNotAvailable: 'This assistant is currently unavailable',
+      feedback: {
+        like: 'Like',
+        dislike: 'Dislike'
+      },
       assistantStatus: 'Assistant Status',
       assistantInactive: 'This assistant has been disabled and cannot be used for conversation',
       assistantDraft: 'This assistant is in draft mode and cannot be used for conversation',
@@ -677,6 +681,9 @@ export default defineI18nLocale(async locale => {
           topAssistantsDesc: 'Most popular assistants',
           unnamed: 'Unnamed',
           conversationsCount: '{count} conversations',
+        },
+        feedbacks: {
+          breadcrumb: 'Feedback Review',
         },
         conversations: {
           breadcrumb: 'Conversation Management',

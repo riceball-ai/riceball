@@ -262,6 +262,18 @@ async def get_dashboard_stats(
     # Total Conversations
     total_conv_result = await session.execute(select(func.count(Conversation.id)))
     total_conversations = total_conv_result.scalar() or 0
+
+    # Total Feedback (Like/Dislike)
+    feedback_stats_query = (
+        select(Message.feedback, func.count(Message.id))
+        .where(Message.feedback.is_not(None))
+        .group_by(Message.feedback)
+    )
+    feedback_stats_result = await session.execute(feedback_stats_query)
+    feedback_stats = {row[0]: row[1] for row in feedback_stats_result.all()}
+    
+    total_feedback_like = feedback_stats.get('like', 0)
+    total_feedback_dislike = feedback_stats.get('dislike', 0)
     
     # 2. Charts Data (Last 30 days)
     thirty_days_ago = datetime.now() - timedelta(days=30)
@@ -324,9 +336,153 @@ async def get_dashboard_stats(
         overview={
             "total_users": total_users,
             "total_token_usage": total_token_usage,
-            "total_conversations": total_conversations
+            "total_conversations": total_conversations,
+            "total_feedback_like": total_feedback_like,
+            "total_feedback_dislike": total_feedback_dislike
         },
         user_growth=user_growth,
         top_assistants=top_assistants,
         recent_users=recent_users
+    )
+
+# --- Feedback / Messages Review ---
+import datetime
+from pydantic import BaseModel, Field, ConfigDict
+from src.assistants.models import MessageTypeEnum
+from sqlalchemy import desc
+from sqlalchemy.orm import selectinload, aliased
+
+class AdminMessageResponse(BaseModel):
+    """Admin view of a message, including context"""
+    id: uuid.UUID
+    content: str
+    message_type: MessageTypeEnum
+    feedback: Optional[str] = None
+    created_at: datetime.datetime
+    
+    # Context
+    conversation_id: uuid.UUID
+    assistant_id: uuid.UUID
+    assistant_name: str
+    user_id: Optional[uuid.UUID] = None
+    user_email: Optional[str] = None
+    
+    # Previous message (Context)
+    context_message: Optional[dict] = None
+    
+    extra_data: dict = Field(default_factory=dict)
+    
+    model_config = ConfigDict(from_attributes=True)
+
+@router.get("/messages", response_model=Page[AdminMessageResponse], summary="List chat messages for review")
+async def list_messages(
+    feedback: Optional[str] = Query(None, description="Filter by feedback (like/dislike)"),
+    assistant_id: Optional[uuid.UUID] = Query(None, description="Filter by assistant"),
+    search: Optional[str] = Query(None, description="Search in content"),
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(20, ge=1, le=100, description="Page size"),
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user)
+):
+    """
+    List messages for admin review.
+    Focuses on assistant messages, optionally filtered by feedback.
+    Includes the previous message as context.
+    """
+    from fastapi_pagination.ext.sqlalchemy import paginate as sqlalchemy_paginate
+    
+    query = (
+        select(Message)
+        .join(Message.conversation)
+        .join(Conversation.assistant)
+        .outerjoin(Conversation.user)
+        .where(Message.message_type == MessageTypeEnum.ASSISTANT)
+        .options(
+            selectinload(Message.conversation).selectinload(Conversation.assistant),
+            selectinload(Message.conversation).selectinload(Conversation.user),
+            selectinload(Message.user)
+        )
+        .order_by(desc(Message.created_at))
+    )
+    
+    if feedback:
+        query = query.where(Message.feedback == feedback)
+    
+    if assistant_id:
+        query = query.where(Conversation.assistant_id == assistant_id)
+        
+    if search:
+        query = query.where(Message.content.ilike(f"%{search}%"))
+
+    # Execute main query with pagination limits manually
+    # We do this to avoid early validation against response_model by fastapi-pagination
+    from sqlalchemy import func
+    
+    # 1. Get total count
+    count_query = select(func.count()).select_from(query.subquery())
+    total_res = await session.execute(count_query)
+    total = total_res.scalar() or 0
+    
+    # 2. Apply Limit/Offset
+    query = query.offset((page - 1) * size).limit(size)
+    result = await session.execute(query)
+    messages = result.scalars().all()
+    
+    # Then process items
+    processed_items = []
+    
+    for msg in messages:
+        # Context: Previous message
+        context_query = (
+            select(Message)
+            .where(Message.conversation_id == msg.conversation_id)
+            .where(Message.created_at < msg.created_at)
+            .order_by(desc(Message.created_at))
+            .limit(1)
+        )
+        context_res = await session.execute(context_query)
+        prev_msg = context_res.scalar_one_or_none()
+        
+        context_data = None
+        if prev_msg:
+            context_data = {
+                "id": str(prev_msg.id),
+                "content": prev_msg.content,
+                "role": prev_msg.message_type.value,
+                "created_at": prev_msg.created_at
+            }
+            
+        # User info from conversation if not in message
+        conversation_user = None
+        if msg.conversation and msg.conversation.user:
+            conversation_user = msg.conversation.user
+            
+        user_id = msg.user_id or (conversation_user.id if conversation_user else None)
+        user_email = (msg.user.email if msg.user else (conversation_user.email if conversation_user else None))
+        
+        item = AdminMessageResponse(
+            id=msg.id,
+            content=msg.content,
+            message_type=msg.message_type,
+            feedback=msg.feedback,
+            created_at=msg.created_at,
+            conversation_id=msg.conversation_id,
+            assistant_id=msg.conversation.assistant.id,
+            assistant_name=msg.conversation.assistant.name,
+            user_id=user_id,
+            user_email=user_email,
+            context_message=context_data,
+            extra_data=msg.extra_data
+        )
+        processed_items.append(item)
+
+    # Replace items
+    # Create a new Page instance instead of mutating result_page to ensure validation works
+    from fastapi_pagination import Page as PageModel
+    return PageModel(
+        items=processed_items,
+        total=total,
+        page=page,
+        size=size,
+        pages=(total + size - 1) // size
     )

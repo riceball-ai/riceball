@@ -155,12 +155,25 @@ class MessageCreate(MessageBase):
     extra_data: Dict[str, Any] = Field(default_factory=dict, description="Message metadata")
 
 
+class MessageFeedbackRequest(BaseModel):
+    """Schema for setting message feedback"""
+    feedback: Optional[str] = Field(None, description="Feedback value: 'like', 'dislike' or null to clear")
+    
+    @field_validator('feedback')
+    @classmethod
+    def validate_feedback(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ('like', 'dislike'):
+            raise ValueError("Feedback must be 'like' or 'dislike'")
+        return v
+
+
 class MessageResponse(MessageBase):
     """Schema for message response"""
     id: uuid.UUID
     message_type: MessageTypeEnum
     conversation_id: uuid.UUID
     user_id: Optional[uuid.UUID] = None
+    feedback: Optional[str] = None
     extra_data: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime
@@ -353,6 +366,8 @@ class DashboardOverview(BaseModel):
     total_users: int
     total_token_usage: int
     total_conversations: int
+    total_feedback_like: int = 0
+    total_feedback_dislike: int = 0
 
 
 class ChartDataPoint(BaseModel):

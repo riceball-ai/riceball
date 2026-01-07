@@ -78,12 +78,12 @@ export default defineNuxtConfig({
       '/api/**': { proxy: (process.env.API_BASE_URL || 'http://localhost:8000') + '/api/**' },
     },
     // Explicitly configure devProxy to ensure stable proxying in development
-    devProxy: {
-      '/api': {
-        target: process.env.API_BASE_URL || 'http://localhost:8000',
-        changeOrigin: true,
-      }
-    }
+    // devProxy: {
+    //   '/api': {
+    //     target: process.env.API_BASE_URL || 'http://localhost:8000',
+    //     changeOrigin: true,
+    //   }
+    // }
   },
 
   i18n: {

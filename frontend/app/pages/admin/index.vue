@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Users, MessageSquare, Zap } from 'lucide-vue-next'
+import { Users, MessageSquare, Zap, ThumbsUp, ThumbsDown, ArrowRight } from 'lucide-vue-next'
 
 const { t } = useI18n()
 
@@ -20,6 +20,8 @@ interface DashboardStats {
     total_users: number
     total_token_usage: number
     total_conversations: number
+    total_feedback_like: number
+    total_feedback_dislike: number
   }
   recent_users: {
     name: string
@@ -56,7 +58,7 @@ const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString()
     </div>
     <div v-else-if="stats" class="space-y-4">
       <!-- Overview Cards -->
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle class="text-sm font-medium">{{ t('admin.pages.dashboard.totalUsers') }}</CardTitle>
@@ -82,6 +84,27 @@ const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString()
           </CardHeader>
           <CardContent>
             <div class="text-2xl font-bold">{{ formatNumber(stats.overview.total_conversations) }}</div>
+          </CardContent>
+        </Card>
+
+        <!-- Feedback Card -->
+        <Card class="cursor-pointer transition-colors hover:bg-accent/50" @click="navigateTo('/admin/feedbacks')">
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium">Feedback</CardTitle>
+            <ArrowRight class="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-1 text-green-600 dark:text-green-500">
+                <ThumbsUp class="w-4 h-4" />
+                <span class="text-2xl font-bold">{{ formatNumber(stats.overview.total_feedback_like || 0) }}</span>
+              </div>
+              <div class="w-px h-8 bg-border"></div>
+              <div class="flex items-center gap-1 text-red-600 dark:text-red-500">
+                <ThumbsDown class="w-4 h-4" />
+                <span class="text-2xl font-bold">{{ formatNumber(stats.overview.total_feedback_dislike || 0) }}</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

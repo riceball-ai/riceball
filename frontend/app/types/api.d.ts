@@ -16,6 +16,7 @@ interface Message {
   created_at: string;
   user_message_id?: string;
   status?: 'STREAMING' | 'FINAL';
+  feedback?: 'like' | 'dislike' | null;
   extra_data?: Record<string, any>;
 }
 

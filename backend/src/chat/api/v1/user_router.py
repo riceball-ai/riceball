@@ -17,7 +17,7 @@ from src.database import get_async_session
 from src.auth import current_active_user
 from src.users.models import User
 from src.chat.service import LangchainChatService
-from src.assistants.models import Conversation
+from src.assistants.models import Conversation, Message
 
 from .schemas import (
     ConversationCreate,
@@ -25,7 +25,8 @@ from .schemas import (
     ConversationResponse,
     MessageResponse,
     GenerateTitleResponse,
-    ChatRequest
+    ChatRequest,
+    MessageFeedbackRequest
 )
 
 router = APIRouter()
@@ -260,3 +261,28 @@ async def chat_with_assistant(
             "X-Accel-Buffering": "no"  # Disable Nginx buffering
         }
     )
+# Message feedback endpoint
+@router.post("/messages/{message_id}/feedback", summary="Set message feedback")
+async def set_message_feedback(
+    message_id: uuid.UUID,
+    feedback_data: MessageFeedbackRequest,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user)
+):
+    """Set feedback for a message (like/dislike)"""
+    # Verify message exists and belongs to user's conversation
+    result = await session.execute(
+        select(Message)
+        .join(Conversation)
+        .where(Message.id == message_id)
+        .where(Conversation.user_id == current_user.id)
+    )
+    message = result.scalar_one_or_none()
+    
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+        
+    message.feedback = feedback_data.feedback
+    await session.commit()
+    
+    return {"status": "success"}

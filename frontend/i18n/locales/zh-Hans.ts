@@ -459,6 +459,10 @@ export default defineI18nLocale(async locale => {
       fetchHistoryFailed: '获取对话历史失败',
       loadingHistory: '正在加载对话历史...',
       assistantNotAvailable: '该助手当前不可用',
+      feedback: {
+        like: '赞',
+        dislike: '踩'
+      },
       assistantStatus: '助手状态',
       assistantInactive: '该助手已被禁用，无法进行对话',
       assistantDraft: '该助手处于草稿状态，无法进行对话',
@@ -677,6 +681,9 @@ export default defineI18nLocale(async locale => {
           topAssistantsDesc: '最受欢迎的助理',
           unnamed: '未命名',
           conversationsCount: '{count} 次对话',
+        },
+        feedbacks: {
+          breadcrumb: '反馈审阅',
         },
         conversations: {
           breadcrumb: '对话管理',

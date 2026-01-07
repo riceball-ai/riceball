@@ -55,6 +55,7 @@ const config = computed((): ModelViewConfig<FileRecord> => ({
     {
       accessorKey: 'filename',
       header: 'Name',
+      meta: { width: 200 },
       cell: (ctx) => {
         const filename = ctx.getValue() as string
         return h('div', { class: 'flex items-center' }, [
@@ -70,7 +71,8 @@ const config = computed((): ModelViewConfig<FileRecord> => ({
     },
     {
       accessorKey: 'content_type',
-      header: 'Type'
+      header: 'Type',
+      meta: { width: 200 },
     },
     {
       accessorKey: 'uploaded_by',

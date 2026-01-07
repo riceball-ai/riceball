@@ -1167,7 +1167,13 @@ class LangchainChatService:
         first_user_message = messages[0]
         
         # Build AI request
-        instruction = "You are a professional conversation title generator. Based on the user's conversation, you first identify the language used, then generate a concise and meaningful title. Titles should be between 3 and 18 words, avoiding quotation marks or special characters."
+        instruction = (
+            "You are a conversation title generator. Follow these steps strictly:\n"
+            "1. Analyze the conversation content below.\n"
+            "2. Identify the primary language used by the user in the conversation.\n"
+            "3. Generate a concise title (3-18 words) in that SAME IDENTIFIED LANGUAGE.\n"
+            "4. Do not use quotation marks or special characters. Return ONLY the title text."
+        )
         combined_user_content = (
             f"{instruction}\n\n"
             + "--- Conversation starts below ---\n"

@@ -6,3 +6,7 @@ backend/storage
 backend/.venv
 
 storage
+**/.git
+**/__pycache__
+**/.DS_Store
+**/.env

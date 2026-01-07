@@ -1168,11 +1168,11 @@ class LangchainChatService:
         
         # Build AI request
         instruction = (
-            "You are a conversation title generator. Follow these steps strictly:\n"
-            "1. Analyze the conversation content below.\n"
-            "2. Identify the primary language used by the user in the conversation.\n"
-            "3. Generate a concise title (3-18 words) in that SAME IDENTIFIED LANGUAGE.\n"
-            "4. Do not use quotation marks or special characters. Return ONLY the title text."
+            "You are a conversation title generator. Generate a concise title (3-15 words) for the conversation below.\n"
+            "Requirements:\n"
+            "1. The title MUST be in the same language as the conversation content.\n"
+            "2. Do NOT include any prefixes (e.g. 'Title:', 'Language:'), labels, or quotation marks.\n"
+            "3. Return ONLY the raw title text."
         )
         combined_user_content = (
             f"{instruction}\n\n"

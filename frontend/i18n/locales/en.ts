@@ -166,6 +166,7 @@ export default defineI18nLocale(async locale => {
         selectKnowledgeBasePlaceholder: 'Please select a knowledge base',
         uploadFiles: 'Upload Files',
         selectFiles: 'Select Files',
+        dragDropTip: 'Or drag and drop files here',
         supportedFormats: 'Supported formats: PDF, TXT, MD, DOCX, PPTX, XLSX',
         addMore: 'Add More Files',
         uploading: 'Uploading...',

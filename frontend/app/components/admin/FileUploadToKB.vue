@@ -3,7 +3,6 @@ import { ref, watch } from 'vue'
 import { Upload, Trash2 } from 'lucide-vue-next'
 import { Button } from '~/components/ui/button'
 import { toast } from 'vue-sonner'
-import type { FileUploadResponse } from '~/types/api'
 
 const { $api } = useNuxtApp()
 const { t } = useI18n()
@@ -30,6 +29,7 @@ const selectedFiles = ref<File[]>([])
 const uploading = ref(false)
 const uploadProgress = ref<UploadProgress[]>([])
 const fileInput = ref<HTMLInputElement>()
+const isDragging = ref(false)
 
 // Watch props changes
 watch(() => props.knowledgeBaseId, (newId) => {
@@ -41,6 +41,26 @@ const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement
   if (target.files) {
     const newFiles = Array.from(target.files)
+    selectedFiles.value.push(...newFiles)
+  }
+}
+
+// Drag and drop handlers
+const onDragOver = (e: DragEvent) => {
+  e.preventDefault()
+  isDragging.value = true
+}
+
+const onDragLeave = (e: DragEvent) => {
+  e.preventDefault()
+  isDragging.value = false
+}
+
+const onDrop = (e: DragEvent) => {
+  e.preventDefault()
+  isDragging.value = false
+  if (e.dataTransfer?.files) {
+    const newFiles = Array.from(e.dataTransfer.files)
     selectedFiles.value.push(...newFiles)
   }
 }
@@ -144,7 +164,13 @@ const uploadFiles = async () => {
 
 <template>
   <div class="space-y-4">
-    <div>
+    <div
+      class="rounded-md transition-all duration-200 min-h-[200px] flex flex-col justify-center border-2 border-transparent"
+      :class="{ 'bg-primary/5 border-primary border-dashed': isDragging }"
+      @dragover="onDragOver"
+      @dragleave="onDragLeave"
+      @drop="onDrop"
+    >
       <div class="text-center">
         <input
           ref="fileInput"
@@ -164,6 +190,9 @@ const uploadFiles = async () => {
               {{ t('components.fileUpload.selectFiles') }}
             </Button>
             <p class="mt-2 text-sm text-gray-500">
+              {{ t('components.fileUpload.dragDropTip') }}
+            </p>
+            <p class="mt-1 text-xs text-gray-400">
               {{ t('components.fileUpload.supportedFormats') }}
             </p>
           </div>

@@ -231,6 +231,7 @@ async def get_knowledge_base_admin(
 async def list_documents_admin(
     kb_id: uuid.UUID,
     file_type: Optional[str] = None,
+    search: Optional[str] = None,
     session: AsyncSession = Depends(get_async_session),
 ):
     """Get document list in knowledge base (Admin)"""
@@ -254,6 +255,10 @@ async def list_documents_admin(
         # Add filter condition if file type is specified
         if file_type:
             conditions.append(Document.file_type == file_type)
+
+        # Add search condition
+        if search:
+            conditions.append(Document.title.ilike(f"%{search}%"))
         
         query = (
             select(Document)

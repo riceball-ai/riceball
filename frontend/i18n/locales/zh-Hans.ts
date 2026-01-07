@@ -166,6 +166,7 @@ export default defineI18nLocale(async locale => {
         selectKnowledgeBasePlaceholder: '请选择知识库',
         uploadFiles: '上传文件',
         selectFiles: '选择文件',
+        dragDropTip: '或将文件拖拽到此处',
         supportedFormats: '支持格式：PDF, TXT, MD, DOCX, PPTX, XLSX',
         addMore: '添加更多文件',
         uploading: '上传中...',

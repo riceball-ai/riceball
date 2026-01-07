@@ -20,7 +20,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal,
+  MoreVertical,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -255,7 +255,25 @@ const getSortIcon = (sortDirection: false | 'asc' | 'desc') => {
 }
 
 const getColumnClass = (columnDef: any) => {
-  return columnDef.meta?.className || ''
+  const classes = [columnDef.meta?.className]
+  // Automatically apply truncate if width is specified, or if explicitly requested
+  if (columnDef.meta?.width || columnDef.meta?.truncate) {
+    classes.push('truncate')
+  }
+  return classes.filter(Boolean).join(' ')
+}
+
+const getColumnStyle = (columnDef: any) => {
+  const style: Record<string, any> = { ...columnDef.meta?.style }
+  if (columnDef.meta?.width) {
+    const width = typeof columnDef.meta.width === 'number' 
+      ? `${columnDef.meta.width}px` 
+      : columnDef.meta.width
+    style.width = width
+    // Automatically apply max-width to ensure ellipsis works
+    style.maxWidth = width
+  }
+  return style
 }
 
 // Watchers
@@ -408,6 +426,7 @@ onMounted(() => {
               v-for="column in table.getHeaderGroups()[0]?.headers || []"
               :key="column.id"
               :class="getColumnClass(column.column.columnDef)"
+              :style="getColumnStyle(column.column.columnDef)"
             >
               <div
                 v-if="column.column.getCanSort()"
@@ -424,7 +443,7 @@ onMounted(() => {
             </TableHead>
 
             <!-- Actions column -->
-            <TableHead v-if="rowActions.length > 0" class="w-20">{{ t('components.dataTable.actions') }}</TableHead>
+            <TableHead v-if="rowActions.length > 0" class="w-20 sticky right-0 z-20 bg-background border-l text-center">{{ t('components.dataTable.actions') }}</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -432,6 +451,7 @@ onMounted(() => {
           <TableRow
             v-for="row in table.getRowModel().rows"
             :key="row.id"
+            class="group"
             :class="{ 'bg-muted/50': row.getIsSelected() }"
           >
             <!-- Checkbox column -->
@@ -449,6 +469,7 @@ onMounted(() => {
               v-for="cell in row.getVisibleCells()"
               :key="cell.id"
               :class="getColumnClass(cell.column.columnDef)"
+              :style="getColumnStyle(cell.column.columnDef)"
             >
               <FlexRender 
                 :render="cell.column.columnDef.cell" 
@@ -457,11 +478,15 @@ onMounted(() => {
             </TableCell>
 
             <!-- Actions column -->
-            <TableCell v-if="rowActions.length > 0">
+            <TableCell
+              v-if="rowActions.length > 0"
+              class="sticky right-0 z-20 border-l text-center"
+              :class="row.getIsSelected() ? 'bg-muted' : 'bg-background group-hover:bg-muted'"
+            >
               <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                   <Button variant="ghost" size="sm" class="h-8 w-8 p-0">
-                    <MoreHorizontal class="h-4 w-4" />
+                    <MoreVertical class="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

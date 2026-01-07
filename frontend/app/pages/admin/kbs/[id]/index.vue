@@ -152,6 +152,9 @@ const tableColumns: ColumnDef<Document>[] = [
     {
       accessorKey: 'title',
       header: t('admin.pages.knowledgeBases.detail.columns.title'),
+      meta: {
+        width: 200
+      },
       cell: (context) => {
         const row = context.row.original
         
@@ -180,11 +183,12 @@ const tableColumns: ColumnDef<Document>[] = [
         const IconComponent = getFileIcon(row.file_type)
         
         return h('div', { 
-          class: 'flex items-center cursor-pointer hover:text-primary transition-colors',
+          class: 'flex items-center cursor-pointer hover:text-primary transition-colors overflow-hidden', // Ensure overflow is hidden
+          title: row.title, // Add title attribute for tooltip on hover
           onClick: () => openChunksSheet(row) // Click title to open chunks
         }, [
-          h(IconComponent, { class: 'size-8 mr-1' }),
-          row.title
+          h(IconComponent, { class: 'size-8 mr-1 flex-shrink-0' }), // Prevent icon from shrinking
+          h('span', { class: 'truncate' }, row.title) // Apply truncate to text
         ])
       }
     },

@@ -38,7 +38,8 @@ async def list_conversations(
     from sqlalchemy import func
     
     query = select(Conversation).options(
-        joinedload(Conversation.assistant)
+        joinedload(Conversation.assistant),
+        joinedload(Conversation.user)
     )
     
     # Apply filters
@@ -82,6 +83,13 @@ async def list_conversations(
         if conversation.assistant:
             assistant_name = conversation.assistant.name
         
+        # Get user info
+        user_name = None
+        user_email = None
+        if conversation.user:
+            user_name = conversation.user.name
+            user_email = conversation.user.email
+        
         # Convert to response dict and add assistant_name
         conv_dict = {
             'id': conversation.id,
@@ -94,7 +102,9 @@ async def list_conversations(
             'extra_data': conversation.extra_data,
             'created_at': conversation.created_at,
             'updated_at': conversation.updated_at,
-            'assistant_name': assistant_name
+            'assistant_name': assistant_name,
+            'user_name': user_name,
+            'user_email': user_email
         }
         enriched_items.append(ConversationResponse(**conv_dict))
     

@@ -16,6 +16,8 @@ interface Conversation {
   created_at: string
   updated_at: string
   assistant_name?: string
+  user_name?: string
+  user_email?: string
 }
 
 definePageMeta({
@@ -88,6 +90,15 @@ const conversationConfig = computed((): ModelViewConfig<Conversation> => ({
           class: 'max-w-[240px] truncate',
           title
         }, title)
+      }
+    },
+    {
+      accessorKey: 'user_name',
+      header: t('admin.pages.conversations.columns.user'),
+      cell: (ctx) => {
+        const row = ctx.row.original
+        const display = row.user_name || row.user_email || row.user_id
+        return h('div', { class: 'text-sm' }, display)
       }
     },
     {

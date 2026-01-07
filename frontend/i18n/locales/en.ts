@@ -703,6 +703,7 @@ export default defineI18nLocale(async locale => {
           noLastMessage: 'No messages',
           columns: {
             title: 'Title',
+            user: 'User',
             assistant: 'Assistant',
             messageCount: 'Messages',
             inputTokens: 'Input Tokens',

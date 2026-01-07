@@ -703,6 +703,7 @@ export default defineI18nLocale(async locale => {
           noLastMessage: '无消息',
           columns: {
             title: '标题',
+            user: '用户',
             assistant: '助手',
             messageCount: '消息数',
             inputTokens: '输入 Token',

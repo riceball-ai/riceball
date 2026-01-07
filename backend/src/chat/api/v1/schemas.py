@@ -133,6 +133,8 @@ class ConversationResponse(ConversationBase):
     
     # Related objects
     assistant_name: Optional[str] = None
+    user_name: Optional[str] = None
+    user_email: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

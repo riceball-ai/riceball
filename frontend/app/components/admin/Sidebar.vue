@@ -12,7 +12,8 @@ import {
     Settings,
     LayoutDashboard,
     Files,
-    Shield
+    Shield,
+    ThumbsUp,
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -39,7 +40,9 @@ const configStore = useConfigStore()
             </SidebarMenuButton>
         </SidebarHeader>
         <SidebarContent>
+            <!-- Overview -->
             <SidebarGroup>
+                <SidebarGroupLabel>{{ $t('admin.sidebar.groups.overview') }}</SidebarGroupLabel>
                 <SidebarGroupContent>
                     <SidebarMenu>
                         <SidebarMenuItem>
@@ -50,6 +53,15 @@ const configStore = useConfigStore()
                                 </NuxtLink>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroupContent>
+            </SidebarGroup>
+
+            <!-- Operations -->
+            <SidebarGroup>
+                <SidebarGroupLabel>{{ $t('admin.sidebar.groups.operations') }}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                    <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton as-child :is-active="route.path === '/admin/users'">
                                 <NuxtLink to="/admin/users">
@@ -67,26 +79,27 @@ const configStore = useConfigStore()
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                         <SidebarMenuItem>
+                            <SidebarMenuButton as-child :is-active="route.path === '/admin/feedbacks'">
+                                <NuxtLink to="/admin/feedbacks">
+                                    <ThumbsUp />
+                                    <span>{{ $t('admin.sidebar.feedbacks') }}</span>
+                                </NuxtLink>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroupContent>
+            </SidebarGroup>
+
+            <!-- Resources -->
+            <SidebarGroup>
+                <SidebarGroupLabel>{{ $t('admin.sidebar.groups.resources') }}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
                             <SidebarMenuButton as-child :is-active="route.path === '/admin/assistants'">
                                 <NuxtLink to="/admin/assistants">
                                     <Bot />
                                     <span>{{ $t('admin.sidebar.assistants') }}</span>
-                                </NuxtLink>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton as-child :is-active="route.path === '/admin/models'">
-                                <NuxtLink to="/admin/models">
-                                    <Brain />
-                                    <span>{{ $t('admin.sidebar.models') }}</span>
-                                </NuxtLink>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton as-child :is-active="route.path === '/admin/model-providers'">
-                                <NuxtLink to="/admin/model-providers">
-                                    <Building />
-                                    <span>{{ $t('admin.sidebar.modelProviders') }}</span>
                                 </NuxtLink>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -107,6 +120,39 @@ const configStore = useConfigStore()
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                         <SidebarMenuItem>
+                            <SidebarMenuButton as-child :is-active="route.path === '/admin/models'">
+                                <NuxtLink to="/admin/models">
+                                    <Brain />
+                                    <span>{{ $t('admin.sidebar.models') }}</span>
+                                </NuxtLink>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton as-child :is-active="route.path === '/admin/model-providers'">
+                                <NuxtLink to="/admin/model-providers">
+                                    <Building />
+                                    <span>{{ $t('admin.sidebar.modelProviders') }}</span>
+                                </NuxtLink>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroupContent>
+            </SidebarGroup>
+
+            <!-- Configuration -->
+            <SidebarGroup>
+                <SidebarGroupLabel>{{ $t('admin.sidebar.groups.configuration') }}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton as-child :is-active="route.path.startsWith('/admin/system-config')">
+                                <NuxtLink to="/admin/system-config">
+                                    <Settings />
+                                    <span>{{ $t('admin.sidebar.systemConfig') }}</span>
+                                </NuxtLink>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
                             <SidebarMenuButton as-child :is-active="route.path.startsWith('/admin/oauth-providers')">
                                 <NuxtLink to="/admin/oauth-providers">
                                     <Shield />
@@ -119,14 +165,6 @@ const configStore = useConfigStore()
                                 <NuxtLink to="/admin/api-keys">
                                     <Key />
                                     <span>{{ $t('admin.sidebar.apiKeys') }}</span>
-                                </NuxtLink>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton as-child :is-active="route.path.startsWith('/admin/system-config')">
-                                <NuxtLink to="/admin/system-config">
-                                    <Settings />
-                                    <span>{{ $t('admin.sidebar.systemConfig') }}</span>
                                 </NuxtLink>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

@@ -606,6 +606,7 @@ export default defineI18nLocale(async locale => {
       sidebar: {
         assistants: 'Assistants',
         conversations: 'Conversations',
+        feedbacks: 'Feedback Review',
         users: 'Users',
         models: 'Models',
         modelProviders: 'Model Providers',
@@ -614,7 +615,13 @@ export default defineI18nLocale(async locale => {
         apiKeys: 'API Keys',
         oauthProviders: 'OAuth Providers',
         systemConfig: 'System Config',
-        backToUser: 'Back to User Area'
+        backToUser: 'Back to User Area',
+        groups: {
+          overview: 'Overview',
+          operations: 'Operations',
+          resources: 'Resources',
+          configuration: 'Configuration',
+        }
       },
       apiKeys: {
         name: 'Name',

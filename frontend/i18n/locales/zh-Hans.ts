@@ -606,6 +606,7 @@ export default defineI18nLocale(async locale => {
       sidebar: {
         assistants: '助手管理',
         conversations: '对话管理',
+        feedbacks: '反馈审查',
         users: '用户管理',
         models: '模型管理',
         modelProviders: '模型提供商',
@@ -614,7 +615,13 @@ export default defineI18nLocale(async locale => {
         apiKeys: 'API 密钥',
         oauthProviders: 'OAuth提供商管理',
         systemConfig: '系统配置',
-        backToUser: '返回用户区'
+        backToUser: '返回用户区',
+        groups: {
+          overview: '概览',
+          operations: '运营',
+          resources: '资源',
+          configuration: '配置',
+        }
       },
       apiKeys: {
         name: '名称',

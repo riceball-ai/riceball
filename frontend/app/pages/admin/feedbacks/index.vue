@@ -1,15 +1,10 @@
 <script setup lang="ts">
 import { useAPI } from '~/composables/useAPI'
-import { ref } from 'vue'
-import { ThumbsUp, ThumbsDown, Search, ArrowRight, MessageSquare, AlertCircle } from 'lucide-vue-next'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { ref, h, computed } from 'vue'
+import { ThumbsUp, ThumbsDown, Eye, MessageSquare, AlertCircle, ArrowRight } from 'lucide-vue-next'
+import DataTable from '~/components/model-view/DataTable.vue'
+import type { ColumnDef, PaginationState } from '@tanstack/vue-table'
+import type { ActionConfig } from '~/components/model-view/types'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { useMarkdown } from '~/composables/useMarkdown'
 
@@ -37,17 +32,6 @@ const { data, refresh, pending } = await useAPI<any>('/api/v1/admin/messages', {
   }))
 })
 
-// Debounce search
-let searchTimer: NodeJS.Timeout
-const handleSearch = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    search.value = target.value
-    page.value = 1
-  }, 500)
-}
-
 const openDetails = (message: any) => {
   selectedMessage.value = message
   detailsOpen.value = true
@@ -57,9 +41,80 @@ const formatDate = (date: string) => {
   return new Date(date).toLocaleString()
 }
 
-const truncate = (text: string, length = 100) => {
-  if (!text) return ''
-  return text.length > length ? text.substring(0, length) + '...' : text
+// Columns definition
+const columns: ColumnDef<any>[] = [
+  {
+    accessorKey: 'feedback',
+    header: 'Status',
+    meta: { width: 80 },
+    cell: ({ row }) => {
+      const feedback = row.original.feedback
+      if (feedback === 'dislike') return h(ThumbsDown, { class: 'w-5 h-5 text-red-500' })
+      if (feedback === 'like') return h(ThumbsUp, { class: 'w-5 h-5 text-green-500' })
+      return h('div', { class: 'w-5 h-5 rounded-full border-2 border-gray-300' })
+    }
+  },
+  {
+    accessorKey: 'assistant_name',
+    header: 'Assistant',
+    meta: { width: 150 },
+    cell: ({ row }) => {
+      return h('div', [
+        h('div', { class: 'font-medium' }, row.original.assistant_name),
+        h('div', { class: 'text-xs text-muted-foreground truncate', title: row.original.assistant_id }, row.original.assistant_id)
+      ])
+    }
+  },
+  {
+    accessorKey: 'context_message',
+    header: 'User Query (Context)',
+    meta: { width: 200 },
+    cell: ({ row }) => {
+      const content = row.original.context_message?.content
+      if (!content) return h('div', { class: 'text-sm text-muted-foreground italic' }, '(No context found)')
+      return h('div', { class: 'truncate', title: content }, content)
+    }
+  },
+  {
+    accessorKey: 'content',
+    header: 'Response Preview',
+    meta: { width: 200 },
+    cell: ({ row }) => {
+       return h('div', { class: 'truncate', title: row.original.content }, row.original.content)
+    }
+  },
+  {
+    accessorKey: 'created_at',
+    header: 'Time',
+    meta: { width: 180 },
+    cell: ({ row }) => formatDate(row.original.created_at)
+  }
+]
+
+// Row actions
+const rowActions: ActionConfig[] = [
+  {
+    key: 'view',
+    label: 'View',
+    icon: Eye
+  }
+]
+
+// Event handlers
+const handleSearch = (query: string) => {
+  search.value = query
+  page.value = 1
+}
+
+const handlePaginate = (pagination: PaginationState) => {
+  page.value = pagination.pageIndex + 1
+  size.value = pagination.pageSize
+}
+
+const handleRowAction = (action: ActionConfig, row: any) => {
+  if (action.key === 'view') {
+    openDetails(row)
+  }
 }
 </script>
 
@@ -90,101 +145,20 @@ const truncate = (text: string, length = 100) => {
           {{ opt.label }}
         </button>
       </div>
-
-      <div class="relative max-w-sm flex-1">
-        <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search content..."
-          class="pl-9"
-          :value="search"
-          @input="handleSearch"
-        />
-      </div>
     </div>
 
-    <!-- Table -->
-    <div class="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead class="w-[50px]">Status</TableHead>
-            <TableHead class="w-[200px]">Assistant</TableHead>
-            <TableHead class="max-w-[300px]">User Query (Context)</TableHead>
-            <TableHead>Response Preview</TableHead>
-            <TableHead class="w-[180px]">Time</TableHead>
-            <TableHead class="w-[80px]">Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <TableRow v-if="pending && !data?.items?.length">
-            <TableCell colspan="6" class="h-24 text-center">Loading...</TableCell>
-          </TableRow>
-          
-          <TableRow v-else-if="!data?.items?.length">
-            <TableCell colspan="6" class="h-24 text-center text-muted-foreground">
-              No feedback found.
-            </TableCell>
-          </TableRow>
-
-          <TableRow v-for="item in data?.items" :key="item.id">
-            <TableCell>
-              <ThumbsDown v-if="item.feedback === 'dislike'" class="w-5 h-5 text-red-500" />
-              <ThumbsUp v-else-if="item.feedback === 'like'" class="w-5 h-5 text-green-500" />
-              <div v-else class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
-            </TableCell>
-            <TableCell>
-              <div class="font-medium">{{ item.assistant_name }}</div>
-              <div class="text-xs text-muted-foreground truncate" :title="item.assistant_id">{{ item.assistant_id }}</div>
-            </TableCell>
-            <TableCell>
-              <div v-if="item.context_message" class="flex flex-col gap-1">
-                <div class="text-sm font-medium text-foreground/80 line-clamp-2" :title="item.context_message.content">
-                  {{ truncate(item.context_message.content, 80) }}
-                </div>
-              </div>
-              <div v-else class="text-sm text-muted-foreground italic">
-                (No context found)
-              </div>
-            </TableCell>
-            <TableCell>
-              <div class="line-clamp-2 text-sm text-muted-foreground" :title="item.content">
-                {{ truncate(item.content, 120) }}
-              </div>
-            </TableCell>
-            <TableCell class="text-sm text-muted-foreground">
-              {{ formatDate(item.created_at) }}
-            </TableCell>
-            <TableCell>
-              <Button variant="ghost" size="sm" @click="openDetails(item)">
-                View
-              </Button>
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </div>
-
-    <!-- Pagination -->
-    <div class="flex items-center justify-end gap-2" v-if="data?.total > size">
-      <Button
-        variant="outline"
-        size="sm"
-        :disabled="page <= 1"
-        @click="page--"
-      >
-        Previous
-      </Button>
-      <div class="text-sm font-medium">Page {{ page }} of {{ Math.ceil((data?.total || 0) / size) }}</div>
-      <Button
-        variant="outline"
-        size="sm"
-        :disabled="page >= Math.ceil((data?.total || 0) / size)"
-        @click="page++"
-      >
-        Next
-      </Button>
-    </div>
+    <!-- DataTable -->
+    <DataTable
+      :data="data?.items || []"
+      :columns="columns"
+      :total-count="data?.total || 0"
+      :loading="pending"
+      :row-actions="rowActions"
+      @search="handleSearch"
+      @paginate="handlePaginate"
+      @row-action="handleRowAction"
+      @refresh="refresh"
+    />
 
     <!-- Details Sheet -->
     <Sheet v-model:open="detailsOpen">

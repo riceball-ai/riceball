@@ -25,6 +25,7 @@ import {
   ArrowUp,
   ArrowDown,
   Database as DatabaseIcon,
+  X,
 } from 'lucide-vue-next'
 
 import { Button } from '~/components/ui/button'
@@ -294,12 +295,23 @@ onMounted(() => {
     <!-- Search and filter bar -->
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-2 flex-1">
-        <Input
-          v-model="searchQuery"
-          :placeholder="t('components.dataTable.search')"
-          class="max-w-sm"
-          @input="onSearch"
-        />
+        <div class="relative w-full max-w-sm">
+          <Input
+            v-model="searchQuery"
+            :placeholder="t('components.dataTable.search')"
+            class="pr-8"
+            @input="onSearch"
+          />
+          <Button
+            v-if="searchQuery"
+            variant="ghost"
+            size="sm"
+            class="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+            @click="searchQuery = ''; onSearch()"
+          >
+            <X class="h-4 w-4 text-muted-foreground" />
+          </Button>
+        </div>
         <Button
           v-if="showFilters && Object.keys(filters).length > 0"
           variant="outline"
@@ -353,44 +365,91 @@ onMounted(() => {
               <div v-for="(filter, key) in filters" :key="key" class="space-y-2">
                 <Label :for="`filter-${key}`">{{ filter.label }}</Label>
                 
-                <Input
-                  v-if="filter.type === 'text'"
-                  :id="`filter-${key}`"
-                  v-model="filterValues[key]"
-                  :placeholder="filter.placeholder"
-                  @input="applyFilters"
-                />
+                <div v-if="filter.type === 'text'" class="relative">
+                  <Input
+                    :id="`filter-${key}`"
+                    v-model="filterValues[key]"
+                    :placeholder="filter.placeholder"
+                    class="pr-8"
+                    @input="applyFilters"
+                  />
+                  <Button
+                    v-if="filterValues[key]"
+                    variant="ghost"
+                    size="sm"
+                    class="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    @click="filterValues[key] = ''; applyFilters()"
+                  >
+                    <X class="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </div>
                 
-                <Select
-                  v-else-if="filter.type === 'select'"
-                  v-model="filterValues[key]"
-                  @update:model-value="applyFilters"
-                >
-                  <SelectTrigger>
-                    <SelectValue :placeholder="filter.placeholder" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem
-                      v-for="option in filter.options"
-                      :key="option.value"
-                      :value="option.value"
-                    >
-                      {{ option.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <div v-else-if="filter.type === 'select'" class="relative">
+                  <Select
+                    v-model="filterValues[key]"
+                    @update:model-value="applyFilters"
+                  >
+                    <SelectTrigger class="pr-8">
+                      <SelectValue :placeholder="filter.placeholder" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem
+                        v-for="option in filter.options"
+                        :key="option.value"
+                        :value="option.value"
+                      >
+                        {{ option.label }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    v-if="filterValues[key]"
+                    variant="ghost"
+                    size="sm"
+                    class="absolute right-6 top-0 h-full px-2 hover:bg-transparent z-10"
+                    @click.stop="filterValues[key] = undefined; applyFilters()"
+                  >
+                    <X class="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </div>
 
                 <div v-else-if="filter.type === 'daterange'" class="flex gap-2">
-                  <Input
-                    type="date"
-                    v-model="filterValues[`${key}_start`]"
-                    @change="applyFilters"
-                  />
-                  <Input
-                    type="date"
-                    v-model="filterValues[`${key}_end`]"
-                    @change="applyFilters"
-                  />
+                  <div class="relative flex-1">
+                    <Input
+                      type="date"
+                      v-model="filterValues[`${key}_start`]"
+                      class="pr-8"
+                      @change="applyFilters"
+                    />
+                    <Button
+                      v-if="filterValues[`${key}_start`]"
+                      variant="ghost"
+                      size="sm"
+                      class="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onclick="event.stopPropagation()"
+                      @click="filterValues[`${key}_start`] = ''; applyFilters()"
+                    >
+                      <X class="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </div>
+                  <div class="relative flex-1">
+                    <Input
+                      type="date"
+                      v-model="filterValues[`${key}_end`]"
+                      class="pr-8"
+                      @change="applyFilters"
+                    />
+                    <Button
+                      v-if="filterValues[`${key}_end`]"
+                      variant="ghost"
+                      size="sm"
+                      class="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onclick="event.stopPropagation()"
+                      @click="filterValues[`${key}_end`] = ''; applyFilters()"
+                    >
+                      <X class="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

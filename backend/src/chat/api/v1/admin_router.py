@@ -27,6 +27,7 @@ router = APIRouter()
 @router.get("/conversations", response_model=Page[ConversationResponse], summary="List conversations")
 async def list_conversations(
     assistant_id: Optional[uuid.UUID] = Query(None, description="Filter by assistant"),
+    user_id: Optional[uuid.UUID] = Query(None, description="Filter by user"),
     status: Optional[str] = Query("ACTIVE", description="Filter by status"),
     search: Optional[str] = Query(None, description="Search in title"),
     page: int = Query(1, ge=1, description="Page number"),
@@ -46,6 +47,9 @@ async def list_conversations(
     if assistant_id:
         query = query.where(Conversation.assistant_id == assistant_id)
     
+    if user_id:
+        query = query.where(Conversation.user_id == user_id)
+    
     if status:
         query = query.where(Conversation.status == status)
     
@@ -59,6 +63,8 @@ async def list_conversations(
     count_query = select(func.count()).select_from(Conversation)
     if assistant_id:
         count_query = count_query.where(Conversation.assistant_id == assistant_id)
+    if user_id:
+        count_query = count_query.where(Conversation.user_id == user_id)
     if status:
         count_query = count_query.where(Conversation.status == status)
     if search:

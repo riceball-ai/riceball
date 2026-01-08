@@ -56,6 +56,19 @@ const statusLabelMap = computed(() => ({
   DELETED: t('admin.pages.conversations.statusLabels.deleted')
 }))
 
+// User options
+const userOptions = ref<{ label: string, value: string }[]>([])
+const { data: usersData } = await useAPI<any>('/api/v1/admin/users', { 
+  params: { size: 100 }
+})
+
+if (usersData.value?.items) {
+  userOptions.value = usersData.value.items.map((u: any) => ({
+    label: u.name || u.email || t('admin.pages.dashboard.unnamed'),
+    value: u.id
+  }))
+}
+
 // Conversation configuration
 const conversationConfig = computed((): ModelViewConfig<Conversation> => ({
   title: t('admin.pages.conversations.title'),
@@ -88,6 +101,11 @@ const conversationConfig = computed((): ModelViewConfig<Conversation> => ({
       type: 'select',
       label: t('admin.pages.conversations.status'),
       options: statusOptions.value
+    },
+    user_id: {
+      type: 'select',
+      label: t('admin.pages.conversations.columns.user'),
+      options: userOptions.value
     }
   },
   

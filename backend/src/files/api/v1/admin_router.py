@@ -6,8 +6,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
+from src.database import get_async_session
 from src.auth.fastapi_users import current_user
 from src.users.models import User
 from ...models import FileType
@@ -25,6 +27,8 @@ class FileResponse(BaseModel):
     file_type: FileType
     file_path: str
     uploaded_by: UUID
+    uploaded_by_name: Optional[str] = None
+    created_at: str
     url: Optional[str] = None
     
     class Config:
@@ -174,6 +178,7 @@ async def list_files(
     offset: int = 0,
     current_user: User = Depends(current_user),
     file_service: FileService = Depends(get_file_service()),
+    session: AsyncSession = Depends(get_async_session),
 ):
     """
     List all files (Admin).
@@ -192,6 +197,15 @@ async def list_files(
         offset=offset
     )
     
+    # Collect user IDs to fetch names
+    user_ids = {f.uploaded_by for f in files}
+    users = {}
+    if user_ids:
+        from sqlalchemy import select
+        result = await session.execute(select(User).where(User.id.in_(user_ids)))
+        for user in result.scalars().all():
+            users[user.id] = user.name or user.email
+
     file_responses = []
     for file_record in files:
         # Generate download URL for each file
@@ -208,6 +222,7 @@ async def list_files(
                 file_type=file_record.file_type,
                 file_path=file_record.file_path,
                 uploaded_by=file_record.uploaded_by,
+                uploaded_by_name=users.get(file_record.uploaded_by),
                 created_at=file_record.created_at.isoformat(),
                 metadata=file_record.file_metadata,
                 url=download_url

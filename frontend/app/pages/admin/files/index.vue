@@ -31,6 +31,7 @@ interface FileRecord {
   file_type: string
   file_path: string
   uploaded_by: string
+  uploaded_by_name?: string
   created_at: string
   metadata: Record<string, any>
   url: string
@@ -76,7 +77,11 @@ const config = computed((): ModelViewConfig<FileRecord> => ({
     },
     {
       accessorKey: 'uploaded_by',
-      header: 'Uploaded By'
+      header: 'Uploaded By',
+      cell: (ctx) => {
+        const row = ctx.row.original as FileRecord
+        return row.uploaded_by_name || row.uploaded_by
+      }
     },
     {
       accessorKey: 'created_at',

@@ -3,21 +3,21 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi_pagination import Page
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.orm import joinedload
+from sqlalchemy import select, desc
+from sqlalchemy.orm import joinedload, selectinload
 
 from src.database import get_async_session
 from src.auth import current_active_user
 from src.users.models import User
-from src.assistants.models import Conversation, Message, Assistant
+from src.assistants.models import Conversation, Message, Assistant, MessageTypeEnum
 from src.chat.service import LangchainChatService
 from .schemas import (
     ConversationCreate,
     ConversationUpdate,
     ConversationResponse,
     MessageResponse,
-    GenerateTitleResponse,
-    DashboardStatsResponse
+    DashboardStatsResponse,
+    AdminMessageResponse
 )
 
 router = APIRouter()
@@ -209,17 +209,24 @@ async def update_conversation(
 @router.delete("/conversations/{conversation_id}", summary="Delete a conversation")
 async def delete_conversation(
     conversation_id: uuid.UUID,
+    permanent: bool = Query(False, description="Permanently delete conversation"),
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user)
 ):
     """Delete a conversation"""
     service = LangchainChatService(session)
-    success = await service.delete_conversation(conversation_id, current_user.id)
+    
+    if permanent:
+        success = await service.hard_delete_conversation(conversation_id)
+        message = "Conversation permanently deleted"
+    else:
+        success = await service.delete_conversation(conversation_id, current_user.id)
+        message = "Conversation deleted successfully"
     
     if not success:
         raise HTTPException(status_code=404, detail="Conversation not found")
     
-    return {"message": "Conversation deleted successfully"}
+    return {"message": message}
 
 
 @router.get("/conversations/{conversation_id}/messages", response_model=Page[MessageResponse], summary="Get conversation messages")
@@ -356,34 +363,6 @@ async def get_dashboard_stats(
     )
 
 # --- Feedback / Messages Review ---
-import datetime
-from pydantic import BaseModel, Field, ConfigDict
-from src.assistants.models import MessageTypeEnum
-from sqlalchemy import desc
-from sqlalchemy.orm import selectinload, aliased
-
-class AdminMessageResponse(BaseModel):
-    """Admin view of a message, including context"""
-    id: uuid.UUID
-    content: str
-    message_type: MessageTypeEnum
-    feedback: Optional[str] = None
-    created_at: datetime.datetime
-    
-    # Context
-    conversation_id: uuid.UUID
-    assistant_id: uuid.UUID
-    assistant_name: str
-    user_id: Optional[uuid.UUID] = None
-    user_email: Optional[str] = None
-    
-    # Previous message (Context)
-    context_message: Optional[dict] = None
-    
-    extra_data: dict = Field(default_factory=dict)
-    
-    model_config = ConfigDict(from_attributes=True)
-
 @router.get("/messages", response_model=Page[AdminMessageResponse], summary="List chat messages for review")
 async def list_messages(
     feedback: Optional[str] = Query(None, description="Filter by feedback (like/dislike)"),

@@ -105,4 +105,9 @@ export interface ModelViewConfig<T> {
   // Other config
   emptyMessage?: string
   pageSize?: number
+
+  // Dynamic Hooks
+  getDeleteParams?: (item: T, filters: Record<string, any>) => Record<string, any>
+  getDeleteTitle?: (count: number, filters: Record<string, any>) => string | undefined
+  getDeleteDescription?: (count: number, filters: Record<string, any>) => string | undefined
 }

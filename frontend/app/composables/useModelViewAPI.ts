@@ -135,11 +135,25 @@ export function useModelViewAPI<T extends Record<string, any>>(
   /**
    * Delete resource
    */
-  const remove = async (id: string | number): Promise<void> => {
+  const remove = async (id: string | number, params?: Record<string, any>): Promise<void> => {
     try {      
       // Real API call:
       const endpoint = resolveEndpointWithId(overrides.delete, baseEndpoint, id)
-      await $api(endpoint, {
+      
+      const query = new URLSearchParams()
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            query.append(key, value.toString())
+          }
+        })
+      }
+      
+      const url = query.toString()
+        ? `${endpoint}?${query.toString()}`
+        : endpoint
+
+      await $api(url, {
         method: 'DELETE'
       })
 

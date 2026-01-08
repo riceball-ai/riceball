@@ -107,6 +107,7 @@ export default defineI18nLocale(async locale => {
         cancel: '取消',
         confirm: '确认',
         confirmDelete: '确认删除',
+        deleteConfirmTitle: '确认删除',
         deleteConfirmSingle: '确定要删除这条{title}记录吗？此操作无法撤销。',
         deleteConfirmMultiple: '确定要删除这 {count} 条{title}记录吗？此操作无法撤销。',
         createTitle: '创建{title}',
@@ -182,6 +183,21 @@ export default defineI18nLocale(async locale => {
           completed: '已完成',
           failed: '失败'
         }
+      },
+      conversationMessages: {
+        title: '消息记录',
+        totalMessages: '{count} 条消息',
+        loadMessagesFailed: '加载消息失败',
+        noMessages: '暂无消息',
+        model: '模型',
+        messageTypes: {
+          user: '用户',
+          assistant: '助手',
+          system: '系统'
+        },
+        totalTokens: '总 Token',
+        inputTokens: '输入 Token',
+        outputTokens: '输出 Token'
       },
     },
 
@@ -727,6 +743,8 @@ export default defineI18nLocale(async locale => {
             archived: '归档',
             deleted: '已删除',
           },
+          permanentDeleteTitle: '永久删除确认',
+          permanentDeleteDescription: '您确定要永久删除这些记录吗？此操作将物理删除数据，无法恢复！请谨慎操作。',
         },
         assistants: {
           breadcrumb: '助手管理',

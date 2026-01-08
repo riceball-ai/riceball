@@ -107,6 +107,7 @@ export default defineI18nLocale(async locale => {
         cancel: 'Cancel',
         confirm: 'Confirm',
         confirmDelete: 'Confirm Delete',
+        deleteConfirmTitle: 'Confirm Delete',
         deleteConfirmSingle: 'Are you sure you want to delete this {title} record? This action cannot be undone.',
         deleteConfirmMultiple: 'Are you sure you want to delete these {count} {title} records? This action cannot be undone.',
         createTitle: 'Create {title}',
@@ -182,6 +183,21 @@ export default defineI18nLocale(async locale => {
           completed: 'Completed',
           failed: 'Failed'
         }
+      },
+      conversationMessages: {
+        title: 'Message History',
+        totalMessages: '{count} Messages',
+        loadMessagesFailed: 'Failed to load messages',
+        noMessages: 'No messages found',
+        model: 'Model',
+        messageTypes: {
+          user: 'User',
+          assistant: 'Assistant',
+          system: 'System'
+        },
+        totalTokens: 'Total Tokens',
+        inputTokens: 'Input Tokens',
+        outputTokens: 'Output Tokens'
       },
     },
 
@@ -727,6 +743,8 @@ export default defineI18nLocale(async locale => {
             archived: 'Archived',
             deleted: 'Deleted',
           },
+          permanentDeleteTitle: 'Permanent Delete Confirmation',
+          permanentDeleteDescription: 'Are you sure you want to permanently delete these records? This action cannot be undone and data will be physically removed!',
         },
         assistants: {
           breadcrumb: 'Assistant Management',

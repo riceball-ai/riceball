@@ -1229,6 +1229,15 @@ class LangchainChatService:
             conversation_id=conversation_id,
             user_id=user_id,
         )
+
+    async def hard_delete_conversation(
+        self,
+        conversation_id: uuid.UUID
+    ) -> bool:
+        """Permanently delete a conversation."""
+        return await self.conversation_service.hard_delete_conversation(
+            conversation_id=conversation_id
+        )
     
     async def archive_conversation(
         self,

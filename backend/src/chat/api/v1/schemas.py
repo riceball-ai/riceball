@@ -385,3 +385,25 @@ class DashboardStatsResponse(BaseModel):
     user_growth: List[ChartDataPoint]
     top_assistants: List[Dict[str, Any]]
     recent_users: List[Dict[str, Any]]
+
+class AdminMessageResponse(BaseModel):
+    """Admin view of a message, including context"""
+    id: uuid.UUID
+    content: str
+    message_type: MessageTypeEnum
+    feedback: Optional[str] = None
+    created_at: datetime
+    
+    # Context
+    conversation_id: uuid.UUID
+    assistant_id: uuid.UUID
+    assistant_name: str
+    user_id: Optional[uuid.UUID] = None
+    user_email: Optional[str] = None
+    
+    # Previous message (Context)
+    context_message: Optional[dict] = None
+    
+    extra_data: dict = Field(default_factory=dict)
+    
+    model_config = ConfigDict(from_attributes=True)

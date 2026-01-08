@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '~/components/ui/dialog'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '~/components/ui/sheet'
 import { Badge } from '~/components/ui/badge'
+import { ScrollArea } from '~/components/ui/scroll-area'
 import { Loader2, User, Bot } from 'lucide-vue-next'
+import { useMarkdown } from '~/composables/useMarkdown'
 
 const { t } = useI18n()
+const { renderMarkdown } = useMarkdown()
 
 interface Message {
   id: string
@@ -84,49 +87,29 @@ const getMessageTypeVariant = (type: string) => {
   }
   return variants[type] || 'default'
 }
-
-// Use statistics passed from parent component (from conversation object)
-const totalStats = computed(() => {
-  return {
-    inputTokens: props.inputTokens || 0,
-    outputTokens: props.outputTokens || 0,
-    totalTokens: props.totalTokens || 0,
-  }
-})
 </script>
 
 <template>
-  <Dialog v-model:open="localOpen">
-    <DialogContent class="max-w-4xl max-h-[85vh] flex flex-col">
-      <DialogHeader>
-        <DialogTitle>{{ t('components.conversationMessages.title') }}</DialogTitle>
-        <DialogDescription class="space-y-2">
+  <Sheet v-model:open="localOpen">
+    <SheetContent class="w-[85vw] sm:max-w-4xl flex flex-col p-0 gap-0">
+      <SheetHeader class="p-6 border-b shrink-0">
+        <SheetTitle>{{ t('components.conversationMessages.title') }}</SheetTitle>
+        <SheetDescription class="space-y-2">
           <div>{{ conversationTitle }} - {{ t('components.conversationMessages.totalMessages', { count: messages.length }) }}</div>
-          <div v-if="totalStats.totalTokens > 0" class="flex gap-4 text-xs">
-            <span class="text-muted-foreground">
-              {{ t('components.conversationMessages.totalTokens') }}: <span class="font-medium text-foreground">{{ totalStats.totalTokens.toLocaleString() }}</span>
-            </span>
-            <span class="text-muted-foreground">
-              {{ t('components.conversationMessages.inputTokens') }}: <span class="font-medium text-foreground">{{ totalStats.inputTokens.toLocaleString() }}</span>
-            </span>
-            <span class="text-muted-foreground">
-              {{ t('components.conversationMessages.outputTokens') }}: <span class="font-medium text-foreground">{{ totalStats.outputTokens.toLocaleString() }}</span>
-            </span>
+        </SheetDescription>
+      </SheetHeader>
+
+      <ScrollArea class="flex-1 min-h-0">
+        <div class="p-6">
+          <div v-if="loading" class="flex items-center justify-center py-12">
+            <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        </DialogDescription>
-      </DialogHeader>
 
-      <div class="flex-1 overflow-y-auto min-h-0">
-        <div v-if="loading" class="flex items-center justify-center py-12">
-          <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+          <div v-else-if="error" class="flex items-center justify-center py-12 text-destructive">
+            {{ error }}
+          </div>
 
-        <div v-else-if="error" class="flex items-center justify-center py-12 text-destructive">
-          {{ error }}
-        </div>
-
-        <div v-else class="pr-4">
-          <div class="space-y-4">
+          <div v-else class="space-y-4">
             <div
               v-for="message in messages"
               :key="message.id"
@@ -160,9 +143,10 @@ const totalStats = computed(() => {
                     </span>
                   </div>
 
-                  <div class="text-sm whitespace-pre-wrap break-words">
-                    {{ message.content }}
-                  </div>
+                  <div 
+                    class="markdown-content prose prose-sm prose-zinc dark:prose-invert max-w-none break-words"
+                    v-html="renderMarkdown(message.content)"
+                  ></div>
 
                   <!-- Display metadata -->
                   <div class="flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -179,7 +163,7 @@ const totalStats = computed(() => {
             </div>
           </div>
         </div>
-      </div>
-    </DialogContent>
-  </Dialog>
+      </ScrollArea>
+    </SheetContent>
+  </Sheet>
 </template>

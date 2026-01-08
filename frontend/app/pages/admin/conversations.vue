@@ -2,7 +2,7 @@
 import { computed, h, ref } from 'vue'
 import { Badge } from '~/components/ui/badge'
 import { MessageSquare } from 'lucide-vue-next'
-import ConversationMessagesDialog from '~/components/admin/ConversationMessagesDialog.vue'
+import ConversationMessagesSheet from '~/components/admin/ConversationMessagesSheet.vue'
 import type { ModelViewConfig } from '~/components/model-view/types'
 
 interface Conversation {
@@ -62,6 +62,27 @@ const conversationConfig = computed((): ModelViewConfig<Conversation> => ({
   description: t('admin.pages.conversations.description'),
   apiEndpoint: '/v1/admin/conversations',
   showFilters: true,
+  
+  // Custom delete logic
+  getDeleteParams: (item, filters) => {
+    if (filters?.status === 'DELETED') {
+      return { permanent: true }
+    }
+    return {}
+  },
+  getDeleteTitle: (count, filters) => {
+    if (filters?.status === 'DELETED') {
+      return t('admin.pages.conversations.permanentDeleteTitle')
+    }
+    return undefined
+  },
+  getDeleteDescription: (count, filters) => {
+    if (filters?.status === 'DELETED') {
+      return t('admin.pages.conversations.permanentDeleteDescription')
+    }
+    return undefined
+  },
+
   filters: {
     status: {
       type: 'select',
@@ -87,8 +108,9 @@ const conversationConfig = computed((): ModelViewConfig<Conversation> => ({
       cell: (ctx) => {
         const title = (ctx.getValue() as string) || t('admin.pages.conversations.untitledConversation')
         return h('div', {
-          class: 'max-w-[240px] truncate',
-          title
+          class: 'max-w-[240px] truncate cursor-pointer hover:underline text-primary font-medium',
+          title,
+          onClick: () => openMessagesDialog(ctx.row.original)
         }, title)
       }
     },
@@ -242,8 +264,8 @@ const handleRowAction = (action: any, item: Conversation) => {
     @row-action="handleRowAction"
   />
   
-  <!-- Message view dialog -->
-  <ConversationMessagesDialog
+  <!-- Message view sheet -->
+  <ConversationMessagesSheet
     v-model:open="showMessagesDialog"
     :conversation-id="selectedConversation?.id || null"
     :conversation-title="selectedConversation?.title || t('admin.pages.conversations.untitledConversation')"

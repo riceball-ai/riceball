@@ -104,7 +104,19 @@ const title = computed(() => props.config.title)
 const description = computed(() => props.config.description)
 const formDescription = computed(() => props.config.formDescription)
 
+const deleteTitle = computed(() => {
+  if (props.config.getDeleteTitle) {
+    const custom = props.config.getDeleteTitle(itemsToDelete.value.length, filters.value)
+    if (custom) return custom
+  }
+  return t('components.modelView.deleteConfirmTitle')
+})
+
 const deleteMessage = computed(() => {
+  if (props.config.getDeleteDescription) {
+    const custom = props.config.getDeleteDescription(itemsToDelete.value.length, filters.value)
+    if (custom) return custom
+  }
   if (itemsToDelete.value.length === 1) {
     return t('components.modelView.deleteConfirmSingle', { title: title.value })
   }
@@ -234,7 +246,8 @@ const deleteItems = async (items: T[]) => {
   deleteLoading.value = true
   try {
     for (const item of items) {
-      await api.remove((item as any).id)
+      const params = props.config.getDeleteParams ? props.config.getDeleteParams(item, filters.value) : undefined
+      await api.remove((item as any).id, params)
     }
     
     toast.success(t('components.modelView.deleteSuccess', { title: title.value }))
@@ -487,7 +500,7 @@ defineExpose({
     <Dialog v-model:open="showDeleteDialog">
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{{ t('components.modelView.confirmDelete') }}</DialogTitle>
+          <DialogTitle>{{ deleteTitle }}</DialogTitle>
           <DialogDescription>
             {{ deleteMessage }}
           </DialogDescription>

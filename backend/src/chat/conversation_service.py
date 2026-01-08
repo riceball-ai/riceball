@@ -143,6 +143,23 @@ class ConversationService:
         await self.session.commit()
         return True
 
+    async def hard_delete_conversation(
+        self,
+        *,
+        conversation_id: uuid.UUID,
+    ) -> bool:
+        """Permanently delete a conversation and its messages."""
+        result = await self.session.execute(
+            select(Conversation).where(Conversation.id == conversation_id)
+        )
+        conversation = result.scalar_one_or_none()
+        if not conversation:
+            return False
+
+        await self.session.delete(conversation)
+        await self.session.commit()
+        return True
+
     async def archive_conversation(
         self,
         *,

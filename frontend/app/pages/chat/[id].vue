@@ -748,23 +748,12 @@ onUnmounted(() => {
 
         <template #right>
           <div class="flex items-center gap-2" v-if="assistant">
-            <Button
-              v-if="userStore.user"
-              variant="outline"
-              size="icon"
-              :title="assistant.is_pinned ? t('assistants.unpin') : t('assistants.pin')"
-              @click="handlePin"
-            >
-              <PinOff v-if="assistant.is_pinned" class="h-4 w-4 text-primary fill-primary" />
-              <Pin v-else class="h-4 w-4" />
-            </Button>
-            
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger as-child>
                   <Button
                     variant="outline"
-                    :size="isDesktop ? 'sm' : 'icon'"
+                    :size="isDesktop ? 'default' : 'icon'"
                     class="text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950 transition-colors"
                     :disabled="shareDialogLoading || !currentConversationId"
                     @click="shareConversation"

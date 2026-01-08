@@ -45,7 +45,7 @@ const formatDate = (date: string) => {
 const columns: ColumnDef<any>[] = [
   {
     accessorKey: 'feedback',
-    header: 'Status',
+    header: t('admin.pages.feedbacks.columns.status'),
     meta: { width: 80 },
     cell: ({ row }) => {
       const feedback = row.original.feedback
@@ -56,7 +56,7 @@ const columns: ColumnDef<any>[] = [
   },
   {
     accessorKey: 'assistant_name',
-    header: 'Assistant',
+    header: t('admin.pages.feedbacks.columns.assistant'),
     meta: { width: 150 },
     cell: ({ row }) => {
       return h('div', [
@@ -67,17 +67,17 @@ const columns: ColumnDef<any>[] = [
   },
   {
     accessorKey: 'context_message',
-    header: 'User Query (Context)',
+    header: t('admin.pages.feedbacks.columns.userQuery'),
     meta: { width: 200 },
     cell: ({ row }) => {
       const content = row.original.context_message?.content
-      if (!content) return h('div', { class: 'text-sm text-muted-foreground italic' }, '(No context found)')
+      if (!content) return h('div', { class: 'text-sm text-muted-foreground italic' }, t('admin.pages.feedbacks.details.noContext'))
       return h('div', { class: 'truncate', title: content }, content)
     }
   },
   {
     accessorKey: 'content',
-    header: 'Response Preview',
+    header: t('admin.pages.feedbacks.columns.responsePreview'),
     meta: { width: 200 },
     cell: ({ row }) => {
        return h('div', { class: 'truncate', title: row.original.content }, row.original.content)
@@ -85,7 +85,7 @@ const columns: ColumnDef<any>[] = [
   },
   {
     accessorKey: 'created_at',
-    header: 'Time',
+    header: t('admin.pages.feedbacks.columns.time'),
     meta: { width: 180 },
     cell: ({ row }) => formatDate(row.original.created_at)
   }
@@ -95,7 +95,7 @@ const columns: ColumnDef<any>[] = [
 const rowActions: ActionConfig[] = [
   {
     key: 'view',
-    label: 'View',
+    label: t('admin.pages.feedbacks.actions.view'),
     icon: Eye
   }
 ]
@@ -122,8 +122,8 @@ const handleRowAction = (action: ActionConfig, row: any) => {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight">Feedback Review</h2>
-        <p class="text-muted-foreground">Review user feedback on assistant responses to improve quality.</p>
+        <h2 class="text-2xl font-bold tracking-tight">{{ t('admin.pages.feedbacks.title') }}</h2>
+        <p class="text-muted-foreground">{{ t('admin.pages.feedbacks.description') }}</p>
       </div>
     </div>
 
@@ -132,9 +132,9 @@ const handleRowAction = (action: ActionConfig, row: any) => {
       <div class="flex items-center rounded-md border bg-background p-1">
         <button
           v-for="opt in [
-            { value: 'dislike', label: 'Needs Improvement', icon: ThumbsDown },
-            { value: 'like', label: 'Positive', icon: ThumbsUp },
-            { value: 'all', label: 'All', icon: null }
+            { value: 'dislike', label: t('admin.pages.feedbacks.filters.needsImprovement'), icon: ThumbsDown },
+            { value: 'like', label: t('admin.pages.feedbacks.filters.positive'), icon: ThumbsUp },
+            { value: 'all', label: t('admin.pages.feedbacks.filters.all'), icon: null }
           ]"
           :key="opt.value"
           @click="feedbackFilter = opt.value; page = 1"
@@ -164,22 +164,22 @@ const handleRowAction = (action: ActionConfig, row: any) => {
     <Sheet v-model:open="detailsOpen">
       <SheetContent class="sm:max-w-2xl overflow-y-auto">
         <SheetHeader class="mb-6">
-          <SheetTitle>Feedback Details</SheetTitle>
+          <SheetTitle>{{ t('admin.pages.feedbacks.details.title') }}</SheetTitle>
           <SheetDescription>
             <div class="flex items-center gap-2 mt-2">
-              <span class="font-medium text-foreground">Assistant:</span> {{ selectedMessage?.assistant_name }}
+              <span class="font-medium text-foreground">{{ t('admin.pages.feedbacks.details.assistant') }}:</span> {{ selectedMessage?.assistant_name }}
               <span class="mx-2">•</span>
-              <span class="font-medium text-foreground">User:</span> {{ selectedMessage?.user_email || 'Anonymous' }}
+              <span class="font-medium text-foreground">{{ t('admin.pages.feedbacks.details.user') }}:</span> {{ selectedMessage?.user_email || t('admin.pages.feedbacks.details.anonymous') }}
             </div>
             <div class="flex items-center gap-2 mt-1">
-              <span class="font-medium text-foreground">Time:</span> {{ selectedMessage ? formatDate(selectedMessage.created_at) : '' }}
+              <span class="font-medium text-foreground">{{ t('admin.pages.feedbacks.details.time') }}:</span> {{ selectedMessage ? formatDate(selectedMessage.created_at) : '' }}
               <span class="mx-2">•</span>
               <span 
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
                 :class="selectedMessage?.feedback === 'dislike' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'"
               >
                 <component :is="selectedMessage?.feedback === 'dislike' ? ThumbsDown : ThumbsUp" class="w-3 h-3" />
-                {{ selectedMessage?.feedback === 'dislike' ? 'Needs Improvement' : 'Positive' }}
+                {{ selectedMessage?.feedback === 'dislike' ? t('admin.pages.feedbacks.details.needsImprovement') : t('admin.pages.feedbacks.details.positive') }}
               </span>
             </div>
           </SheetDescription>
@@ -190,7 +190,7 @@ const handleRowAction = (action: ActionConfig, row: any) => {
           <div v-if="selectedMessage.context_message" class="space-y-2">
             <h3 class="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <MessageSquare class="w-4 h-4" />
-              User Query
+              {{ t('admin.pages.feedbacks.details.userQuery') }}
             </h3>
             <div class="bg-muted/50 p-4 rounded-lg text-sm whitespace-pre-wrap">
               {{ selectedMessage.context_message.content }}
@@ -198,7 +198,7 @@ const handleRowAction = (action: ActionConfig, row: any) => {
           </div>
           <div v-else class="flex items-center gap-2 text-amber-600 dark:text-amber-500 text-sm bg-amber-50 dark:bg-amber-950/20 p-3 rounded-md">
             <AlertCircle class="w-4 h-4" />
-            No context message could be found for this conversation turn.
+            {{ t('admin.pages.feedbacks.details.noContextMessage') }}
           </div>
 
           <!-- Divider with Arrow -->
@@ -210,7 +210,7 @@ const handleRowAction = (action: ActionConfig, row: any) => {
           <div class="space-y-2">
             <h3 class="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <div class="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">AI</div>
-              Assistant Response
+              {{ t('admin.pages.feedbacks.details.assistantResponse') }}
             </h3>
             <div 
               class="prose prose-sm dark:prose-invert max-w-none border rounded-lg p-4 bg-background"
@@ -220,7 +220,7 @@ const handleRowAction = (action: ActionConfig, row: any) => {
           
           <!-- Metadata -->
           <div v-if="selectedMessage.extra_data && Object.keys(selectedMessage.extra_data).length" class="space-y-2 pt-4 border-t">
-            <h3 class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Debug Metadata</h3>
+            <h3 class="text-xs font-medium text-muted-foreground uppercase tracking-wider">{{ t('admin.pages.feedbacks.details.debugMetadata') }}</h3>
             <pre class="bg-gray-950 text-gray-50 p-3 rounded-md text-xs overflow-x-auto">{{ JSON.stringify(selectedMessage.extra_data, null, 2) }}</pre>
           </div>
         </div>

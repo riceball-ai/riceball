@@ -620,6 +620,7 @@ export default defineI18nLocale(async locale => {
       success: '操作成功',
       failed: '操作失败',
       sidebar: {
+        dashboard: '仪表盘',
         assistants: '助手管理',
         conversations: '对话管理',
         feedbacks: '反馈审查',
@@ -708,6 +709,37 @@ export default defineI18nLocale(async locale => {
         },
         feedbacks: {
           breadcrumb: '反馈审阅',
+          title: '反馈审阅',
+          description: '审阅用户对助手回复的反馈，以提高回答质量。',
+          columns: {
+            status: '状态',
+            assistant: '助手',
+            userQuery: '用户提问 (上下文)',
+            responsePreview: '回复预览',
+            time: '时间'
+          },
+          filters: {
+            needsImprovement: '需改进',
+            positive: '好评',
+            all: '全部'
+          },
+          details: {
+            title: '反馈详情',
+            assistant: '助手',
+            user: '用户',
+            anonymous: '匿名用户',
+            time: '时间',
+            needsImprovement: '需改进',
+            positive: '好评',
+            userQuery: '用户提问',
+            noContext: '(未找到上下文)',
+            noContextMessage: '未能找到此对话轮次的上下文消息。',
+            assistantResponse: '助手回复',
+            debugMetadata: '调试元数据'
+          },
+          actions: {
+            view: '查看'
+          }
         },
         conversations: {
           breadcrumb: '对话管理',

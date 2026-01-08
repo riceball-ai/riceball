@@ -620,6 +620,7 @@ export default defineI18nLocale(async locale => {
       success: 'Operation successful',
       failed: 'Operation failed',
       sidebar: {
+        dashboard: 'Dashboard',
         assistants: 'Assistants',
         conversations: 'Conversations',
         feedbacks: 'Feedback Review',
@@ -708,6 +709,37 @@ export default defineI18nLocale(async locale => {
         },
         feedbacks: {
           breadcrumb: 'Feedback Review',
+          title: 'Feedback Review',
+          description: 'Review user feedback on assistant responses to improve quality.',
+          columns: {
+            status: 'Status',
+            assistant: 'Assistant',
+            userQuery: 'User Query (Context)',
+            responsePreview: 'Response Preview',
+            time: 'Time'
+          },
+          filters: {
+            needsImprovement: 'Needs Improvement',
+            positive: 'Positive',
+            all: 'All'
+          },
+          details: {
+            title: 'Feedback Details',
+            assistant: 'Assistant',
+            user: 'User',
+            anonymous: 'Anonymous',
+            time: 'Time',
+            needsImprovement: 'Needs Improvement',
+            positive: 'Positive',
+            userQuery: 'User Query',
+            noContext: '(No context found)',
+            noContextMessage: 'No context message could be found for this conversation turn.',
+            assistantResponse: 'Assistant Response',
+            debugMetadata: 'Debug Metadata'
+          },
+          actions: {
+            view: 'View'
+          }
         },
         conversations: {
           breadcrumb: 'Conversation Management',

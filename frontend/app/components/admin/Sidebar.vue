@@ -49,7 +49,7 @@ const configStore = useConfigStore()
                             <SidebarMenuButton as-child :is-active="route.path === '/admin'">
                                 <NuxtLink to="/admin">
                                     <LayoutDashboard />
-                                    <span>Dashboard</span>
+                                    <span>{{ $t('admin.sidebar.dashboard') }}</span>
                                 </NuxtLink>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

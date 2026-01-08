@@ -90,7 +90,7 @@ const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString()
         <!-- Feedback Card -->
         <Card class="cursor-pointer transition-colors hover:bg-accent/50" @click="navigateTo('/admin/feedbacks')">
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-medium">Feedback</CardTitle>
+            <CardTitle class="text-sm font-medium">{{ t('admin.pages.dashboard.feedback') }}</CardTitle>
             <ArrowRight class="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

@@ -700,6 +700,7 @@ export default defineI18nLocale(async locale => {
           totalUsers: '总用户数',
           tokenUsage: 'Token 使用量',
           conversations: '对话数',
+          feedback: '反馈管理',
           recentUsers: '最近用户',
           recentUsersDesc: '最新注册的用户',
           topAssistants: '热门助理',

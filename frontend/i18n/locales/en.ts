@@ -700,6 +700,7 @@ export default defineI18nLocale(async locale => {
           totalUsers: 'Total Users',
           tokenUsage: 'Token Usage',
           conversations: 'Conversations',
+          feedback: 'Feedback',
           recentUsers: 'Recent Users',
           recentUsersDesc: 'Latest registered users',
           topAssistants: 'Top Assistants',

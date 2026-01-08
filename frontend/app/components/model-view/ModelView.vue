@@ -78,8 +78,8 @@ const canView = computed(() => props.config.canView !== false)
 const canDuplicate = computed(() => props.config.canDuplicate !== false)
 const selectable = computed(() => props.config.selectable !== false)
 const showFilters = computed(() => props.config.showFilters !== false)
-const showExport = computed(() => props.config.showExport !== false)
-const showImport = computed(() => props.config.showImport !== false)
+const showExport = computed(() => !!props.config.showExport)
+const showImport = computed(() => !!props.config.showImport)
 const emptyMessage = computed(() => props.config.emptyMessage || t('components.modelView.emptyMessage'))
 
 const detailRenderValues = computed<Record<string, any>>(() => {

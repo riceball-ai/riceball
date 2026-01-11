@@ -19,12 +19,16 @@ graph TD
         Tools -.->|Standard Protocol| MCP["MCP (Model Context Protocol)"]
     end
     
-    Provider -.->|API| External["External AI Services (OpenAI/Ollama/etc.)"]
+    ExternalApps["External Apps<br/>(WeCom/Telegram)"] -->|Webhook| Assistant
+    Provider -.->|API| ExternalServices["External AI Services (OpenAI/Ollama/etc.)"]
 ```
 
 ### Entity Explanation
 
 - **Assistant**: The core entity for user interaction. It defines "Who am I" (System Prompt), "What brain do I use" (Model), "What do I remember" (Knowledge Base), and "What can I do" (Tools).
+- **Channels**: The interface for external communication.
+  - **Adapter Pattern**: Normalized handling of messages from different platforms (WeCom, Telegram, etc.).
+  - **Identity Mapping**: Automatically maps external user IDs (e.g., WeCom UserID) to internal system users, ensuring conversation isolation.
 - **Model Provider & Model**: 
   - **Provider**: Manages credentials for AI service providers (e.g., OpenAI API Key).
   - **Model**: Specific model configuration (e.g., GPT-4o). RiceBall abstracts away the differences between providers.

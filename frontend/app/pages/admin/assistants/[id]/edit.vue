@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ArrowLeft, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, Trash2, AudioWaveform } from 'lucide-vue-next'
 import { Button } from '~/components/ui/button'
 import { 
   AlertDialog,
@@ -122,10 +122,16 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Delete button -->
-      <AlertDialog>
+      <div class="flex items-center gap-2">
+        <Button variant="outline" @click="router.push(`/admin/assistants/${assistantId}/integrations`)">
+            <AudioWaveform class="h-4 w-4 mr-2"/>
+            Integrations
+        </Button>
+
+        <!-- Delete button -->
+        <AlertDialog>
         <AlertDialogTrigger as-child>
-          <Button variant="destructive" size="sm" :disabled="loading">
+          <Button variant="destructive" :disabled="loading">
             <Trash2 class="h-4 w-4 mr-2" />
             {{ t('admin.delete') }}
           </Button>
@@ -149,6 +155,7 @@ onMounted(() => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
     </div>
 
     <!-- Loading state -->

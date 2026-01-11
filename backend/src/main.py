@@ -29,6 +29,8 @@ from .chat.api.v1.admin_router import router as chat_admin_router_v1
 from .chat.api.v1.share_router import router as chat_share_router_v1
 from .chat.api.v1.openai_router import router as chat_openai_router_v1
 from .agents.api.v1.admin_router import router as agents_admin_router_v1
+from .channels.api.v1.admin_router import router as channels_config_router
+from .channels.api.v1.webhook_router import router as channels_webhook_router
 
 logging.basicConfig(level=settings.LOG_LEVEL)
 
@@ -74,6 +76,7 @@ app.include_router(oauth_user_router, prefix="/api/v1", tags=["OAuth"])
 app.include_router(assistants_user_router_v1, prefix="/api/v1", tags=["Assistants"])
 app.include_router(chat_share_router_v1, prefix="/api/v1", tags=["Chat Shares"])
 app.include_router(chat_openai_router_v1, prefix="/api/v1")
+app.include_router(channels_webhook_router, prefix="/api/v1", tags=["Channels Webhook"])
 
 
 # User routes
@@ -91,6 +94,8 @@ user_route_v1.include_router(models_user_router_v1, tags=["AI Models"])
 user_route_v1.include_router(files_user_router_v1, tags=["Files"])
 
 user_route_v1.include_router(chat_user_router_v1, tags=["Chat"])
+
+user_route_v1.include_router(channels_config_router, tags=["Channels Config"])
 
 app.include_router(user_route_v1)
 

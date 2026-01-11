@@ -19,9 +19,16 @@ graph LR
         State["State Management<br/>(Pinia)"]
     end
 
+    subgraph Channels ["Channels / Integrations"]
+        WeCom["WeCom / Enterprise WeChat"]
+        Telegram[Telegram]
+        Slack["Slack (Planned)"]
+    end
+
     subgraph Backend ["Backend Services"]
         API[API Router]
         Auth["Auth Module<br/>(FastAPI Users)"]
+        ChannelsSvc["Channel Service<br/>(Identity & Adapter)"]
         RAG[RAG Engine]
         Agent["Agent Engine<br/>(LangChain + Tools)"]
     end
@@ -38,6 +45,10 @@ graph LR
     UI <--> State
     UI -->|API| API
     
+    Channels -->|Webhook| API
+    API --> ChannelsSvc
+    ChannelsSvc --> Agent
+    
     API --> Auth
     API --> RAG
     API --> Agent
@@ -48,6 +59,7 @@ graph LR
     RAG <--> LLM
 
     Auth --> DB
+    ChannelsSvc --> DB
     RAG --> FileStore
 ```
 
@@ -60,6 +72,10 @@ graph LR
 - **🤖 Agent Engine**: 
   - Built on **LangChain**, utilizing robust **Tool Calling** capabilities to execute tasks.
   - **Model Context Protocol (MCP)** support is in active development (🚧), aiming to provide standardized connections to your ecosystem.
+- **📢 Multi-Channel Integrations**:
+  - **Omnichannel**: Deploy your Assistant to **WeCom (Enterprise WeChat)**, **Telegram**, and more. 
+  - **Guest Management**: Automatically maps external user identities to internal "Guest" accounts with isolated conversation history.
+  - **Streaming**: Supports streaming responses even on platforms that require polling (like WeCom Smart Bot) via an intermediate stream buffer.
 - **🔌 Multi-Model Support**: 
   - **Vendor Agnostic**: Switch between OpenAI, Anthropic, Google Gemini, XAI (Grok), and any OpenAI-compatible provider (e.g., DeepSeek, DashScope).
   - **Cost Optimization**: Route simple queries to cheaper models and complex reasoning to high-performance models.

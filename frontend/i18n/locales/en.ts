@@ -53,6 +53,11 @@ export default defineI18nLocale(async locale => {
       updatedAt: 'Updated At',
       description: 'Description',
       confirmDelete: 'Confirm Delete',
+      active: 'Active',
+      disabled: 'Disabled',
+      required: 'Required',
+      created: 'Created successfully',
+      updated: 'Updated successfully',
     },
 
     // Components
@@ -389,6 +394,51 @@ export default defineI18nLocale(async locale => {
         productivity: 'Productivity',
         other: 'Other',
         all: 'All'
+      },
+      integrations: {
+        title: 'Integrations',
+        title_page: 'Assistant Integrations',
+        manage_channels_for: 'Manage channels for {name}',
+        failed_load: 'Failed to load assistant',
+      },
+      channels: {
+        list_title: 'Integration Channels',
+        list_description: 'Connect this assistant to external messaging platforms.',
+        add: 'Add Channel',
+        loading: 'Loading channels...',
+        empty: 'No channels configured yet.',
+        connect_btn: 'Connect Telegram / WeCom',
+        copy_webhook: 'Copy Webhook URL',
+        webhook_copied: 'Webhook URL copied!',
+        delete_confirm: 'Are you sure you want to delete this channel?',
+        delete_success: 'Channel deleted',
+        delete_failed: 'Failed to delete',
+        form: {
+             edit_title: 'Edit Channel',
+             add_title: 'Add New Channel',
+             description: 'Connect your assistant to external platforms.',
+             platform: 'Platform',
+             select_provider: 'Select provider',
+             name: 'Channel Name',
+             telegram: {
+                 bot_token: 'Bot Token',
+                 bot_token_hint: "Obtain from {'@'}BotFather on Telegram"
+             },
+             wecom: {
+                 corp_id: 'Corp ID',
+                 agent_id: 'Agent ID',
+                 secret: 'Secret',
+                 token: 'Token',
+                 aes_key: 'EncodingAESKey',
+                 generate_random: 'Generate Random Keys'
+             },
+             is_active: 'Enable this channel',
+             error_missing_creds: 'Missing required credentials',
+             error_failed: 'Operation failed',
+             webhook_url: 'Webhook URL',
+             webhook_hint: 'Configure this URL in your platform settings to receive messages.',
+             save_to_get_webhook: 'Please save the channel first to generate the Webhook URL.'
+        }
       }
     },
 

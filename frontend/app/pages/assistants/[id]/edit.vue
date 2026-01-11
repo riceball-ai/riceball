@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { toast } from 'vue-sonner'
-import AssistantForm from '~/components/assistants/AssistantForm.vue'
-import type { Assistant } from '~/types/api'
+import { ref, onMounted } from "vue"
+import { useRouter, useRoute } from "vue-router"
+import { toast } from "vue-sonner"
+import { Share2 } from "lucide-vue-next"
+import { Button } from "@/components/ui/button"
+import AssistantForm from "~/components/assistants/AssistantForm.vue"
+import type { Assistant } from "~/types/api"
 
 const { t } = useI18n()
 
 useHead({
-  title: t('assistantForm.editTitle')
+  title: t("assistantForm.editTitle")
 })
 
 // Page metadata
 definePageMeta({
-  layout: 'default'
+  layout: "default"
 })
 
 const router = useRouter()
@@ -33,9 +35,9 @@ const fetchAssistant = async () => {
     const data = await $api<Assistant>(`/v1/assistants/${assistantId}`)
     assistant.value = data
   } catch (error) {
-    console.error('Failed to fetch assistant details:', error)
-    toast.error(t('assistantForm.fetchFailed'))
-    router.push('/assistants')
+    console.error("Failed to fetch assistant details:", error)
+    toast.error(t("assistantForm.fetchFailed"))
+    router.push("/assistants")
   } finally {
     fetching.value = false
   }
@@ -52,16 +54,16 @@ const updateAssistant = async (data: Partial<Assistant>) => {
     const { $api } = useNuxtApp()
     
     await $api(`/v1/assistants/${assistantId}`, {
-      method: 'PUT',
+      method: "PUT",
       body: data
     })
     
-    toast.success(t('assistantForm.updateSuccess'))
-    router.push('/assistants')
+    toast.success(t("assistantForm.updateSuccess"))
+    router.push("/assistants")
     
   } catch (error) {
-    console.error('Update failed:', error)
-    toast.error(t('assistantForm.updateFailed'))
+    console.error("Update failed:", error)
+    toast.error(t("assistantForm.updateFailed"))
   } finally {
     loading.value = false
   }
@@ -69,7 +71,7 @@ const updateAssistant = async (data: Partial<Assistant>) => {
 
 // Cancel action
 const handleCancel = () => {
-  router.push('/assistants')
+  router.push("/assistants")
 }
 </script>
 
@@ -81,13 +83,13 @@ const handleCancel = () => {
           <BreadcrumbItem>
             <BreadcrumbLink as-child>
               <NuxtLink to="/assistants">
-                {{ t('chat.breadcrumbAssistants') }}
+                {{ t("chat.breadcrumbAssistants") }}
               </NuxtLink>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>{{ t('assistantForm.editTitle') }}</BreadcrumbPage>
+            <BreadcrumbPage>{{ t("assistantForm.editTitle") }}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -99,14 +101,15 @@ const handleCancel = () => {
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
 
-        <AssistantForm
-          v-else-if="assistant"
-          :initial-data="assistant"
-          :is-admin="false"
-          :loading="loading"
-          @submit="updateAssistant"
-          @cancel="handleCancel"
-        />
+        <div v-else-if="assistant" class="space-y-6">
+            <AssistantForm
+            :initial-data="assistant"
+            :is-admin="false"
+            :loading="loading"
+            @submit="updateAssistant"
+            @cancel="handleCancel"
+            />
+        </div>
       </div>
     </div>
   </div>

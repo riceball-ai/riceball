@@ -19,12 +19,16 @@ graph TD
         Tools -.->|标准协议| MCP["MCP (Model Context Protocol)"]
     end
     
-    Provider -.->|API| External["外部 AI 服务 (OpenAI/Ollama/etc.)"]
+    ExternalApps["外部应用 (WeCom/Telegram)"] -->|Webhook| Assistant
+    Provider -.->|API| ExternalServices["外部 AI 服务 (OpenAI/Ollama/etc.)"]
 ```
 
 ### 实体说明
 
 - **Assistant (助手)**: 用户交互的核心实体。它定义了"我是谁"（系统提示词）、"我能用什么大脑"（模型）、"我记得什么"（知识库）以及"我能做什么"（工具）。
+- **Channels (渠道)**: 外部沟通的接口。
+  - **适配器模式 (Adapter Pattern)**: 统一处理来自不同平台（企业微信、Telegram 等）的消息。
+  - **身份映射 (Identity Mapping)**: 自动将外部用户 ID（如企业微信 UserID）映射为系统内部用户，确保对话隔离。
 - **Model Provider & Model**: 
   - **Provider**: 管理 AI 服务商的凭证（如 OpenAI API Key）。
   - **Model**: 具体的模型配置（如 GPT-4o）。RiceBall 屏蔽了不同提供商的差异。

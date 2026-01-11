@@ -53,6 +53,11 @@ export default defineI18nLocale(async locale => {
       updatedAt: '更新时间',
       description: '描述',
       confirmDelete: '确认删除',
+      active: '已启用',
+      disabled: '已禁用',
+      required: '必填项',
+      created: '创建成功',
+      updated: '更新成功',
     },
 
     // 组件
@@ -389,6 +394,51 @@ export default defineI18nLocale(async locale => {
         productivity: '生产力',
         other: '其他',
         all: '全部'
+      },
+      integrations: {
+        title: '集成',
+        title_page: '助理集成',
+        manage_channels_for: '管理 {name} 的渠道',
+        failed_load: '加载助理失败',
+      },
+      channels: {
+        list_title: '集成渠道',
+        list_description: '将此助理连接到外部消息平台。',
+        add: '添加渠道',
+        loading: '正在加载渠道...',
+        empty: '尚未配置任何渠道。',
+        connect_btn: '连接 Telegram / 企业微信',
+        copy_webhook: '复制 Webhook URL',
+        webhook_copied: 'Webhook URL 已复制！',
+        delete_confirm: '确定要删除此渠道吗？',
+        delete_success: '渠道已删除',
+        delete_failed: '删除失败',
+        form: {
+             edit_title: '编辑渠道',
+             add_title: '添加新渠道',
+             description: '将您的助理连接到外部平台。',
+             platform: '平台',
+             select_provider: '选择提供商',
+             name: '渠道名称',
+             telegram: {
+                 bot_token: 'Bot Token',
+                 bot_token_hint: "从 Telegram {'@'}BotFather 获取"
+             },
+             wecom: {
+                 corp_id: '企业ID (Corp ID)',
+                 agent_id: '应用ID (Agent ID)',
+                 secret: 'Secret',
+                 token: 'Token',
+                 aes_key: 'EncodingAESKey',
+                 generate_random: '生成随机密钥'
+             },
+             is_active: '启用此渠道',
+             error_missing_creds: '缺失必要的凭据',
+             error_failed: '操作失败',
+             webhook_url: 'Webhook URL',
+             webhook_hint: '在您的平台设置中配置此 URL 以接收消息。',
+             save_to_get_webhook: '请先保存渠道以生成 Webhook URL。'
+        }
       }
     },
 

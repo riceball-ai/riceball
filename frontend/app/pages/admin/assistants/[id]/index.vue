@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ArrowLeft, Edit, Trash2, MessageSquare, Copy, Settings, Languages } from 'lucide-vue-next'
+import { ArrowLeft, Save, Trash2 } from 'lucide-vue-next'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
-import { Badge } from '~/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
-import { Separator } from '~/components/ui/separator'
-import { Label } from '~/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import { Card, CardContent } from '~/components/ui/card'
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -20,327 +17,247 @@ import {
   AlertDialogTrigger,
 } from '~/components/ui/alert-dialog'
 import { toast } from 'vue-sonner'
-import type { Assistant } from '~/types/api'
-import { ASSISTANT_CATEGORIES } from '~/constants/assistants'
+import BasicInfo from '~/components/assistants/form/BasicInfo.vue'
+import ModelSettings from '~/components/assistants/form/ModelSettings.vue'
+import ReviewDeployForm from '~/components/assistants/form/ReviewDeployForm.vue'
+import KnowledgeBaseConfig from '~/components/admin/KnowledgeBaseConfig.vue'
+import AgentConfig from '~/components/admin/AgentConfig.vue'
+import TranslationManager from '~/components/assistants/form/TranslationManager.vue'
+import ChannelList from '~/components/channels/ChannelList.vue'
+import type { Assistant, Model, RagConfig } from '~/types/api'
+import { useConfigStore } from '~/stores/config'
 
 const { t } = useI18n()
+const router = useRouter()
+const route = useRoute()
+const configStore = useConfigStore()
+const assistantId = route.params.id as string
 
 // Page metadata
 definePageMeta({
-  breadcrumb: 'admin.pages.assistants.detail.breadcrumb',
+  breadcrumb: 'admin.pages.assistants.edit.breadcrumb',
   layout: 'admin'
 })
 
-const router = useRouter()
-const route = useRoute()
-const assistantId = route.params.id as string
-
-// State management
+// State
 const loading = ref(false)
+const saveLoading = ref(false)
 const deleteLoading = ref(false)
-const assistant = ref<Assistant | null>(null)
+const enableCategories = ref(false)
+const activeTab = ref('general')
 
-// Computed properties
-const statusConfig = computed(() => {
-  if (!assistant.value) return null
-  
-  switch (assistant.value.status) {
-    case 'ACTIVE':
-      return { label: t('admin.pages.assistants.detail.status.active'), variant: 'default' as const, color: 'text-green-600' }
-    case 'INACTIVE':
-      return { label: t('admin.pages.assistants.detail.status.inactive'), variant: 'secondary' as const, color: 'text-gray-500' }
-    case 'DRAFT':
-      return { label: t('admin.pages.assistants.detail.status.draft'), variant: 'outline' as const, color: 'text-orange-600' }
-    default:
-      return { label: t('admin.pages.assistants.detail.status.unknown'), variant: 'secondary' as const, color: 'text-gray-500' }
+// Data
+const formData = ref<Partial<Assistant>>({})
+const originalData = ref<Assistant | null>(null)
+
+// Computed for sub-components
+const knowledgeBaseData = computed({
+  get: () => ({
+    knowledge_base_ids: formData.value.knowledge_base_ids || [],
+    rag_config: formData.value.rag_config
+  }),
+  set: (val) => {
+    formData.value.knowledge_base_ids = val.knowledge_base_ids
+    formData.value.rag_config = val.rag_config
   }
 })
 
-const categoryLabel = computed(() => {
-  if (!assistant.value?.category) return t('admin.pages.assistants.detail.uncategorized')
-  const category = ASSISTANT_CATEGORIES.find(c => c.value === assistant.value?.category)
-  return category ? t(`admin.pages.assistants.create.basicInfo.categories.${category.value}`) : assistant.value.category
+const agentData = computed({
+  get: () => ({
+    enable_agent: !!formData.value.enable_agent,
+    agent_max_iterations: formData.value.agent_max_iterations || 5,
+    agent_enabled_tools: formData.value.agent_enabled_tools || [],
+    mcp_server_ids: formData.value.mcp_server_ids || []
+  }),
+  set: (val) => {
+    formData.value.enable_agent = val.enable_agent
+    formData.value.agent_max_iterations = val.agent_max_iterations
+    formData.value.agent_enabled_tools = val.agent_enabled_tools
+    formData.value.mcp_server_ids = val.mcp_server_ids
+  }
 })
 
-// Load assistant data
+// Fetch options
+const { data: models } = useAPI<Model[]>('/v1/admin/all-models?capabilities=chat', { server: false })
+const modelOptions = computed(() => {
+  return (models.value ?? []).map(m => ({ label: m.display_name, value: m.id }))
+})
+
+// Validation
+const errors = ref<Record<string, string>>({})
+
+// Load data
+onMounted(async () => {
+  const config = await configStore.getConfig()
+  enableCategories.value = String(config.enable_assistant_categories).toLowerCase() !== 'false'
+  
+  loadAssistant()
+})
+
 const loadAssistant = async () => {
   loading.value = true
   try {
     const { $api } = useNuxtApp()
-    const response = await $api(`/v1/admin/assistants/${assistantId}`)
-    assistant.value = response
-    
+    const response = await $api<Assistant>(`/v1/admin/assistants/${assistantId}`)
+    originalData.value = response
+    formData.value = JSON.parse(JSON.stringify(response))
   } catch (error) {
-    console.error('Failed to load assistant data:', error)
-    toast.error(t('admin.pages.assistants.detail.loadFailed'))
+    console.error('Failed to load assistant:', error)
+    toast.error(t('admin.pages.assistants.edit.loadFailed'))
     router.push('/admin/assistants')
   } finally {
     loading.value = false
   }
 }
 
-// Delete assistant
-const deleteAssistant = async () => {
+// Actions
+const handleSave = async () => {
+  // Validate basic info
+  if (!formData.value.name || formData.value.name.length < 2) {
+    errors.value.name = t('admin.pages.assistants.create.validation.nameMin')
+    activeTab.value = 'general'
+    return
+  }
+  if (!formData.value.system_prompt) {
+    errors.value.system_prompt = t('admin.pages.assistants.create.validation.systemPromptMin')
+    activeTab.value = 'model'
+    return
+  }
+
+  saveLoading.value = true
+  try {
+    const { $api } = useNuxtApp()
+    await $api(`/v1/admin/assistants/${assistantId}`, {
+      method: 'PUT',
+      body: formData.value
+    })
+    toast.success(t('admin.pages.assistants.edit.updateSuccess'))
+    router.push('/admin/assistants')
+  } catch (error) {
+    console.error('Update failed:', error)
+    toast.error(t('admin.pages.assistants.edit.updateFailed'))
+  } finally {
+    saveLoading.value = false
+  }
+}
+
+const handleDelete = async () => {
   deleteLoading.value = true
   try {
     const { $api } = useNuxtApp()
     await $api(`/v1/admin/assistants/${assistantId}`, {
       method: 'DELETE'
     })
-    
-    toast.success(t('admin.pages.assistants.detail.deleteSuccess'))
+    toast.success(t('admin.pages.assistants.edit.deleteSuccess'))
     router.push('/admin/assistants')
-    
   } catch (error) {
     console.error('Delete failed:', error)
-    toast.error(t('admin.pages.assistants.detail.deleteFailed'))
+    toast.error(t('admin.pages.assistants.edit.deleteFailed'))
   } finally {
     deleteLoading.value = false
   }
 }
-
-// Copy assistant ID
-const copyAssistantId = () => {
-  if (assistant.value) {
-    navigator.clipboard.writeText(assistant.value.id)
-    toast.success(t('admin.pages.assistants.detail.idCopied'))
-  }
-}
-
-// Navigation actions
-const handleEdit = () => {
-  router.push(`/admin/assistants/${assistantId}/edit`)
-}
-
-const handleBack = () => {
-  router.push('/admin/assistants')
-}
-
-const handleChat = () => {
-  router.push(`/chatwith/${assistantId}`)
-}
-
-// Page initialization
-onMounted(() => {
-  loadAssistant()
-})
 </script>
 
 <template>
-  <div class="container mx-auto py-6 space-y-6">
+  <div class="space-y-6 pb-10">
+    <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-4">
-        <Button variant="ghost" size="sm" @click="handleBack">
-          <ArrowLeft class="h-4 w-4 mr-2" />
-          {{ t('admin.back') }}
+        <Button variant="ghost" size="icon" @click="router.push('/admin/assistants')">
+          <ArrowLeft class="w-5 h-5" />
         </Button>
         <div>
-          <h1 class="text-2xl font-bold">{{ t('admin.pages.assistants.detail.title') }}</h1>
-          <p class="text-muted-foreground">
-            {{ assistant?.name ? t('admin.pages.assistants.detail.viewing', { name: assistant.name }) : t('common.loading') }}
-          </p>
+          <h1 class="text-2xl font-bold tracking-tight">{{ t('admin.pages.assistants.edit.title') }}</h1>
+          <p class="text-muted-foreground">{{ formData.name || '...' }}</p>
         </div>
       </div>
-
       <div class="flex items-center gap-2">
-        <Button variant="outline" size="sm" @click="handleChat" :disabled="loading">
-          <MessageSquare class="h-4 w-4 mr-2" />
-          {{ t('admin.pages.assistants.detail.testChat') }}
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          @click="router.push(`/admin/assistants/${assistantId}/translations`)" 
-          :disabled="loading"
-        >
-          <Languages class="h-4 w-4 mr-2" />
-          {{ t('admin.pages.assistants.actions.translations') }}
-        </Button>
-        <Button variant="outline" size="sm" @click="handleEdit" :disabled="loading">
-          <Edit class="h-4 w-4 mr-2" />
-          {{ t('admin.edit') }}
-        </Button>
-        
         <AlertDialog>
           <AlertDialogTrigger as-child>
-            <Button variant="destructive" size="sm" :disabled="loading">
-              <Trash2 class="h-4 w-4 mr-2" />
-              {{ t('admin.delete') }}
+            <Button variant="destructive" :disabled="deleteLoading || saveLoading">
+              <Trash2 class="w-4 h-4 mr-2" />
+              {{ t('common.delete') }}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{{ t('admin.pages.assistants.delete.title') }}</AlertDialogTitle>
+              <AlertDialogTitle>{{ t('admin.pages.assistants.edit.deleteTitle') }}</AlertDialogTitle>
               <AlertDialogDescription>
-                {{ t('admin.pages.assistants.delete.description', { name: assistant?.name }) }}
+                {{ t('admin.pages.assistants.edit.deleteDescription') }}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>{{ t('admin.cancel') }}</AlertDialogCancel>
-              <AlertDialogAction 
-                @click="deleteAssistant" 
-                :disabled="deleteLoading"
-                class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {{ t('admin.pages.assistants.delete.confirm') }}
+              <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+              <AlertDialogAction @click="handleDelete" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                {{ t('common.confirmDelete') }}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        
+        <Button @click="handleSave" :disabled="saveLoading || deleteLoading || loading">
+          <Save class="w-4 h-4 mr-2" />
+          {{ t('common.save') }}
+        </Button>
       </div>
     </div>
 
-    <div v-if="loading" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>
+    <Tabs v-model="activeTab" class="space-y-4">
+      <TabsList>
+        <TabsTrigger value="general">{{ t('assistantForm.basicInfo') }}</TabsTrigger>
+        <TabsTrigger value="model">{{ t('assistantForm.modelConfig') }}</TabsTrigger>
+        <TabsTrigger value="knowledge">{{ t('admin.knowledgeBase.title') }}</TabsTrigger>
+        <TabsTrigger value="agent">{{ t('admin.agent.title') }}</TabsTrigger>
+        <TabsTrigger value="integrations">{{ t('assistants.integrations.title') }}</TabsTrigger>
+        <TabsTrigger value="translations">{{ t('admin.pages.assistants.translations.title') }}</TabsTrigger>
+      </TabsList>
 
-    <div v-else-if="assistant" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 space-y-6">
-        <Card>
-          <CardHeader>
-            <div class="flex items-start gap-4">
-              <Avatar class="w-16 h-16">
-                <AvatarImage :src="assistant.avatar_url || ''" />
-                <AvatarFallback>{{ assistant.name.charAt(0).toUpperCase() }}</AvatarFallback>
-              </Avatar>
-              <div class="flex-1">
-                <div class="flex items-center gap-3 mb-2">
-                  <CardTitle class="text-xl">{{ assistant.name }}</CardTitle>
-                  <Badge v-if="statusConfig" :variant="statusConfig.variant">
-                    {{ statusConfig.label }}
-                  </Badge>
-                  <Badge v-if="assistant.is_public" variant="outline">
-                    {{ t('admin.public') }}
-                  </Badge>
-                </div>
-                <CardDescription class="text-base">
-                  {{ assistant.description }}
-                </CardDescription>
-                
-                <div class="flex flex-wrap gap-2 mt-4">
-                  <Badge variant="secondary" class="text-xs">
-                    {{ categoryLabel }}
-                  </Badge>
-                  <Badge 
-                    v-for="tag in assistant.tags" 
-                    :key="tag" 
-                    variant="outline" 
-                    class="text-xs"
-                  >
-                    {{ tag }}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+      <TabsContent value="general" class="space-y-6">
+        <BasicInfo
+          v-model="formData"
+          :enable-categories="enableCategories"
+          :loading="loading"
+          :errors="errors"
+        />
+        <ReviewDeployForm
+          v-model="formData"
+          :is-admin="true"
+          :loading="loading"
+          :errors="errors"
+        />
+      </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle class="flex items-center gap-2">
-              <Settings class="h-5 w-5" />
-              {{ t('admin.pages.assistants.create.modelConfig.systemPromptLabel') }}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div class="bg-muted p-4 rounded-lg">
-              <pre class="whitespace-pre-wrap text-sm">{{ assistant.system_prompt }}</pre>
-            </div>
-          </CardContent>
-        </Card>
+      <TabsContent value="model">
+        <ModelSettings
+          v-model="formData"
+          :model-options="modelOptions"
+          :loading="loading"
+          :errors="errors"
+        />
+      </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{{ t('admin.pages.assistants.create.modelConfig.title') }}</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <Label class="text-sm text-muted-foreground">{{ t('admin.pages.assistants.create.modelConfig.modelLabel') }}</Label>
-                <div class="font-medium">{{ assistant.model?.display_name || t('admin.notSet') }}</div>
-              </div>
-              <div>
-                <Label class="text-sm text-muted-foreground">{{ t('admin.pages.assistants.create.modelConfig.providerLabel') }}</Label>
-                <div class="font-medium">{{ assistant.model?.provider || '-' }}</div>
-              </div>
-              <div>
-                <Label class="text-sm text-muted-foreground">{{ t('admin.pages.assistants.create.modelConfig.temperatureLabel') }}</Label>
-                <div class="font-medium">{{ assistant.temperature ?? '-' }}</div>
-              </div>
-              <div>
-                <Label class="text-sm text-muted-foreground">{{ t('admin.pages.assistants.create.modelConfig.maxTokensLabel') }}</Label>
-                <div class="font-medium">{{ assistant.max_tokens ?? '-' }}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <TabsContent value="knowledge">
+         <KnowledgeBaseConfig
+           v-model="knowledgeBaseData"
+           :disabled="loading"
+         />
+      </TabsContent>
 
-      <div class="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle class="text-lg">{{ t('admin.pages.assistants.detail.statusInfo') }}</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-4">
-            <div>
-              <Label class="text-sm text-muted-foreground">{{ t('admin.pages.assistants.create.publishSettings.statusLabel') }}</Label>
-              <div class="flex items-center gap-2 mt-1">
-                <div :class="statusConfig?.color" class="w-2 h-2 rounded-full bg-current"></div>
-                <span class="font-medium">{{ statusConfig?.label }}</span>
-              </div>
-            </div>
-            <Separator />
-            <div>
-              <Label class="text-sm text-muted-foreground">{{ t('admin.pages.assistants.detail.visibility') }}</Label>
-              <div class="font-medium mt-1">
-                {{ assistant.is_public ? t('admin.pages.assistants.detail.visibilityPublic') : t('admin.pages.assistants.detail.visibilityPrivate') }}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <TabsContent value="agent">
+        <AgentConfig
+          v-model="agentData"
+          :disabled="loading"
+        />
+      </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle class="text-lg">{{ t('admin.pages.assistants.detail.metadata') }}</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-4 text-sm">
-            <div>
-              <Label class="text-muted-foreground">Assistant ID</Label>
-              <div class="flex items-center gap-2 mt-1">
-                <code class="font-mono text-xs bg-muted px-2 py-1 rounded">{{ assistant.id }}</code>
-                <Button variant="ghost" size="sm" @click="copyAssistantId">
-                  <Copy class="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-            <Separator />
-            <div>
-              <Label class="text-muted-foreground">{{ t('admin.pages.assistants.list.createdAt') }}</Label>
-              <div class="mt-1">{{ new Date(assistant.created_at).toLocaleString() }}</div>
-            </div>
-            <div>
-              <Label class="text-muted-foreground">{{ t('admin.pages.assistants.edit.updatedAt') }}</Label>
-              <div class="mt-1">{{ new Date(assistant.updated_at).toLocaleString() }}</div>
-            </div>
-            <div v-if="assistant.owner_id">
-              <Label class="text-muted-foreground">{{ t('admin.pages.assistants.detail.creator') }}</Label>
-              <div class="mt-1">{{ assistant.owner_id }}</div>
-            </div>
-          </CardContent>
-        </Card>
+      <TabsContent value="integrations">
+        <ChannelList :assistant-id="assistantId" />
+      </TabsContent>
 
-        <!-- Usage Stats (Reserved) -->
-        <Card>
-          <CardHeader>
-            <CardTitle class="text-lg">{{ t('admin.pages.assistants.detail.usageStats') }}</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-3 text-sm">
-            <div class="text-muted-foreground text-center py-4">
-              {{ t('admin.pages.assistants.detail.statsDev') }}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+      <TabsContent value="translations">
+        <TranslationManager :assistant-id="assistantId" />
+      </TabsContent>
+    </Tabs>
   </div>
 </template>

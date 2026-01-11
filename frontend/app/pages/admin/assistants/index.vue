@@ -112,19 +112,9 @@ const tableColumns = computed((): ColumnDef<Assistant>[] => [
 // Row action config
 const rowActions = computed((): ActionConfig[] => [
   {
-    key: 'view',
-    label: t('admin.pages.assistants.actions.view'),
-    icon: Eye,
-  },
-  {
     key: 'edit',
     label: t('admin.pages.assistants.actions.edit'),
     icon: Edit,
-  },
-  {
-    key: 'translations',
-    label: t('admin.pages.assistants.actions.translations'),
-    icon: Languages,
   }
 ])
 
@@ -222,14 +212,8 @@ const handlePaginate = (paginationState: PaginationState) => {
 
 const handleRowAction = (action: ActionConfig, row: Assistant) => {
   switch (action.key) {
-    case 'view':
-      router.push(`/admin/assistants/${row.id}`)
-      break
     case 'edit':
-      router.push(`/admin/assistants/${row.id}/edit`)
-      break
-    case 'translations':
-      router.push(`/admin/assistants/${row.id}/translations`)
+      router.push(`/admin/assistants/${row.id}`)
       break
     default:
       console.log('Unknown action:', action.key, row)

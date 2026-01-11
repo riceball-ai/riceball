@@ -690,6 +690,12 @@ export default defineI18nLocale(async locale => {
           configuration: 'Configuration',
         }
       },
+      knowledgeBase: {
+        title: 'Knowledge Base',
+      },
+      agent: {
+        title: 'Agent Configuration',
+      },
       apiKeys: {
         name: 'Name',
         namePlaceholder: 'Enter key name',
@@ -745,6 +751,118 @@ export default defineI18nLocale(async locale => {
         }
       },
       pages: {
+        assistants: {
+          title: 'Assistant Management',
+          description: 'Create and manage AI assistants, configure model parameters and knowledge bases.',
+          createButton: 'Create Assistant',
+          breadcrumb: 'Assistants List',
+          emptyMessage: 'No assistants found',
+          loadDataFailed: 'Failed to load assistants list',
+          columns: {
+            name: 'Name',
+            model: 'Model',
+            category: 'Category',
+            tags: 'Tags',
+            status: 'Status',
+            createdAt: 'Created At'
+          },
+          filters: {
+            model: 'Model',
+            modelPlaceholder: 'Select Model',
+            category: 'Category',
+            categoryPlaceholder: 'Select Category',
+            tags: 'Tags',
+            tagsPlaceholder: 'Enter Tags',
+            status: 'Status',
+            statusPlaceholder: 'Select Status',
+            createdAt: 'Created At'
+          },
+          status: {
+            active: 'Active',
+            inactive: 'Inactive',
+            draft: 'Draft',
+            unknown: 'Unknown',
+          },
+          actions: {
+            view: 'View',
+            edit: 'Edit',
+            translations: 'Translations',
+          },
+          create: {
+            title: 'Create Assistant',
+            subtitle: 'Configure basic information, model parameters, and publish settings.',
+            breadcrumb: 'Create Assistant',
+            createSuccess: 'Assistant created successfully',
+            createFailed: 'Failed to create assistant',
+            validation: {
+              nameMin: 'Name must be at least 2 characters',
+              systemPromptMin: 'System prompt must be at least 10 characters',
+              modelRequired: 'Please select a model',
+              statusRequired: 'Please set the publish status'
+            },
+            publishSettings: {
+               statuses: {
+                 inactive: 'Inactive'
+               },
+               isPublic: 'Public Access'
+            },
+            tips: {
+              title: 'Configuration Tips',
+              systemPromptTitle: 'System Prompt:',
+              systemPromptContent: 'This is the core setting of the assistant. Please describe the assistant\'s role, responsibilities, and limitations in detail. E.g. "You are a professional Python programmer..."',
+              modelSelectionTitle: 'Model Selection:',
+              modelSelectionContent: 'Different models have different capabilities and costs. For complex reasoning or coding tasks, choose a more powerful model.',
+              parameterTitle: 'Parameter Adjustment:',
+              temperatureTitle: 'Temperature:',
+              temperatureContent: 'Controls the randomness of the response. Higher values mean more creativity, lower values mean more precision.',
+              tokensTitle: 'Max Tokens:',
+              tokensContent: 'Limits the maximum length of the assistant\'s response.'
+            }
+          },
+          edit: {
+            title: 'Edit Assistant',
+            breadcrumb: 'Edit Assistant',
+            loadFailed: 'Failed to load assistant details',
+            updateSuccess: 'Updated successfully',
+            updateFailed: 'Update failed',
+            deleteTitle: 'Delete Assistant',
+            deleteDescription: 'Are you sure you want to delete this assistant? This action cannot be undone.',
+            deleteSuccess: 'Deleted successfully',
+            deleteFailed: 'Failed to delete'
+          },
+          detail: {
+             status: {
+                active: 'Active',
+                inactive: 'Inactive',
+                draft: 'Draft',
+                unknown: 'Unknown'
+             },
+             uncategorized: 'Uncategorized',
+             loadFailed: 'Failed to load details',
+             deleteSuccess: 'Deleted successfully',
+             deleteFailed: 'Failed to delete'
+          },
+          translations: {
+            title: 'Multilingual Settings',
+            breadcrumb: 'Translations',
+            subtitle: 'Manage multilingual configuration for {name}',
+            save: 'Save Translation',
+            saving: 'Saving...',
+            saveSuccess: 'Translation saved successfully',
+            saveFailed: 'Failed to save translation',
+            languageList: 'Language List',
+            selectLanguage: 'Select a language to edit',
+            defaultLanguage: 'Default Language (English)',
+            progress: 'Translation Progress: {progress}%',
+            reference: 'Reference (Default)',
+            translation: 'Translation ({language})',
+            namePlaceholder: 'Enter translated name',
+            descPlaceholder: 'Enter translated description',
+            promptPlaceholder: 'Enter translated system prompt',
+            guideTitle: 'Translation Guide',
+            guideContent: 'If you do not provide a translation for a specific language, the system will automatically use the default language configuration. You can translate only some fields; untranslated fields will fall back to the default language.'
+          }
+        },
         dashboard: {
           breadcrumb: 'Dashboard',
           totalUsers: 'Total Users',

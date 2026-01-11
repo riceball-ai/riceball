@@ -36,6 +36,10 @@ export default defineI18nLocale(async locale => {
       bulkOperationSuccess: '批量{action}操作成功，影响 {count} 条记录',
       importSuccess: '导入成功，共导入 {count} 条记录',
       saveChanges: '保存修改',
+      saving: '保存中...',
+      creating: '创建中...',
+      fixValidationErrors: '请修复表单错误',
+      prev: '上一步',
       updating: '更新...',
       deleting: '删除中...',
       rename: '重命名',
@@ -446,6 +450,11 @@ export default defineI18nLocale(async locale => {
     assistantForm: {
       createTitle: '新建 Assistant',
       editTitle: '编辑 Assistant',
+      tabs: {
+        basic: '基本信息',
+        model: '模型设置',
+        review: '预览发布',
+      },
       createSubtitle: '创建一个新的 AI 助手',
       editSubtitle: '修改 AI 助手配置',
       backToList: '返回列表',
@@ -751,119 +760,6 @@ export default defineI18nLocale(async locale => {
         }
       },
       pages: {
-        assistants: {
-          title: '助手管理',
-          description: '创建和管理 AI 助手，配置模型参数和知识库。',
-          createButton: '创建助手',
-          breadcrumb: '助手列表',
-          emptyMessage: '暂无助手',
-          loadDataFailed: '加载助手列表失败',
-          columns: {
-            name: '名称',
-            model: '模型',
-            category: '分类',
-            tags: '标签',
-            status: '状态',
-            createdAt: '创建时间'
-          },
-          filters: {
-            model: '模型',
-            modelPlaceholder: '选择模型',
-            category: '分类',
-            categoryPlaceholder: '选择分类',
-            tags: '标签',
-            tagsPlaceholder: '输入标签',
-            status: '状态',
-            statusPlaceholder: '选择状态',
-            createdAt: '创建时间'
-          },
-          status: {
-            active: '已启用',
-            inactive: '已禁用',
-            draft: '草稿',
-            unknown: '未知',
-          },
-          actions: {
-            view: '查看',
-            edit: '编辑',
-            translations: '多语言',
-          },
-          create: {
-            title: '新建助手',
-            subtitle: '配置助手的基本信息、模型参数和发布设置。',
-            breadcrumb: '新建助手',
-            createSuccess: '助手创建成功',
-            createFailed: '创建助手失败',
-            validation: {
-              nameMin: '名称至少需要2个字符',
-              systemPromptMin: '系统提示词至少需要10个字符',
-              modelRequired: '请选择一个模型',
-              statusRequired: '请设置发布状态'
-            },
-            publishSettings: {
-               statuses: {
-                 inactive: '已禁用'
-               },
-               isPublic: '公开访问'
-            },
-            tips: {
-              title: '配置提示',
-              systemPromptTitle: '系统提示词：',
-              systemPromptContent: '这是助手的核心设定。请详细描述助手的角色、职责和限制。例如："你是一个专业的 Python 程序员..."',
-              modelSelectionTitle: '模型选择：',
-              modelSelectionContent: '不同的模型有不同的能力和成本。如果涉及到复杂的推理或编程任务，建议选择更强大的模型。',
-              parameterTitle: '参数调整：',
-              temperatureTitle: '温度 (Temperature)：',
-              temperatureContent: '控制回复的随机性。数值越大越具有创造性，数值越小越严谨。',
-              tokensTitle: '最大 Tokens：',
-              tokensContent: '限制助手回复的最大长度。'
-            }
-          },
-          edit: {
-            title: '编辑助手',
-            breadcrumb: '编辑助手',
-            loadFailed: '加载助手详情失败',
-            updateSuccess: '更新成功',
-            updateFailed: '更新失败',
-            deleteTitle: '删除助手',
-            deleteDescription: '确定要删除这个助手吗？此操作无法撤销。',
-            deleteSuccess: '删除成功',
-            deleteFailed: '删除失败'
-          },
-          detail: {
-            breadcrumb: '助手详情',
-             status: {
-                active: '使用中',
-                inactive: '已禁用',
-                draft: '草稿',
-                unknown: '未知'
-             },
-             uncategorized: '未分类',
-             loadFailed: '加载详情失败',
-             deleteSuccess: '删除成功',
-             deleteFailed: '删除失败'
-          },
-          translations: {
-            title: '多语言设置',
-            breadcrumb: '多语言翻译',
-            subtitle: '{name} 的多语言配置',
-            save: '保存翻译',
-            saving: '保存中...',
-            saveSuccess: '翻译保存成功',
-            saveFailed: '翻译保存失败',
-            languageList: '语言列表',
-            selectLanguage: '选择需要编辑的语言',
-            defaultLanguage: '默认语言 (English)',
-            progress: '翻译进度: {progress}%',
-            reference: '参考 (默认语言)',
-            translation: '翻译 ({language})',
-            namePlaceholder: '输入翻译后的名称',
-            descPlaceholder: '输入翻译后的简介',
-            promptPlaceholder: '输入翻译后的系统提示词',
-            guideTitle: '翻译说明',
-            guideContent: '如果您不提供特定语言的翻译，系统将自动使用默认语言的配置。您可以只翻译部分字段，未翻译的字段将回退到默认语言。'
-          }
-        },
         dashboard: {
           breadcrumb: 'Dashboard',
           totalUsers: '总用户数',

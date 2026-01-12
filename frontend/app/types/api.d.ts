@@ -34,6 +34,23 @@ interface ChatResponse {
     conversation_id: number;
 }
 
+export interface RetrievalChunk {
+  content: string;
+  metadata: Record<string, any>;
+  score: number;
+  kb_id: string;
+  doc_id?: string;
+}
+
+export interface RetrievalResult {
+  query: string;
+  chunks: RetrievalChunk[];
+}
+
+export interface RetrievalTestRequest {
+  query: string;
+}
+
 interface ChatRequest {
     assistant_id: number;
     content: string;

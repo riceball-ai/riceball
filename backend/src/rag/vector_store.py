@@ -55,6 +55,32 @@ class ChromaVectorStore:
         )
         retriever = collection.as_retriever(**kwargs)
         return retriever
+
+    async def similarity_search_with_score(
+        self,
+        collection_name: str,
+        query: str,
+        k: int,
+        embedding_function: Embeddings,
+    ) -> List[tuple[VectorDocument, float]]:
+        """
+        Run similarity search with score
+        """
+        collection = self._get_collection(
+            collection_name,
+            embedding_function=embedding_function,
+        )
+        # using ainvoke would require wrapping, easier to call direct async method if available or sync in separate thread
+        # Chroma in langchain is weird about async. 
+        # langchain_chroma.Chroma.asimilarity_search_with_relevance_scores is available
+        
+        # We use relevance_scores to try to normalize to 0-1 (higher is better)
+        # This makes sorting easier across different collections if they use compatible metrics (e.g. cosine)
+        results = await collection.asimilarity_search_with_relevance_scores(
+            query=query,
+            k=k
+        )
+        return results
     
 
     async def add_documents(

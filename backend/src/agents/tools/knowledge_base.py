@@ -40,28 +40,32 @@ class KnowledgeBaseTool(AgentTool):
             
             rag_service = RAGService(self.session)
             
-            # Query each knowledge base
-            all_results = []
-            for kb_id_str in self.knowledge_base_ids:
-                try:
-                    kb_id = uuid.UUID(kb_id_str)
-                    results = await rag_service.relevance_search(
-                        query=query,
-                        knowledge_base_id=kb_id,
-                        k=top_k
-                    )
-                    all_results.extend(results)
-                except Exception:
-                    continue
+            # Query each knowledge base with Unified Retrieval Service
+            try:
+                kb_uuids = [uuid.UUID(kb_id_str) for kb_id_str in self.knowledge_base_ids]
+            except (ValueError, TypeError):
+                return "Error: Invalid knowledge base ID format"
+
+            try:
+                 # Use retrieve_multi which includes Reranking and Global Sorting
+                retrieval_result = await rag_service.retrieve_multi(
+                    query=query,
+                    knowledge_base_ids=kb_uuids,
+                    top_k=top_k
+                )
+            except Exception as e:
+                return f"Error retrieving information: {str(e)}"
             
-            if not all_results:
+            if not retrieval_result.chunks:
                 return "No relevant information found in knowledge base."
             
             # Format results
             formatted_results = []
-            for i, doc in enumerate(all_results[:top_k], 1):
-                content = doc.page_content if hasattr(doc, 'page_content') else str(doc)
-                formatted_results.append(f"[Result {i}]\n{content}\n")
+            for i, chunk in enumerate(retrieval_result.chunks, 1):
+                # Use retrieval chunk structure directly
+                title = chunk.metadata.get("title") or chunk.metadata.get("source") or "Untitled Document"
+                content = chunk.content
+                formatted_results.append(f"[Result {i} (Source: {title})]\n{content}\n")
             
             return "\n".join(formatted_results)
             

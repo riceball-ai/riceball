@@ -5,8 +5,10 @@ from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
 from langchain_core.documents import Document as VectorDocument
 import logging
+import asyncio
 
 from .models import Document, DocumentChunk, KnowledgeBase
+from .schemas import RetrievalResult, RetrievalChunk
 from .embeddings import EmbeddingService
 from .chunker import DocumentChunker
 from .content_extractor import DocumentContentExtractor
@@ -438,39 +440,151 @@ class RAGService:
             raise
 
 
-    async def relevance_search(
+    async def _relevance_search_with_score(
         self,
         query: str,
         knowledge_base_id: uuid.UUID,
-        k: int = 5,
-    ) -> list[VectorDocument]:
-        """RAG query"""
-        try:
-            kb = await self.get_knowledge_base(knowledge_base_id)
-            if not kb:
-                raise ValueError("Knowledge base not found or access denied")
+        k: int,
+        kb_obj: KnowledgeBase,
+    ) -> List[Any]: # List[Tuple[Document, float]]
+        """Helper for scored search"""
+        if not kb_obj.embedding_model_id:
+            return []
             
-            collection_name = f"kb_{knowledge_base_id}"
-            
-            # Retrieve relevant documents
-            if not kb.embedding_model_id:
-                raise ValueError("Knowledge base embedding model is not configured")
+        collection_name = f"kb_{knowledge_base_id}"
+        embedding_model_id = str(kb_obj.embedding_model_id)
+        embedder = await self.embedding_service.get_embedder(embedding_model_id)
+        
+        return await self.vector_store.similarity_search_with_score(
+            collection_name=collection_name,
+            query=query,
+            k=k,
+            embedding_function=embedder
+        )
 
-            embedding_model_id = str(kb.embedding_model_id)
+    # Legacy method replaced by retrieve_multi
+    # async def relevance_search(...)
             
-            embedder = await self.embedding_service.get_embedder(embedding_model_id)
+    async def retrieve_multi(
+        self,
+        query: str,
+        knowledge_base_id: uuid.UUID,
+        k: int,
+        kb_obj: KnowledgeBase,
+    ) -> List[Any]: # List[Tuple[Document, float]]
+        """Helper for scored search"""
+        if not kb_obj.embedding_model_id:
+            return []
+            
+        collection_name = f"kb_{knowledge_base_id}"
+        embedding_model_id = str(kb_obj.embedding_model_id)
+        embedder = await self.embedding_service.get_embedder(embedding_model_id)
+        
+        return await self.vector_store.similarity_search_with_score(
+            collection_name=collection_name,
+            query=query,
+            k=k,
+            embedding_function=embedder
+        )
 
-            retriever = await self.vector_store.get_retriever(
-                collection_name=collection_name,
-                embedding_function=embedder,
-                search_type="mmr",
-                search_kwargs={
-                    'k': k,
-                }
+    async def retrieve_multi(
+        self,
+        query: str,
+        knowledge_base_ids: List[uuid.UUID],
+        top_k: int = 5,
+        score_threshold: Optional[float] = None,
+    ) -> RetrievalResult:
+        """
+        Execute RAG retrieval across multiple Knowledge Bases with global Reranking.
+        """
+        all_chunks: List[RetrievalChunk] = []
+        
+        # Pre-fetch KnowledgeBase objects
+        stmt = select(KnowledgeBase).where(KnowledgeBase.id.in_(knowledge_base_ids))
+        result = await self.session.execute(stmt)
+        kbs = result.scalars().all()
+        kb_map = {kb.id: kb for kb in kbs}
+
+        # Create tasks (using score-based search)
+        tasks = []
+        valid_kb_ids = [] # keep track of order
+        
+        for kb_id in knowledge_base_ids:
+            kb = kb_map.get(kb_id)
+            if kb:
+                # We request top_k from EACH KB to ensure we have enough candidates
+                # Since we will global sort later.
+                tasks.append(self._relevance_search_with_score(query, kb_id, k=top_k, kb_obj=kb))
+                valid_kb_ids.append(kb_id)
+        
+        if not tasks:
+            return RetrievalResult(query=query, chunks=[])
+
+        # Execute all searches
+        results_list = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        for i, result in enumerate(results_list):
+            kb_id = valid_kb_ids[i]
+            
+            if isinstance(result, Exception):
+                logger.warning(f"Error retrieving from KB {kb_id}: {result}")
+                continue
+                
+            if not result:
+                continue
+            
+            # Result is List[Tuple[Document, float]]
+            for doc, score in result:
+                # Filter by score threshold if provided
+                if score_threshold is not None and score < score_threshold:
+                    continue
+
+                # Convert VectorDocument to RetrievalChunk
+                chunks_doc_id = None
+                if doc.metadata and "doc_id" in doc.metadata:
+                    try:
+                        chunks_doc_id = uuid.UUID(doc.metadata["doc_id"])
+                    except (ValueError, TypeError):
+                        pass
+
+                chunk = RetrievalChunk(
+                    content=doc.page_content,
+                    metadata=doc.metadata or {},
+                    score=score,
+                    kb_id=kb_id,
+                    doc_id=chunks_doc_id
+                )
+                all_chunks.append(chunk)
+
+        # Global Re-ranking (Sort by score descending)
+        # Assuming scores are comparable (normalized relevance scores)
+        all_chunks.sort(key=lambda x: x.score if x.score is not None else -1.0, reverse=True)
+        
+        # Limit to top_k Global
+        final_chunks = all_chunks[:top_k]
+        
+        return RetrievalResult(
+            query=query,
+            chunks=final_chunks
+        )
+
+    def format_retrieval_result_for_llm(self, result: RetrievalResult) -> str:
+        """
+        Format the retrieval result into a context string with citations.
+        Matches the style used in PromptBuilder.
+        """
+        context_entries = []
+        entry_index = 1
+        
+        for chunk in result.chunks:
+            metadata = chunk.metadata or {}
+            # Try to get title from metadata, fallback to doc_id or "Untitled"
+            title = metadata.get("title") or metadata.get("source") or "Untitled Document"
+            content = chunk.content or ""
+            
+            context_entries.append(
+                f"[Reference {entry_index}] (Document {title})\n{content}"
             )
-
-            return await retriever.ainvoke(query)
+            entry_index += 1
             
-        except Exception as e:
-            logger.error(f"Failed to perform RAG query: {e}")
-            raise
+        return "\n\n".join(context_entries)

@@ -360,6 +360,19 @@ export default defineI18nLocale(async locale => {
 
     // 助理选择页面
     assistants: {
+      retrievalTest: {
+        title: '检索测试',
+        simulatorTitle: '检索模拟器',
+        description: '测试助手如何从知识库中检索信息。这模拟了聊天过程中使用的确切检索增强生成 (RAG) 过程。',
+        placeholder: '输入问题以测试检索上下文...',
+        testButton: '测试',
+        foundChunks: '找到 {count} 个相关片段',
+        noResults: '未找到相关文档。',
+        noResultsHint: '请尝试调整查询或检查知识库是否已处理文件。',
+        rank: '排名 #{rank}',
+        untitled: '无标题文档',
+        page: '第 {page} 页'
+      },
       create: '创建助理',
       myAssistants: '我的助理',
       title: '选择助理开始对话',

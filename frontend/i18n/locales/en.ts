@@ -360,6 +360,19 @@ export default defineI18nLocale(async locale => {
 
     // Assistants Page
     assistants: {
+      retrievalTest: {
+        title: 'Retrieval Test',
+        simulatorTitle: 'Retrieval Simulator',
+        description: 'Test how the assistant retrieves information from its Knowledge Bases. This simulates the exact Retrieval-Augmented Generation (RAG) process used during chat.',
+        placeholder: 'Type a question to test retrieval context...',
+        testButton: 'Test',
+        foundChunks: 'Found {count} Relevant Chunks',
+        noResults: 'No relevant documents found.',
+        noResultsHint: 'Try adjusting the query or checking if the Knowledge Base has processed files.',
+        rank: 'Rank #{rank}',
+        untitled: 'Untitled Document',
+        page: 'Page {page}'
+      },
       create: 'Create Assistant',
       myAssistants: 'My Assistants',
       title: 'Choose an Assistant to Start',

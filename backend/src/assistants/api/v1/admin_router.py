@@ -1,4 +1,5 @@
 import uuid
+import logging
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi_pagination import Page, Params
@@ -14,6 +15,8 @@ from src.users.models import User
 from src.assistants.models import Assistant, Conversation
 from src.ai_models.models import Model
 from src.rag.models import KnowledgeBase
+from src.rag.service import RAGService
+from src.rag.schemas import RetrievalResult
 from src.agents.tools.registry import LocalToolRegistry
 from .schemas import (
     AssistantCreate,
@@ -23,6 +26,8 @@ from .schemas import (
     AssistantTranslationsResponse,
     UpdateTranslationRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -531,3 +536,62 @@ async def delete_assistant_translation(
         return {"message": "Translation deleted successfully", "locale": locale}
     
     raise HTTPException(status_code=404, detail=f"Translation for locale '{locale}' not found")
+
+
+class RetrievalTestRequest(BaseModel):
+    query: str
+
+
+@router.post("/assistants/{assistant_id}/retrieval-test", response_model=RetrievalResult, summary="Test RAG retrieval for an assistant")
+async def test_assistant_retrieval(
+    assistant_id: uuid.UUID,
+    params: RetrievalTestRequest,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    """
+    Test retrieval logic for a specific assistant using its configured knowledge bases.
+    Returns the exact chunks that would be injected into the LLM context.
+    """
+    query = select(Assistant).where(Assistant.id == assistant_id)
+    result = await session.execute(query)
+    assistant = result.scalar_one_or_none()
+    
+    if not assistant:
+        raise HTTPException(status_code=404, detail="Assistant not found")
+        
+    knowledge_base_ids = getattr(assistant, "knowledge_base_ids", None) or []
+    if not knowledge_base_ids:
+        # Return empty result if no KBs
+        return RetrievalResult(query=params.query, chunks=[])
+        
+    rag_config = getattr(assistant, "rag_config", {}) or {}
+    retrieval_count = rag_config.get("retrieval_count") or 5
+    similarity_threshold = rag_config.get("similarity_threshold")
+    
+    rag_service = RAGService(session)
+    
+    # Parse UUIDs - matches logic in PromptBuilder which now also uses rag_service
+    valid_kb_ids = []
+    for raw_kb_id in knowledge_base_ids:
+        try:
+            kb_uuid = raw_kb_id if isinstance(raw_kb_id, uuid.UUID) else uuid.UUID(str(raw_kb_id))
+            valid_kb_ids.append(kb_uuid)
+        except Exception:
+            continue
+            
+    if not valid_kb_ids:
+         return RetrievalResult(query=params.query, chunks=[])
+
+    try:
+        results = await rag_service.retrieve_multi(
+            query=params.query,
+            knowledge_base_ids=valid_kb_ids,
+            top_k=retrieval_count,
+            score_threshold=similarity_threshold,
+        )
+        return results
+    except Exception as e:
+        logger.exception("Error during retrieval test")
+        print(f"Error during retrieval test: {e}")  # Ensure it prints to console for devs
+        raise HTTPException(status_code=500, detail=str(e))

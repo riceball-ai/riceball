@@ -23,6 +23,7 @@ import ReviewDeployForm from '~/components/assistants/form/ReviewDeployForm.vue'
 import KnowledgeBaseConfig from '~/components/admin/KnowledgeBaseConfig.vue'
 import AgentConfig from '~/components/admin/AgentConfig.vue'
 import TranslationManager from '~/components/assistants/form/TranslationManager.vue'
+import RetrievalTester from '~/components/assistants/form/RetrievalTester.vue'
 import ChannelList from '~/components/channels/ChannelList.vue'
 import type { Assistant, Model, RagConfig } from '~/types/api'
 import { useConfigStore } from '~/stores/config'
@@ -208,6 +209,7 @@ const handleDelete = async () => {
         <TabsTrigger value="general">{{ t('assistantForm.basicInfo') }}</TabsTrigger>
         <TabsTrigger value="model">{{ t('assistantForm.modelConfig') }}</TabsTrigger>
         <TabsTrigger value="knowledge">{{ t('admin.knowledgeBase.title') }}</TabsTrigger>
+        <TabsTrigger value="retrieval">{{ t('assistants.retrievalTest.title') }}</TabsTrigger>
         <TabsTrigger value="agent">{{ t('admin.agent.title') }}</TabsTrigger>
         <TabsTrigger value="integrations">{{ t('assistants.integrations.title') }}</TabsTrigger>
         <TabsTrigger value="translations">{{ t('admin.pages.assistants.translations.title') }}</TabsTrigger>
@@ -242,6 +244,10 @@ const handleDelete = async () => {
            v-model="knowledgeBaseData"
            :disabled="loading"
          />
+      </TabsContent>
+
+      <TabsContent value="retrieval">
+        <RetrievalTester :assistant-id="assistantId" />
       </TabsContent>
 
       <TabsContent value="agent">

@@ -688,14 +688,23 @@ class PromptBuilder:
 
         rag_config = getattr(assistant, "rag_config", {}) or {}
         retrieval_count = rag_config.get("retrieval_count") or 5
+        similarity_threshold = rag_config.get("similarity_threshold")
+        
+        # Ensure threshold is None if not set or invalid
+        if similarity_threshold is not None:
+             try:
+                 similarity_threshold = float(similarity_threshold)
+             except (ValueError, TypeError):
+                 similarity_threshold = None
 
         rag_service = RAGService(self.session)
-        context_entries: List[str] = []
-        entry_index = 1
-
+        
+        # Parse KB IDs
+        valid_kb_ids = []
         for raw_kb_id in knowledge_base_ids:
             try:
                 kb_uuid = raw_kb_id if isinstance(raw_kb_id, uuid.UUID) else uuid.UUID(str(raw_kb_id))
+                valid_kb_ids.append(kb_uuid)
             except Exception:
                 logger.warning(
                     "Invalid knowledge base ID '%s' configured on assistant %s",
@@ -703,35 +712,27 @@ class PromptBuilder:
                     assistant.id,
                 )
                 continue
-
-            try:
-                relevance_docs = await rag_service.relevance_search(
-                    query=user_query,
-                    knowledge_base_id=kb_uuid,
-                    k=retrieval_count,
-                )
-            except Exception as exc:
-                logger.warning(
-                    "Failed to retrieve RAG context for assistant %s (KB %s): %s",
-                    assistant.id,
-                    kb_uuid,
-                    exc,
-                )
-                continue
-
-            for doc in relevance_docs:
-                metadata = doc.metadata or {}
-                title = metadata.get("title", "Untitled Document")
-                content = doc.page_content or ""
-                context_entries.append(
-                    f"[Reference {entry_index}] (Document {title})\n{content}"
-                )
-                entry_index += 1
-
-        if not context_entries:
+                
+        if not valid_kb_ids:
             return None
 
-        context_text = "\n\n".join(context_entries)
+        # Execute unified retrieval
+        try:
+            retrieval_result = await rag_service.retrieve_multi(
+                query=user_query,
+                knowledge_base_ids=valid_kb_ids,
+                top_k=retrieval_count,
+                score_threshold=similarity_threshold,
+            )
+        except Exception as exc:
+            logger.error("Error during multi-KB retrieval: %s", exc)
+            return None
+
+        if not retrieval_result.chunks:
+            return None
+
+        # Format using the service's standard formatter
+        context_text = rag_service.format_retrieval_result_for_llm(retrieval_result)
         
         instructions = RAG_INSTRUCTIONS.format(context_text=context_text)
         return instructions

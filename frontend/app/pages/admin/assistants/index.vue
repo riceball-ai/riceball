@@ -58,7 +58,10 @@ const tableColumns = computed((): ColumnDef<Assistant>[] => [
         h(Avatar, { class: 'w-8 h-8' }, () => [
           h(AvatarImage, { src: row.avatar_url || '' })
         ]),
-        h('span', row.name)
+        h('span', { 
+          class: 'cursor-pointer hover:underline font-medium',
+          onClick: () => router.push(`/admin/assistants/${row.id}`)
+        }, row.name)
       ])
     }
   },

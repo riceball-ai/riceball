@@ -523,14 +523,29 @@ async def rag_query(
     query_data: RAGQueryRequest,
     session: AsyncSession = Depends(get_async_session)
 ):
-    """RAG Query"""
+    """RAG Query (Debug Endpoint)"""
     try:
         service = RAGService(session)
-        docs = await service.relevance_search(
+        # We upgrade this legacy single-KB endpoint to use the new scored search under the hood
+        # but keep the response format backward compatible if possible, or just return docs.
+        # Since RAGQueryResponse expects 'documents' list of VectorDocument-like objects
+        
+        # We'll use the internal scoped search or just retrieve_multi with one ID
+        result = await service.retrieve_multi(
             query=query_data.query,
-            knowledge_base_id=query_data.knowledge_base_id,
-            k=query_data.k,
+            knowledge_base_ids=[query_data.knowledge_base_id],
+            top_k=query_data.k,
         )
+        
+        # Convert Chunks back to Document-like dicts or objects for the response model
+        # Assuming RAGQueryResponse.documents is List[dict] or List[Document]
+        docs = []
+        for chunk in result.chunks:
+            # Reconstruct a simplified object/dict compatible with what relevance_search returned
+            docs.append({
+                "page_content": chunk.content,
+                "metadata": chunk.metadata
+            })
         
         return RAGQueryResponse(
             query=query_data.query,

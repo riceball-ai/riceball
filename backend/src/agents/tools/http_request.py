@@ -166,14 +166,41 @@ IMPORTANT: headers, body, and query_params must be dictionaries (objects), NOT J
             url = base_url.rstrip("/") + "/" + url.lstrip("/")
         
         # Merge headers (tool config + request headers)
-        merged_headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "User-Agent": "AI-Assistant/1.0",
-            **default_headers,
-            **(headers or {})
+        # Use more browser-like default headers to avoid being blocked
+        browser_headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
         }
         
+        # If the user explicitly asks for JSON, we should respect that or start with JSON accept
+        # But if no explicit accept is given, browser-like is safer for general scraping.
+        # However, this tool description says "Supports GET... API". APIs usually need JSON.
+        # Let's keep JSON priority if it looks like an API call (based on no specific Accept header provided)
+        # BUT the user report says "can't request 3rd party websites" -> implies scraping/browse intent.
+        
+        # Strategy:
+        # 1. Base is browser headers (good for sites)
+        # 2. If 'content-type' in headers is 'application/json', we assume API intent and adjust Accept.
+        # 3. Allow config defaults override.
+        
+        merged_headers = browser_headers.copy()
+        merged_headers.update(default_headers)
+        if headers:
+            merged_headers.update(headers)
+            
+        # If sending JSON body but no Content-Type, set it
+        if body and "Content-Type" not in merged_headers and "content-type" not in merged_headers:
+            merged_headers["Content-Type"] = "application/json"
+            
+        # If we think it's an API call (JSON body or JSON content type), make sure Accept includes JSON
+        is_json_request = (
+            merged_headers.get("Content-Type") == "application/json" or 
+            merged_headers.get("content-type") == "application/json"
+        )
+        if is_json_request and "Accept" not in (headers or {}):
+             merged_headers["Accept"] = "application/json, */*"
+
         logger.info(f"HTTP {method} request to {url}")
         
         try:

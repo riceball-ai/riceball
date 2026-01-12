@@ -146,8 +146,8 @@ const handleMaxHistoryToggle = (enabled: boolean) => {
           <div class="flex items-center justify-between">
             <Label for="max_history_messages">{{ t('assistantForm.maxHistory') }}</Label>
             <Switch
-              :checked="enableMaxHistory"
-              @update:checked="handleMaxHistoryToggle"
+              :model-value="enableMaxHistory"
+              @update:model-value="handleMaxHistoryToggle"
               :disabled="loading"
             />
           </div>

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted } from 'vue'
-import { useMarkdown } from '~/composables/useMarkdown'
 import { Copy, Share, Check, Quote, ThumbsUp, ThumbsDown } from 'lucide-vue-next'
 import type { Assistant, Message } from '~/types/api'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
+import MarkdownContent from './MarkdownContent.vue'
 
 interface Props {
   message: Message
@@ -24,7 +24,6 @@ const emit = defineEmits<{
 
 // Use markdown composable
 const { t } = useI18n()
-const { renderMarkdown } = useMarkdown()
 
 // State management
 const copySuccess = ref(false)
@@ -44,10 +43,10 @@ const isStreamingMessage = computed(() => {
 })
 
 // Compute rendered content
-const renderedContent = computed(() => {
-  const defaultPanel = isStreamingMessage.value ? 'code' : 'preview'
-  return renderMarkdown(props.message.content, { defaultSvgPanel: defaultPanel })
-})
+// const renderedContent = computed(() => {
+//   const defaultPanel = isStreamingMessage.value ? 'code' : 'preview'
+//   return renderMarkdown(props.message.content, { defaultSvgPanel: defaultPanel })
+// })
 
 // Copy message content
 const copyMessage = async () => {
@@ -306,7 +305,7 @@ watch(
   <div ref="messageRoot" class="flex" :class="{
     'justify-end': message.message_type === 'USER'
   }">
-    <div :class="{
+    <div class="min-w-0" :class="{
       'max-w-3xl': message.message_type === 'USER',
       'w-full': message.message_type === 'ASSISTANT'
     }">
@@ -314,11 +313,11 @@ watch(
         'bg-gray-100 dark:bg-gray-800 text-foreground p-3': message.message_type === 'USER',
         'text-foreground': message.message_type === 'ASSISTANT'
       }">
-        <article 
-          class="markdown-content prose prose-zinc dark:prose-invert max-w-none"
-          v-html="renderedContent"
+        <MarkdownContent 
+          :content="message.content"
+          :is-streaming="isStreamingMessage"
           @click="handleMarkdownClick"
-        ></article>
+        />
         
         <!-- Render media attachments if present -->
         <div v-if="hasRenderableImages" class="mt-3 space-y-2">
@@ -426,7 +425,5 @@ watch(
 </template>
 
 <style scoped>
-.markdown-content > *:last-child {
-  margin-bottom: 0 !important;
-}
+/* Styles moved to MarkdownContent.vue */
 </style>

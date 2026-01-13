@@ -4,10 +4,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Badge } from '~/components/ui/badge'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Loader2, User, Bot } from 'lucide-vue-next'
-import { useMarkdown } from '~/composables/useMarkdown'
+import MarkdownContent from '~/components/chat/MarkdownContent.vue'
 
 const { t } = useI18n()
-const { renderMarkdown } = useMarkdown()
 
 interface Message {
   id: string
@@ -133,7 +132,7 @@ const getMessageTypeVariant = (type: string) => {
                   </div>
                 </div>
 
-                <div class="flex-1 space-y-2">
+                <div class="flex-1 space-y-2 min-w-0">
                   <div class="flex items-center gap-2">
                     <Badge :variant="getMessageTypeVariant(message.message_type)">
                       {{ getMessageTypeLabel(message.message_type) }}
@@ -143,10 +142,10 @@ const getMessageTypeVariant = (type: string) => {
                     </span>
                   </div>
 
-                  <div 
-                    class="markdown-content prose prose-sm prose-zinc dark:prose-invert max-w-none break-words"
-                    v-html="renderMarkdown(message.content)"
-                  ></div>
+                  <MarkdownContent 
+                    :content="message.content"
+                    class="prose-sm break-words"
+                  />
 
                   <!-- Display metadata -->
                   <div class="flex flex-wrap gap-3 text-xs text-muted-foreground">

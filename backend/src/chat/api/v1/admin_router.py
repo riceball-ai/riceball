@@ -54,33 +54,42 @@ async def list_conversations(
     
     if search:
         search_term = f"%{search}%"
-        # Join Message explicitly to enable filtering on message content
-        query = query.outerjoin(Message, Conversation.id == Message.conversation_id)
+        # Use EXISTS subquery to avoid JOIN duplication and JSON type comparison issues in DISTINCT
+        # This fixes "could not identify an equality operator for type json" error
+        message_exists_stmt = select(1).where(
+            (Message.conversation_id == Conversation.id) & 
+            (Message.content.ilike(search_term))
+        ).exists()
+        
         query = query.where(
             or_(
                 Conversation.title.ilike(search_term),
-                Message.content.ilike(search_term)
+                message_exists_stmt
             )
         )
-        query = query.distinct()
     
     query = query.order_by(Conversation.updated_at.desc())
     
     # Get total count
+    count_query = select(func.count()).select_from(Conversation)
+    
     if search:
-        # If searching, we need to count distinct conversations matching criteria
-        count_query = select(func.count(distinct(Conversation.id))).select_from(Conversation)
-        count_query = count_query.outerjoin(Message, Conversation.id == Message.conversation_id)
-        
         search_term = f"%{search}%"
+        # Same logic for count query
+        message_exists_stmt = select(1).where(
+            (Message.conversation_id == Conversation.id) & 
+            (Message.content.ilike(search_term))
+        ).exists()
+        
         count_query = count_query.where(
             or_(
                 Conversation.title.ilike(search_term),
-                Message.content.ilike(search_term)
+                message_exists_stmt
             )
         )
     else:
-        count_query = select(func.count()).select_from(Conversation)
+        # If not searching, distinct count is not needed as we are not joining
+        pass # Logic handled above by base assignment if not searching
         
     if assistant_id:
         count_query = count_query.where(Conversation.assistant_id == assistant_id)

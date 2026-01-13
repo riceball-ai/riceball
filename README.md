@@ -1,6 +1,6 @@
 # RiceBall - Private AI Knowledge Base & Agent Platform Built for Teams and Enterprises
 
-[Documentation](https://riceball-ai.github.io/riceball/) | [文档](https://riceball-ai.github.io/riceball/zh/)
+[Documentation](https://riceball-ai.github.io/riceball/) | [文档](https://riceball-ai.github.io/riceball/zh/guide/intro.html)
 
 ## 🍚 What is RiceBall?
 

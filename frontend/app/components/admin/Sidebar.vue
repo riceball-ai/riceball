@@ -151,8 +151,14 @@ const configStore = useConfigStore()
                                     <span>{{ $t('admin.sidebar.systemConfig') }}</span>
                                 </NuxtLink>
                             </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
+                        </SidebarMenuItem>                        <SidebarMenuItem>
+                            <SidebarMenuButton as-child :is-active="route.path === '/admin/mcp'">
+                                <NuxtLink to="/admin/mcp">
+                                    <Bot />
+                                    <span>{{ $t('admin.sidebar.mcp') }}</span>
+                                </NuxtLink>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>                        <SidebarMenuItem>
                             <SidebarMenuButton as-child :is-active="route.path.startsWith('/admin/oauth-providers')">
                                 <NuxtLink to="/admin/oauth-providers">
                                     <Shield />

@@ -1,0 +1,34 @@
+services:
+  # ---------------------------------------------------------------------------
+  # MCP SIDE CAR SERVICES
+  # Include this file in your docker-compose.yml or run separately 
+  # to enable extra capabilities for RiceBall.
+  # ---------------------------------------------------------------------------
+
+  # 1. MCP Filesystem Server (Custom SSE implementation)
+  # Allows RiceBall to read/write files in the mapped volume via SSE
+  mcp-filesystem:
+    build:
+      context: ./extra/mcp-servers/filesystem
+      dockerfile: Dockerfile
+    container_name: mcp-filesystem
+    environment:
+      - PORT=8000
+    volumes:
+      - ./storage/files:/data  # Map RiceBall's storage folder here
+    networks:
+      - riceball-network
+    restart: unless-stopped
+
+  # 2. Brave Search (Official/Standard pattern)
+  # Note: requires BRAVE_API_KEY in .env
+#   mcp-brave:
+#     image: mcp/brave-search
+#     environment:
+#       - API_KEY=${BRAVE_API_KEY}
+#     networks:
+#       - riceball-network
+
+networks:
+  riceball-network:
+    external: true

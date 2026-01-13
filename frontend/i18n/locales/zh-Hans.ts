@@ -704,6 +704,7 @@ export default defineI18nLocale(async locale => {
         apiKeys: 'API 密钥',
         oauthProviders: 'OAuth提供商管理',
         systemConfig: '系统配置',
+        mcp: 'MCP 服务',
         backToUser: '返回用户区',
         groups: {
           overview: '概览',
@@ -730,6 +731,38 @@ export default defineI18nLocale(async locale => {
         createSuccess: 'API 密钥创建成功',
         lastUsedAt: '最后使用时间',
         description: '管理您的个人 API 密钥',
+      },
+      mcp: {
+        breadcrumb: 'MCP 服务',
+        title: 'MCP 服务器管理',
+        description: '管理模型上下文协议 (MCP) 服务器并执行本地/远程工具。',
+        presets: '预设',
+        installed: '已安装的服务器',
+        addManual: '手动添加',
+        install: '安装',
+        connect: '连接',
+        disconnect: '断开',
+        status: '状态',
+        tools: '工具列表',
+        viewTools: '查看工具',
+        deleteConfirm: '断开并删除服务器 "{name}"？',
+        installSuccess: 'MCP 服务器安装成功',
+        connectSuccess: '连接成功',
+        connectionType: '连接类型',
+        url: '连接地址',
+        command: '命令',
+        args: '参数',
+        env: '环境变量',
+        preset: {
+           installTitle: '安装 {name}',
+           overrides: '连接配置覆盖 (可选)',
+           warning: '此预设将连接到 {url}。请确保对应的服务已在该地址运行。',
+        },
+        columns: {
+            name: '名称',
+            type: '类型',
+            status: '状态'
+        }
       },
       systemConfig: {
         title: '系统配置',

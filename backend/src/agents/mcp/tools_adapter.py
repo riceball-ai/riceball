@@ -1,21 +1,23 @@
 """
 MCP Tools Adapter - Convert MCP tools to Agent tools
 """
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from pydantic import create_model, Field
+import logging
 
 from langchain_core.tools import StructuredTool
 
-from .client import MCPClient
+from .client import MCPClientBase
 from ..tools.base import AgentTool, AgentToolConfig
 
+logger = logging.getLogger(__name__)
 
 class MCPToolAdapter(AgentTool):
     """Adapter to convert MCP tools to Agent tools"""
     
     def __init__(
         self, 
-        mcp_client: MCPClient, 
+        mcp_client: MCPClientBase, 
         tool_info: Dict[str, Any], 
         config: Optional[AgentToolConfig] = None
     ):
@@ -37,16 +39,23 @@ class MCPToolAdapter(AgentTool):
     async def execute(self, **kwargs) -> Any:
         """Execute MCP tool"""
         try:
+            # Check if client is connected
+            if not self.mcp_client.is_connected:
+                return f"Error: MCP Server '{self.mcp_client.name}' is disconnected."
+
             result = await self.mcp_client.call_tool(self._name, kwargs)
             
-            # Extract content from result
+            # Extract content from result (based on MCP spec)
+            # result is typically CallToolResult
             if hasattr(result, 'content'):
-                # Handle list of content items
+                # Handle list of content items (TextContent, ImageContent, etc.)
                 if isinstance(result.content, list):
                     content_parts = []
                     for item in result.content:
                         if hasattr(item, 'text'):
                             content_parts.append(item.text)
+                        elif hasattr(item, 'data'): # Image data?
+                            content_parts.append(f"[Image content: {item.mimeType}]")
                         else:
                             content_parts.append(str(item))
                     return "\n".join(content_parts)
@@ -56,6 +65,7 @@ class MCPToolAdapter(AgentTool):
             return str(result)
             
         except Exception as e:
+            logger.error(f"Error executing MCP tool {self._name}: {e}")
             return f"Error executing MCP tool {self._name}: {str(e)}"
     
     def _create_langchain_tool(self) -> StructuredTool:
@@ -84,6 +94,7 @@ class MCPToolAdapter(AgentTool):
         
         for prop_name, prop_info in properties.items():
             field_type = self._json_type_to_python(prop_info.get("type", "string"))
+            # If default is not provided and not required, make it optional
             default = ... if prop_name in required else None
             description = prop_info.get("description", "")
             
@@ -95,17 +106,22 @@ class MCPToolAdapter(AgentTool):
         if not fields:
             return None
         
-        return create_model(f"{self._name}Args", **fields)
+        try:
+            return create_model(f"{self._name}Args", **fields)
+        except Exception as e:
+            logger.warning(f"Failed to create schema model for {self._name}: {e}")
+            return None
     
     @staticmethod
-    def _json_type_to_python(json_type: str):
-        """Convert JSON Schema type to Python type"""
-        type_mapping = {
+    def _json_type_to_python(json_type: str) -> Any:
+        # Simplified mapping
+        type_map = {
             "string": str,
             "number": float,
             "integer": int,
             "boolean": bool,
-            "array": list,
-            "object": dict
+            "array": List,
+            "object": Dict,
+            "null": type(None)
         }
-        return type_mapping.get(json_type, str)
+        return type_map.get(json_type, Any)

@@ -72,3 +72,17 @@ class MCPServerToolsResponse(BaseModel):
     tools: List[MCPToolInfo]
 
 
+class MCPPresetResponse(BaseModel):
+    """MCP Preset Response"""
+    id: str
+    name: str
+    description: str
+    server_type: MCPServerTypeEnum
+    connection_config: Dict[str, Any]
+    logo_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+

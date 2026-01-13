@@ -13,7 +13,7 @@ from src.assistants.models import Assistant
 from src.ai_models.client_factory import create_chat_model
 from .tools.base import AgentTool
 from .tools.registry import tool_registry
-from .mcp.registry import mcp_registry
+from .mcp.manager import mcp_manager
 from .mcp.tools_adapter import MCPToolAdapter
 from .tools.knowledge_base import KnowledgeBaseTool
 from .descriptions import get_action_description, get_observation_description, get_tool_display_name
@@ -61,8 +61,8 @@ class AgentExecutionEngine:
         await self._load_local_tools()
         
         # Load MCP tools
-        # await self._load_mcp_tools()
-    
+        await self._load_mcp_tools()
+
     async def _load_local_tools(self):
         """Load local registered tools"""
         for tool_name in self.assistant.agent_enabled_tools:
@@ -92,13 +92,17 @@ class AgentExecutionEngine:
                 continue
             
             try:
-                # Check if server is registered
-                if not mcp_registry.is_registered(mcp_server.name):
-                    # Register the server
-                    await mcp_registry.register_server(mcp_server)
-                
-                # Get client
-                client = await mcp_registry.get_server(mcp_server.name)
+                # Ensure connection
+                client = await mcp_manager.get_client(mcp_server.name)
+                if not client or not client.is_connected:
+                    # Try to connect on demand
+                    logger.info(f"Connecting to MCP server {mcp_server.name} on demand...")
+                    await mcp_manager.connect_server(mcp_server)
+                    client = await mcp_manager.get_client(mcp_server.name)
+
+                if not client or not client.is_connected:
+                    logger.warning(f"MCP Server {mcp_server.name} unavailable. Skipping.")
+                    continue
                 
                 # Get tools
                 mcp_tool_list = await client.list_tools()

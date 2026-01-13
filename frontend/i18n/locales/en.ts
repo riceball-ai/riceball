@@ -704,6 +704,7 @@ export default defineI18nLocale(async locale => {
         apiKeys: 'API Keys',
         oauthProviders: 'OAuth Providers',
         systemConfig: 'System Config',
+        mcp: 'MCP Servers',
         backToUser: 'Back to User Area',
         groups: {
           overview: 'Overview',
@@ -730,6 +731,38 @@ export default defineI18nLocale(async locale => {
         createSuccess: 'API Key created successfully',
         lastUsedAt: 'Last Used',
         description: 'Manage your personal API keys'
+      },
+      mcp: {
+        breadcrumb: 'MCP Servers',
+        title: 'MCP Server Management',
+        description: 'Manage Model Context Protocol (MCP) servers and execute local/remote tools.',
+        presets: 'Presets',
+        installed: 'Installed Servers',
+        addManual: 'Add Manually',
+        install: 'Install',
+        connect: 'Connect',
+        disconnect: 'Disconnect',
+        status: 'Status',
+        tools: 'Tools',
+        viewTools: 'View Tools',
+        deleteConfirm: 'Disconnect and delete server "{name}"?',
+        installSuccess: 'MCP Server installed successfully',
+        connectSuccess: 'Connected successfully',
+        connectionType: 'Connection Type',
+        url: 'URL',
+        command: 'Command',
+        args: 'Arguments',
+        env: 'Environment Variables',
+        preset: {
+           installTitle: 'Install {name}',
+           overrides: 'Connection Overrides (Optional)',
+           warning: 'This preset connects to {url}. Ensure the service is running.',
+        },
+        columns: {
+            name: 'Name',
+            type: 'Type',
+            status: 'Status'
+        }
       },
       systemConfig: {
         title: 'System Configuration',

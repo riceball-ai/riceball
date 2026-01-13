@@ -4,8 +4,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi_pagination import add_pagination
 from pathlib import Path
+from contextlib import asynccontextmanager
 
 from .config import settings, StorageType
+from .database import async_session_maker
+from .agents.mcp.manager import mcp_manager
 from .auth import current_active_user, current_superuser
 from .auth.api.v1.user_router import router as auth_user_router
 from .auth.api.v1.refresh_router import router as auth_refresh_router
@@ -59,7 +62,26 @@ app_config = {
 if settings.ENVIRONMENT not in settings.SHOW_DOCS_ENVIRONMENT:
     app_config["openapi_url"] = None
 
-app = FastAPI(**app_config)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger = logging.getLogger("uvicorn.startup")
+    logger.info("Starting up RiceBall...")
+    
+    # Initialize MCP Manager
+    try:
+        async with async_session_maker() as session:
+            await mcp_manager.load_and_connect_all(session)
+    except Exception as e:
+        logger.error(f"Failed to initialize MCP manager: {e}")
+        
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down RiceBall...")
+    await mcp_manager.shutdown()
+
+app = FastAPI(**app_config, lifespan=lifespan)
 
 app.include_router(configs_user_router_v1, prefix="/api/v1", tags=["Public Configs"])
 app.include_router(manifest_router, prefix="/api/v1/config", tags=["Public Configs"])

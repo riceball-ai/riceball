@@ -38,7 +38,7 @@ graph LR
         VectorDB[(ChromaDB)]
         FileStore["S3 / Local"]
         LLM["LLM Providers"]
-        MCPServers["MCP Servers (🚧)"]
+        MCPServers["Universal MCP Host<br/>(Stdio + HTTP)"]
     end
 
     Browser -->|HTTP| UI
@@ -71,7 +71,10 @@ graph LR
   - Citations and reference tracking.
 - **🤖 Agent Engine**: 
   - Built on **LangChain**, utilizing robust **Tool Calling** capabilities to execute tasks.
-  - **Model Context Protocol (MCP)** support is in active development (🚧), aiming to provide standardized connections to your ecosystem.
+  - **Universal MCP Support**: Full implementation of Model Context Protocol (MCP).
+    - **Stdio**: Connect to local tools via standard input/output.
+    - **HTTP (SSE)**: Uses HTTP POST for client-to-server messages with optional Server-Sent Events, enabling remote or Dockerized MCP server connections.
+    - **Presets**: One-click install for common tools like Filesystem, Brave Search, etc.
 - **📢 Multi-Channel Integrations**:
   - **Omnichannel**: Deploy your Assistant to **WeCom (Enterprise WeChat)**, **Telegram**, and more. 
   - **Guest Management**: Automatically maps external user identities to internal "Guest" accounts with isolated conversation history.
@@ -93,7 +96,7 @@ graph LR
 ## 💡 Why Choose RiceBall?
 
 1. **Security First**: Self-hosted solution ensures your IP and user data remain on your infrastructure.
-2. **Business Native**: Through **Tool Calling** (with upcoming **MCP** support), RiceBall isn't just a chatbot—it's an operator that can interact with your business systems.
+2. **Business Native**: Through **Tool Calling** and **Universal MCP Support**, RiceBall isn't just a chatbot—it's an operator that can interact with your business systems (Filesystem, Databases, APIs) regardless of where they are hosted.
 3. **Developer Ready**: Clean, modular architecture (Frontend/Backend separation) makes it an excellent starter kit for custom AI solutions.
 
 ## 👥 Target Audience

@@ -12,7 +12,10 @@ RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. I
   - Citations and reference tracking.
 - **🤖 Agent Engine**: 
   - Built on **LangChain**, utilizing robust **Tool Calling** capabilities to execute tasks.
-  - **Model Context Protocol (MCP)** support is in active development (🚧), aiming to provide standardized connections to your ecosystem.
+  - **Universal MCP Support**: Full implementation of Model Context Protocol.
+    - **Stdio**: Connect to local tools.
+    - **SSE**: Connect to remote/Dockerized tools.
+    - **Presets**: One-click install for common tools.
 - **🔌 Multi-Model Support**: 
   - **Vendor Agnostic**: Switch between OpenAI, Anthropic, Google Gemini, XAI (Grok), and any OpenAI-compatible provider.
   - **Cost Optimization**: Route simple queries to cheaper models and complex reasoning to high-performance models.
@@ -30,8 +33,19 @@ RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. I
 ## 💡 Why Choose RiceBall?
 
 1. **Security First**: Self-hosted solution ensures your IP and user data remain on your infrastructure.
-2. **Business Native**: Through **Tool Calling** (with upcoming **MCP** support), RiceBall isn't just a chatbot—it's an operator that can interact with your business systems.
+2. **Business Native**: Through **Tool Calling** and **Universal MCP Support**, RiceBall isn't just a chatbot—it's an operator that can interact with your business systems (Filesystem, Databases, APIs) regardless of where they are hosted.
 3. **Developer Ready**: Clean, modular architecture (Frontend/Backend separation) makes it an excellent starter kit for custom AI solutions.
+
+## 🔗 Universal MCP Host
+
+RiceBall implements the full **Model Context Protocol (MCP)** specification, acting as a Universal Host that can connect to any MCP Server.
+
+### Key Features
+- **🔌 Any Transport Protocol**:
+  - **Stdio**: Seamlessly connect to local processes (e.g., `git`, local scripts). Ideal for local development.
+  - **HTTP (Simple & SSE)**: Full support for HTTP transport. Uses HTTP POST for client-to-server messages with optional Server-Sent Events (SSE) for streaming. Perfect for Docker "Sidecar" patterns.
+- **📦 Smart Presets**: Built-in configurations for popular tools (Filesystem, Brave Search, etc.) enabling one-click setup without manual configuration.
+- **📄 Extensible**: Add your own custom MCP servers via the Admin Panel to expand your Assistant's capabilities endlessly.
 
 ## 👥 Target Audience
 

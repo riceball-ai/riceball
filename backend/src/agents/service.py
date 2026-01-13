@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from .models import MCPServerConfig
-from .mcp.registry import mcp_registry
+from .mcp.manager import mcp_manager
+from .mcp.presets import MCP_PRESETS, get_preset_by_id
 
 logger = logging.getLogger(__name__)
 
@@ -20,19 +21,62 @@ class MCPServerService:
         self.session = session
     
     async def create_mcp_server(self, server_data: Dict[str, Any]) -> MCPServerConfig:
-        """Create MCP server configuration"""
+        """Create MCP server configuration manually"""
         server = MCPServerConfig(**server_data)
         
         self.session.add(server)
         await self.session.commit()
         await self.session.refresh(server)
         
-        # Try to register with MCP registry
+        # Connect if active
         if server.is_active:
-            try:
-                await mcp_registry.register_server(server)
-            except Exception as e:
-                logger.error(f"Failed to register MCP server: {e}")
+            await mcp_manager.connect_server(server)
+        
+        return server
+    
+    async def install_preset(self, preset_id: str, connection_overrides: Dict[str, Any] = None) -> MCPServerConfig:
+        """Install an MCP server from a preset"""
+        preset = get_preset_by_id(preset_id)
+        if not preset:
+            raise ValueError(f"Preset {preset_id} not found")
+            
+        connection_config = preset.connection_config.copy()
+        if connection_overrides:
+            connection_config.update(connection_overrides)
+            
+        # Ensure unique name
+        base_name = preset.name
+        name = base_name
+        counter = 1
+        
+        # Simple name collision avoidance loop
+        while True:
+            stmt = select(MCPServerConfig).where(MCPServerConfig.name == name)
+            existing = (await self.session.execute(stmt)).scalar_one_or_none()
+            if not existing:
+                break
+            name = f"{base_name} ({counter})"
+            counter += 1
+
+        server_data = {
+            "name": name,
+            "description": preset.description,
+            "server_type": preset.server_type,
+            "connection_config": connection_config,
+            "is_active": True,
+            "extra_data": {
+                "installed_from_preset": preset_id,
+                "logo_url": preset.logo_url
+            }
+        }
+        
+        server = MCPServerConfig(**server_data)
+        self.session.add(server)
+        await self.session.commit()
+        await self.session.refresh(server)
+        
+        # Auto connect
+        await mcp_manager.connect_server(server)
         
         return server
     
@@ -48,15 +92,18 @@ class MCPServerService:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
+    async def list_presets(self) -> List[Any]:
+        """List available presets"""
+        return MCP_PRESETS
+    
     async def delete_mcp_server(self, server_id: uuid.UUID) -> bool:
         """Delete MCP server"""
         server = await self.get_mcp_server(server_id)
         if not server:
             return False
         
-        # Unregister from MCP registry
-        if mcp_registry.is_registered(server.name):
-            await mcp_registry.unregister_server(server.name)
+        # Disconnect
+        await mcp_manager.disconnect_server(server.name)
         
         await self.session.delete(server)
         await self.session.commit()

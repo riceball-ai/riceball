@@ -12,7 +12,10 @@ RiceBall 是一个开源的、全栈式的 **AI 智能体与知识库平台**。
   - 支持引用追踪。
 - **🤖 智能体 (Agent) 引擎**：
   - 基于 **LangChain** 构建，利用强大的 **工具调用 (Tool Calling)** 能力执行任务。
-  - **Model Context Protocol (MCP)** 支持正在积极开发中 (🚧)，旨在连接你的生态系统。
+  - **通用 MCP 支持 (Universal MCP)**：完整实现 Model Context Protocol。
+    - **Stdio**：连接本地命令行工具。
+    - **SSE**：连接远程或 Docker 容器中的工具。
+    - **Presets**：常用工具一键安装。
 - **🔌 多模型支持**：
   - **拒绝厂商锁定**：在 OpenAI, Anthropic, Google Gemini, XAI (Grok) 以及任何兼容 OpenAI 接口的供应商之间切换。
   - **成本优化**：简单问题路由到低成本模型，复杂推理交给高性能模型。
@@ -30,8 +33,19 @@ RiceBall 是一个开源的、全栈式的 **AI 智能体与知识库平台**。
 ## 💡 为什么选择 RiceBall？
 
 1. **安全优先**：私有化部署方案确保数据和 IP 保留在你自己的基础设施上。
-2. **业务原生**：通过 **工具调用 (Tool Calling)**（以及即将到来的 **MCP** 支持），RiceBall 不仅仅是一个聊天机器人，它是一个能够与业务系统交互的操作员。
+2. **业务原生**：通过 **工具调用 (Tool Calling)** 和 **通用 MCP 支持**，RiceBall 不仅仅是一个聊天机器人，它是能够与处于任何环境（本地/远程）的业务系统（文件、数据库、API）进行交互的操作员。
 3. **开发者就绪**：清晰的模块化架构（前后端分离），是构建定制化 AI 解决方案的绝佳起点。
+
+## 🔗 通用 MCP 主机 (Universal MCP Host)
+
+RiceBall 实现了完整的 **Model Context Protocol (MCP)** 规范，作为通用主机（Universal Host）可以连接任何 MCP 服务器。
+
+### 核心特性
+- **🔌 全传输协议支持**:
+  - **Stdio**: 无缝连接本地进程（如 `git`、本地 Python 脚本）。非常适合本地开发和调试。
+  - **HTTP (Simple & SSE)**: 完整支持 HTTP 传输协议。使用 HTTP POST 发送消息，可选 Server-Sent Events (SSE) 进行流式传输。完美支持 Docker "Sidecar" 模式部署。
+- **📦 智能预设 (Smart Presets)**: 内置常用工具配置（如本地文件系统、Brave 搜索 API 等），无需手动配置，一键安装即可使用。
+- **📄 无限扩展**: 通过管理后台添加自定义的 MCP 服务器连接信息，无限扩展你的助手能力。
 
 ## 👥 适用人群
 

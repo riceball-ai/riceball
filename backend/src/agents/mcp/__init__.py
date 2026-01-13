@@ -1,8 +1,5 @@
-"""
-MCP (Model Context Protocol) integration module
-"""
-from .client import MCPClient
-from .registry import mcp_registry, MCPServerRegistry
+from .manager import mcp_manager, MCPConnectionManager
+from .client import MCPClientBase
 from .tools_adapter import MCPToolAdapter
 
-__all__ = ["MCPClient", "mcp_registry", "MCPServerRegistry", "MCPToolAdapter"]
+__all__ = ["MCPClientBase", "mcp_manager", "MCPConnectionManager", "MCPToolAdapter"]

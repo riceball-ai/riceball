@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi_pagination import Page
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, or_, func, distinct
 from sqlalchemy.orm import joinedload, selectinload
 
 from src.database import get_async_session
@@ -36,7 +36,6 @@ async def list_conversations(
     current_user: User = Depends(current_active_user)
 ):
     """List user's conversations with pagination and filtering"""
-    from sqlalchemy import func
     
     query = select(Conversation).options(
         joinedload(Conversation.assistant),
@@ -55,21 +54,40 @@ async def list_conversations(
     
     if search:
         search_term = f"%{search}%"
-        query = query.where(Conversation.title.ilike(search_term))
+        # Join Message explicitly to enable filtering on message content
+        query = query.outerjoin(Message, Conversation.id == Message.conversation_id)
+        query = query.where(
+            or_(
+                Conversation.title.ilike(search_term),
+                Message.content.ilike(search_term)
+            )
+        )
+        query = query.distinct()
     
     query = query.order_by(Conversation.updated_at.desc())
     
     # Get total count
-    count_query = select(func.count()).select_from(Conversation)
+    if search:
+        # If searching, we need to count distinct conversations matching criteria
+        count_query = select(func.count(distinct(Conversation.id))).select_from(Conversation)
+        count_query = count_query.outerjoin(Message, Conversation.id == Message.conversation_id)
+        
+        search_term = f"%{search}%"
+        count_query = count_query.where(
+            or_(
+                Conversation.title.ilike(search_term),
+                Message.content.ilike(search_term)
+            )
+        )
+    else:
+        count_query = select(func.count()).select_from(Conversation)
+        
     if assistant_id:
         count_query = count_query.where(Conversation.assistant_id == assistant_id)
     if user_id:
         count_query = count_query.where(Conversation.user_id == user_id)
     if status:
         count_query = count_query.where(Conversation.status == status)
-    if search:
-        search_term = f"%{search}%"
-        count_query = count_query.where(Conversation.title.ilike(search_term))
     
     total_result = await session.execute(count_query)
     total = total_result.scalar()

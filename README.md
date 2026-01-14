@@ -9,58 +9,23 @@ RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. I
 ![Client Interface](docs/.vuepress/public/client.gif)
 ![Dashboard Interface](docs/.vuepress/public/dashboard.png)
 
-## 🏗️ System Architecture
+## 🧩 Concepts & Architecture
 
 ```mermaid
-graph LR
-    subgraph Client ["Client Side"]
-        Browser[Browser]
-        UI["UI Components<br/>(Shadcn Vue)"]
-        State["State Management<br/>(Pinia)"]
-    end
-
-    subgraph Channels ["Channels / Integrations"]
-        WeCom["WeCom / Enterprise WeChat"]
-        Telegram[Telegram]
-        Slack["Slack (Planned)"]
-    end
-
-    subgraph Backend ["Backend Services"]
-        API[API Router]
-        Auth["Auth Module<br/>(FastAPI Users)"]
-        ChannelsSvc["Channel Service<br/>(Identity & Adapter)"]
-        RAG[RAG Engine]
-        Agent["Agent Engine<br/>(LangChain + Tools)"]
-    end
-
-    subgraph Infrastructure ["Storage & External"]
-        DB[(PostgreSQL / SQLite)]
-        VectorDB[(ChromaDB)]
-        FileStore["S3 / Local"]
-        LLM["LLM Providers"]
-        MCPServers["Universal MCP Host<br/>(Stdio + HTTP)"]
-    end
-
-    Browser -->|HTTP| UI
-    UI <--> State
-    UI -->|API| API
+graph TD
+    User["User"] -->|Interacts with| Assistant["Assistant"]
     
-    Channels -->|Webhook| API
-    API --> ChannelsSvc
-    ChannelsSvc --> Agent
+    subgraph "RiceBall Platform"
+        Assistant -->|Based on| Model["Model"]
+        Assistant -->|Retrieves| RAG["Knowledge Base (RAG / ChromaDB)"]
+        Assistant -->|Calls| Tools["Tools"]
+        
+        Model -->|Configured from| Provider["Model Provider"]
+        Tools -.->|Standard Protocol| MCP["MCP (Model Context Protocol)"]
+    end
     
-    API --> Auth
-    API --> RAG
-    API --> Agent
-
-    Agent <--> LLM
-    Agent <--> MCPServers
-    RAG <--> VectorDB
-    RAG <--> LLM
-
-    Auth --> DB
-    ChannelsSvc --> DB
-    RAG --> FileStore
+    ExternalApps["External Apps<br/>(WeCom/Telegram)"] -->|Webhook| Assistant
+    Provider -.->|API| ExternalServices["External AI Services (OpenAI/Ollama/etc.)"]
 ```
 
 ## ✨ Core Capabilities

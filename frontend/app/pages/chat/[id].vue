@@ -835,11 +835,6 @@ onUnmounted(() => {
     >
       <div ref="scrollContent" class="p-4 pb-40">
         <div class="max-w-4xl mx-auto space-y-4">
-          <!-- Welcome message -->
-          <ChatWelcome 
-            :assistant="assistant" 
-            :show-welcome="messages.length === 0 && !isLoadingHistory" 
-          />
 
           <!-- Loading history indicator -->
           <ChatLoading 

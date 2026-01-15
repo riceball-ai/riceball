@@ -190,29 +190,19 @@ watch(() => userStore.user, (val) => {
 </script>
 
 <template>
-  <ChatLayout v-if="assistant" :assistant="assistant">
+  <ChatLayout 
+    v-if="assistant" 
+    :assistant="assistant"
+    :empty-state="true"
+  >
     <!-- Welcome message -->
     <ChatWelcome 
       :assistant="assistant" 
-      :show-welcome="messages.length === 0" 
+      :show-welcome="true" 
     />
 
-    <!-- User Messages -->
-    <ChatMessage 
-      v-for="message in messages" 
-      :key="message.id" 
-      :message="message" 
-      :assistant="assistant"
-    />
-
-    <!-- Loading indicator when creating conversation -->
-    <ChatLoading 
-      v-if="isCreatingConversation" 
-      :assistant="assistant"
-      :message="t('chat.creatingConversation', 'Creating new conversation...')"
-    />
-
-    <template #input>
+    <!-- Input in center -->
+    <div class="max-w-2xl mx-auto w-full mt-8">
       <ChatInput 
         v-model="newMessage"
         :disabled="inputDisabled || isLoading"
@@ -223,6 +213,14 @@ watch(() => userStore.user, (val) => {
         @click="handleInputFocus"
         @send="sendMessage"
       />
-    </template>
+    </div>
+
+    <!-- Loading indicator when creating conversation (transient state) -->
+    <ChatLoading 
+      v-if="isCreatingConversation" 
+      :assistant="assistant"
+      :message="t('chat.creatingConversation', 'Creating new conversation...')"
+      class="mt-4"
+    />
   </ChatLayout>
 </template>

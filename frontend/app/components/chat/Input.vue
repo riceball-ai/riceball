@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ArrowUp, Image as ImageIcon, Camera, X, Loader2, AlertTriangle, Square } from 'lucide-vue-next'
 import type { ImageAttachment } from '~/composables/useStreamingChat'
+import { InputGroup, InputGroupTextarea, InputGroupButton } from '~/components/ui/input-group'
+import type { ComponentPublicInstance } from 'vue'
 
 type AttachmentStatus = 'uploading' | 'ready' | 'error'
 
@@ -40,7 +42,7 @@ const emit = defineEmits<Emits>()
 const { $api } = useNuxtApp()
 const { showError } = useNotifications()
 const { t } = useI18n()
-const textareaRef = ref<HTMLTextAreaElement>()
+const textareaRef = ref<ComponentPublicInstance>()
 const fileInputRef = ref<HTMLInputElement>()
 const cameraInputRef = ref<HTMLInputElement>()
 const attachedImages = ref<AttachmentItem[]>([])
@@ -91,11 +93,6 @@ const handleKeyPress = (event: KeyboardEvent) => {
     }
   }
   emit('keydown', event)
-}
-
-const handleInput = (event: Event) => {
-  const target = event.target as HTMLTextAreaElement
-  emit('update:modelValue', target.value)
 }
 
 const handleSend = () => {
@@ -272,10 +269,11 @@ const removeImage = (id: string) => {
 
 // Auto-resize textarea
 const adjustTextareaHeight = () => {
-  if (textareaRef.value) {
-    textareaRef.value.style.height = 'auto'
-    const newHeight = Math.min(textareaRef.value.scrollHeight, 192)
-    textareaRef.value.style.height = newHeight + 'px'
+  const el = textareaRef.value?.$el as HTMLTextAreaElement | undefined
+  if (el) {
+    el.style.height = 'auto'
+    const newHeight = Math.min(el.scrollHeight, 192)
+    el.style.height = newHeight + 'px'
   }
 }
 
@@ -288,146 +286,154 @@ onMounted(() => {
 })
 
 defineExpose({
-  focus: () => textareaRef.value?.focus()
+  focus: () => {
+    const el = textareaRef.value?.$el as HTMLTextAreaElement | undefined
+    el?.focus()
+  }
 })
 </script>
 
 <template>
-  <fieldset class="flex w-full min-w-0 flex-col">
-      <div
-        class="flex flex-col bg-background mx-2 md:mx-0 items-stretch transition-all duration-200 relative cursor-text z-10 rounded-2xl border border-border shadow-sm hover:shadow-md focus-within:shadow-md"
-        :class="{ 'ring-2 ring-primary/40 bg-accent/20': isDragActive }"
-        @dragenter.prevent="handleDragEnter"
-        @dragover.prevent="handleDragOver"
-        @dragleave.prevent="handleDragLeave"
-        @drop.prevent="handleDrop"
-      >
-      <div class="flex flex-col gap-3.5 m-3.5">
-        <!-- Image previews -->
-        <div v-if="attachedImages.length > 0" class="flex flex-wrap gap-2">
-          <div 
-            v-for="image in attachedImages" 
-            :key="image.id"
-            class="relative group w-20 h-20 rounded-lg overflow-hidden border border-border"
-          >
-            <img 
-              :src="image.dataUrl" 
-              :alt="image.alt || t('chat.input.previewAlt')"
-              class="w-full h-full object-cover"
-            />
-            <div
-              v-if="image.status === 'uploading'"
-              class="absolute inset-0 bg-background/70 flex items-center justify-center"
-            >
-              <Loader2 class="w-4 h-4 animate-spin text-muted-foreground" />
-            </div>
-            <div
-              v-else-if="image.status === 'error'"
-              class="absolute inset-0 bg-destructive/75 text-destructive-foreground text-[11px] font-medium flex items-center justify-center text-center px-1"
-            >
-              {{ t('chat.input.uploadFailedLabel') }}
-            </div>
-            <button
-              @click="removeImage(image.id)"
-              class="absolute top-1 right-1 p-1.5 rounded-full border border-border bg-background/90 text-destructive shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
-              type="button"
-            >
-              <X class="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-        
-        <!-- Text input area -->
-        <div class="relative">
-          <textarea
-            ref="textareaRef"
-            :value="modelValue"
-            @input="handleInput"
-            @keydown="handleKeyPress"
-            @paste="handlePaste"
-            :placeholder="placeholderText"
-            :disabled="disabled"
-            autofocus
-            class="w-full resize-none border-0 outline-none bg-transparent text-base leading-6 placeholder:text-muted-foreground min-h-[3rem] max-h-48 py-2 overflow-y-auto"
-            rows="1"
+  <fieldset
+    class="flex w-full min-w-0 flex-col gap-2 transition-all"
+    @dragenter.prevent="handleDragEnter"
+    @dragover.prevent="handleDragOver"
+    @dragleave.prevent="handleDragLeave"
+    @drop.prevent="handleDrop"
+  >
+    <InputGroup
+      class="flex-col h-auto bg-background items-stretch transition-all duration-200 relative cursor-text z-10 rounded-2xl hover:shadow-md"
+      :class="{ 'ring-2 ring-primary/40 bg-accent/20': isDragActive }"
+    >
+      <!-- 1. Image previews (Top) -->
+      <div v-if="attachedImages.length > 0" class="flex flex-wrap gap-2 px-3 pt-3">
+        <div
+          v-for="image in attachedImages"
+          :key="image.id"
+          class="relative group w-20 h-20 rounded-lg overflow-hidden border border-border"
+        >
+          <img
+            :src="image.dataUrl"
+            :alt="image.alt || t('chat.input.previewAlt')"
+            class="w-full h-full object-cover"
           />
+          <div
+            v-if="image.status === 'uploading'"
+            class="absolute inset-0 bg-background/70 flex items-center justify-center"
+          >
+            <Loader2 class="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+          <div
+            v-else-if="image.status === 'error'"
+            class="absolute inset-0 bg-destructive/75 text-destructive-foreground text-[11px] font-medium flex items-center justify-center text-center px-1"
+          >
+            {{ t('chat.input.uploadFailedLabel') }}
+          </div>
+          <button
+            @click="removeImage(image.id)"
+            class="absolute top-1 right-1 p-1.5 rounded-full border border-border bg-background/90 text-destructive shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+            type="button"
+          >
+            <X class="w-3 h-3" />
+          </button>
         </div>
-        
-        <!-- Bottom row with controls and send button -->
-        <div class="flex gap-2.5 w-full items-center">
-          <div class="relative flex-1 flex items-center gap-2 shrink min-w-0">
-            <!-- Left side controls -->
-            <div class="flex flex-row items-center gap-2 min-w-0">
-              <!-- Image upload button (only show if model supports vision) -->
-              <button
-                v-if="supportsVision"
+      </div>
+
+      <!-- 2. Text input area (Middle) -->
+      <InputGroupTextarea
+        ref="textareaRef"
+        :model-value="modelValue"
+        @update:model-value="(val) => emit('update:modelValue', String(val))"
+        @keydown="handleKeyPress"
+        @paste="handlePaste"
+        :placeholder="placeholderText"
+        :disabled="disabled"
+        autofocus
+        class="w-full resize-none border-0 outline-none bg-transparent text-base leading-6 placeholder:text-muted-foreground min-h-[3rem] max-h-48 py-3 px-3 shadow-none focus-visible:ring-0"
+        rows="1"
+      />
+
+      <!-- 3. Bottom controls area (Bottom) -->
+      <div class="flex gap-2.5 w-full items-center p-2 pl-2">
+        <div class="relative flex-1 flex items-center gap-2 shrink min-w-0">
+          <!-- Left side controls -->
+          <div class="flex flex-row items-center gap-1 min-w-0">
+            <template v-if="supportsVision">
+              <InputGroupButton
                 @click="handleFileSelect"
                 type="button"
                 :disabled="disabled"
-                class="p-1.5 rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
+                variant="ghost"
+                size="icon-sm"
                 :title="t('chat.input.uploadButton')"
+                class="text-muted-foreground hover:text-foreground"
               >
-                <ImageIcon class="w-5 h-5 text-muted-foreground" />
-              </button>
-              <button
-                v-if="supportsVision"
+                <ImageIcon class="size-5" />
+              </InputGroupButton>
+              <InputGroupButton
                 @click="handleCameraCapture"
                 type="button"
                 :disabled="disabled"
-                class="p-1.5 rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
+                variant="ghost"
+                size="icon-sm"
                 :title="t('chat.input.cameraButton')"
+                class="text-muted-foreground hover:text-foreground"
               >
-                <Camera class="w-5 h-5 text-muted-foreground" />
-              </button>
-              <input
-                ref="fileInputRef"
-                type="file"
-                accept="image/*"
-                multiple
-                class="hidden"
-                @change="handleFileChange"
-              />
-              <input
-                ref="cameraInputRef"
-                type="file"
-                accept="image/*"
-                :capture="captureAttribute"
-                class="hidden"
-                @change="handleCameraChange"
-              />
-            </div>
-            <div class="text-muted-foreground text-xs ml-2 space-y-1">
-              <span v-if="hasPendingUploads" class="flex items-center gap-1">
-                <Loader2 class="w-3 h-3 animate-spin" />
-                {{ t('chat.input.uploadingStatus', { count: pendingUploadsCount }) }}
-              </span>
-              <span v-else-if="attachedImages.length > 0">
-                {{ t('chat.input.readyStatus', { count: readyAttachments.length }) }}
-              </span>
-              <span v-if="erroredAttachments.length" class="flex items-center gap-1 text-destructive">
-                <AlertTriangle class="w-3 h-3" />
-                {{ t('chat.input.failedStatus', { count: erroredAttachments.length }) }}
-              </span>
-              <span v-if="supportsVision" class="block text-muted-foreground">
-                {{ t('chat.input.visionHint') }}
-              </span>
-            </div>
+                <Camera class="size-5" />
+              </InputGroupButton>
+            </template>
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*"
+              multiple
+              class="hidden"
+              @change="handleFileChange"
+            />
+            <input
+              ref="cameraInputRef"
+              type="file"
+              accept="image/*"
+              :capture="captureAttribute"
+              class="hidden"
+              @change="handleCameraChange"
+            />
           </div>
-          
-          <!-- Send button -->
-          <div class="overflow-hidden shrink-0">
-            <Button 
-              @click="handleSend" 
-              :disabled="(sendDisabled && !loading) || hasPendingUploads"
-              class="size-8"
-            >
-              <Loader2 v-if="hasPendingUploads" class="animate-spin" />
-              <Square v-else-if="loading" class="fill-current" />
-              <ArrowUp v-else />
-            </Button>
+
+          <!-- Status Text -->
+          <div class="text-muted-foreground text-xs ml-1 space-y-1">
+            <span v-if="hasPendingUploads" class="flex items-center gap-1">
+              <Loader2 class="w-3 h-3 animate-spin" />
+              {{ t('chat.input.uploadingStatus', { count: pendingUploadsCount }) }}
+            </span>
+            <span v-else-if="attachedImages.length > 0">
+              {{ t('chat.input.readyStatus', { count: readyAttachments.length }) }}
+            </span>
+            <span v-if="erroredAttachments.length" class="flex items-center gap-1 text-destructive">
+              <AlertTriangle class="w-3 h-3" />
+              {{ t('chat.input.failedStatus', { count: erroredAttachments.length }) }}
+            </span>
+            <span v-if="supportsVision && attachedImages.length === 0 && !modelValue" class="block text-muted-foreground">
+              {{ t('chat.input.visionHint') }}
+            </span>
           </div>
         </div>
+
+        <!-- Send button -->
+        <div class="overflow-hidden shrink-0">
+          <InputGroupButton
+            @click="handleSend"
+            :disabled="(sendDisabled && !loading) || hasPendingUploads"
+            variant="default"
+            size="icon-sm"
+            class="rounded-full"
+          >
+            <Loader2 v-if="hasPendingUploads" class="animate-spin size-4" />
+            <Square v-else-if="loading" class="fill-current size-4" />
+            <ArrowUp v-else class="size-4" />
+          </InputGroupButton>
+        </div>
       </div>
-    </div>
+    </InputGroup>
   </fieldset>
 </template>

@@ -6,9 +6,12 @@ import { toast } from 'vue-sonner'
 interface Props {
   assistant: Assistant
   title?: string | null
+  emptyState?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {})
+const props = withDefaults(defineProps<Props>(), {
+  emptyState: false
+})
 const { t } = useI18n()
 const { $api } = useNuxtApp()
 const userStore = useUserStore()
@@ -116,15 +119,19 @@ const handlePin = async () => {
     
     <!-- Chat content area -->
     <div class="flex-1 overflow-y-auto">
-      <div class="p-4 pb-40">
-        <div class="max-w-4xl mx-auto space-y-4">
+      <div 
+        class="p-4"
+        :class="{ 'pb-40': !emptyState, 'h-full flex flex-col justify-center pb-[20vh]': emptyState }"
+      >
+        <div class="max-w-4xl mx-auto space-y-4 w-full">
           <slot />
         </div>
       </div>
     </div>
 
-    <!-- Input area slot -->
-    <div class="absolute bottom-0 left-0 right-0 z-50">
+    <!-- Input area slot (only shown if not empty state OR if explicity populated in empty state via slot check, 
+         but usually in empty state we want input inside the main flow) -->
+    <div v-if="!emptyState || $slots.input" class="absolute bottom-0 left-0 right-0 z-50">
       <div class="p-4">
         <div class="max-w-4xl mx-auto">
           <slot name="input" />

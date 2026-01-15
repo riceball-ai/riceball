@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <div v-if="showWelcome" class="text-center py-12">
+  <div v-if="showWelcome" class="text-center">
     <div class="mb-4">
       <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
         <Avatar class="w-12 h-12">
@@ -25,7 +25,7 @@ const props = withDefaults(defineProps<Props>(), {
     </div>
     <h3 class="text-lg font-semibold mb-2">{{ assistant?.name }}</h3>
     <p class="text-muted-foreground max-w-md mx-auto">
-      {{ assistant?.description || 'Start a conversation by typing a message below.' }}
+      {{ assistant?.description || '' }}
     </p>
   </div>
 </template>

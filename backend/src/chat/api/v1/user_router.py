@@ -5,7 +5,7 @@ import json
 import uuid
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from fastapi_pagination import Page
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi_pagination.ext.sqlalchemy import paginate as sqlalchemy_paginate
 
-from src.database import get_async_session
+from src.database import get_async_session, async_session_maker
 from src.auth import current_active_user
 from src.users.models import User
 from src.chat.service import LangchainChatService
@@ -24,7 +24,6 @@ from .schemas import (
     ConversationUpdate,
     ConversationResponse,
     MessageResponse,
-    GenerateTitleResponse,
     ChatRequest,
     MessageFeedbackRequest
 )
@@ -34,6 +33,16 @@ from src.services.cache import get_cache_service, CacheBackend
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+async def generate_title_background_task(conversation_id: uuid.UUID, user_id: uuid.UUID):
+    """Background task to generate conversation title"""
+    try:
+        async with async_session_maker() as session:
+            service = LangchainChatService(session)
+            # Use auto_update=True to save to DB
+            await service.generate_conversation_title(conversation_id, user_id, auto_update=True)
+            logger.info(f"Background title generation completed for {conversation_id}")
+    except Exception as e:
+        logger.error(f"Background title generation failed for {conversation_id}: {e}")
 
 
 # Conversation endpoints
@@ -88,34 +97,6 @@ async def create_conversation(
         raise HTTPException(status_code=403, detail=str(e))
 
 
-# Generate conversation title endpoint
-@router.post("/conversations/{conversation_id}/generate-title", response_model=GenerateTitleResponse, summary="Generate conversation title")
-async def generate_conversation_title(
-    conversation_id: uuid.UUID,
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(current_active_user)
-):
-    """Generate a title for the conversation using AI with langchain"""
-    service = LangchainChatService(session)
-    
-    try:
-        title, model_used, updated = await service.generate_conversation_title(
-            conversation_id=conversation_id,
-            user_id=current_user.id
-        )
-        
-        return GenerateTitleResponse(
-            conversation_id=conversation_id,
-            title=title,
-            model_used=model_used,
-            updated=updated
-        )
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except PermissionError as e:
-        raise HTTPException(status_code=403, detail=str(e))
-    
 
 @router.get("/conversations/{conversation_id}", response_model=ConversationResponse, summary="Get a conversation")
 async def get_conversation(
@@ -202,10 +183,14 @@ async def get_conversation_messages(
 @router.post("/chat", summary="Chat with an assistant (streaming)")
 async def chat_with_assistant(
     chat_data: ChatRequest,
+    background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user)
 ):
-    """Send a message to an assistant and get a streaming response using langchain"""
+    """
+    Send a message to an assistant and get a streaming response using langchain.
+    Supports auto-title generation in background for new conversations.
+    """
     
     # Check user balance before allowing chat - REMOVED: Billing system no longer exists
     from src.assistants.models import AssistantStatusEnum
@@ -218,6 +203,11 @@ async def chat_with_assistant(
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
     
+    # Trigger background title generation if it's the first message
+    if conversation.message_count == 0:
+        logger.info(f"Scheduling background title generation for conversation {conversation.id}")
+        background_tasks.add_task(generate_title_background_task, conversation.id, current_user.id)
+
     # Check if assistant is active
     if conversation.assistant.status != AssistantStatusEnum.ACTIVE:
         raise HTTPException(

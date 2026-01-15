@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Conversation, ConversationsResponse, GenerateTitleResponse } from '~/types/api'
+import type { Conversation, ConversationsResponse } from '~/types/api'
 
 export const useConversationsStore = defineStore('conversations', () => {
   const conversations = ref<Conversation[]>([])
@@ -145,31 +145,34 @@ export const useConversationsStore = defineStore('conversations', () => {
     }
   }
 
-  const generateTitle = async (conversationId: string) => {
-    try {
-      const response = await $api<GenerateTitleResponse>(`/v1/conversations/${conversationId}/generate-title`, {
-        method: 'POST'
-      })
-
-      if (response.title) {
-        const conversation = conversations.value.find(c => c.id === conversationId)
-        if (conversation) {
-          conversation.title = response.title
-        }
-      }
-
-      return response
-    } catch (err) {
-      const errorMessage = `Failed to generate title: ${err instanceof Error ? err.message : 'Unknown error'}`
-      error.value = errorMessage
-      showError(errorMessage)
-      console.error('Failed to generate title:', err)
-      throw err
-    }
-  }
 
   const refreshConversations = async () => {
     await fetchConversations(1)
+  }
+
+  const refreshConversation = async (id: string) => {
+    try {
+      const data = await $api<Conversation>(`/v1/conversations/${id}`)
+      
+      const index = conversations.value.findIndex(c => c.id === id)
+      if (index !== -1) {
+        conversations.value[index] = { ...conversations.value[index], ...data }
+      } else {
+        // If not found in list (e.g. new convo), prepend it
+        conversations.value.unshift(data)
+        totalCount.value++
+      }
+      
+      // Also update current conversation if it matches
+      if (currentConversation.value?.id === id) {
+        currentConversation.value = data
+      }
+      
+      return data
+    } catch (err) {
+      console.error('Failed to refresh conversation:', err)
+      return null
+    }
   }
 
   const setCurrentConversation = (conversation: Conversation | null) => {
@@ -200,8 +203,8 @@ export const useConversationsStore = defineStore('conversations', () => {
     deleteConversation,
     removeConversation,
     updateConversationTitle,
-    generateTitle,
     refreshConversations,
+    refreshConversation,
     setCurrentConversation,
     clearError
   }

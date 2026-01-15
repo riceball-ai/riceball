@@ -1016,7 +1016,7 @@ class LangchainChatService:
             async for chunk in client.astream(lc_messages):
                 # Check for stop signal
                 if conversation_id and await cache.exists(f"stop_signal:{conversation_id}"):
-                    # await cache.delete(f"stop_signal:{conversation_id}")
+                    await cache.delete(f"stop_signal:{conversation_id}")
                     break
 
                 # Log chunk structure for debugging

@@ -213,6 +213,20 @@ const fetchAssistant = async (assistantId: string) => {
   }
 }
 
+const fetchConversation = async () => {
+  if (!currentConversationId.value) return
+
+  try {
+    const data = await $api<Conversation>(`/v1/conversations/${currentConversationId.value}`)
+    conversationInfo.value = data
+    if (data.assistant) {
+      assistant.value = data.assistant
+    }
+  } catch (error) {
+    console.error('Failed to fetch conversation details:', error)
+  }
+}
+
 // Initialize assistant data
 const initializeAssistant = async () => {
   const conversationData = newConversationStore.state.conversations[conversationId]
@@ -596,20 +610,8 @@ const sendMessageInternal = async (messageContent: string, userMessage: Message,
         finalizeAssistantStreamingMessage(finalMessage)
         const mediaRenderPromise = waitForMediaRender()
         
-        // Generate title for new conversations after first assistant response
-        if (isNewConversation.value && currentConversationId.value) {
-          const assistantMessageCount = messages.value.filter(msg => msg.message_type === 'ASSISTANT').length
-          if (assistantMessageCount === 1) {
-            try {
-              await conversationsStore.generateTitle(currentConversationId.value)
-              // Reset the flag after generating title
-              isNewConversation.value = false
-            } catch (error) {
-              console.error('Failed to generate title after first message:', error)
-              // Don't show error to user as this is not critical functionality
-            }
-          }
-        }
+        // Background title generation sync
+        refreshTitleIfNeeded()
         
         isLoading.value = false
 
@@ -665,21 +667,54 @@ const sendMessageInternal = async (messageContent: string, userMessage: Message,
       // images
       images
     )
-  } catch (error) {
-    console.error('Failed to send message:', error)
-    // Remove the user message if sending failed
-    shouldShowStreamingLoading.value = false
-    const failedUserMessageIndex = messages.value.findIndex(msg => msg.id === userMessage.id)
-    if (failedUserMessageIndex !== -1) {
-      messages.value.splice(failedUserMessageIndex, 1)
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.log('Stream aborted by user')
+    } else {
+      console.error('Failed to send message:', error)
+      
+      const failedUserMessageIndex = messages.value.findIndex(msg => msg.id === userMessage.id)
+      if (failedUserMessageIndex !== -1) {
+        messages.value.splice(failedUserMessageIndex, 1)
+      }
+      discardAssistantStreamingMessage()
+
+      showError(error.message || t('chat.sendFailed'))
     }
-    discardAssistantStreamingMessage()
+    
+    // Cleanup on error
+    shouldShowStreamingLoading.value = false
     isStreaming.value = false
     isLoading.value = false
-    
-    // Show error to user
-    showError(`${t('chat.sendFailed')}: ${error instanceof Error ? error.message : t('chat.unknownError')}`)
+    isAgentThinking.value = false
   }
+}
+
+const handleStop = async () => {
+    await stopGenerating()
+    // Manually trigger title refresh on stop, as streaming complete won't fire
+    refreshTitleIfNeeded()
+}
+
+const refreshTitleIfNeeded = () => {
+    if (isNewConversation.value && currentConversationId.value) {
+        const cid = currentConversationId.value
+        isNewConversation.value = false // Reset immediately
+        
+        setTimeout(async () => {
+        try {
+            // Efficiently refresh just this conversation in the sidebar list
+            await conversationsStore.refreshConversation(cid)
+            
+            // Refresh current conversation details (header title) if still on same page
+            if (route.params.id === cid) {
+                await fetchConversation()
+            }
+        } catch (error) {
+            console.error('Failed to sync generated title:', error)
+        }
+        }, 3000) // 3 seconds delay should be enough for title generation
+    }
 }
 
 const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
@@ -888,7 +923,7 @@ onUnmounted(() => {
             :loading="isGenerating"
             :supports-vision="supportsVision"
             @send="sendMessage"
-            @stop="stopGenerating"
+            @stop="handleStop"
           />
         </div>
       </div>

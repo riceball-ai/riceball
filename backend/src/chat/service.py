@@ -21,6 +21,7 @@ from src.ai_models.models import Model
 from src.ai_models.client_factory import create_chat_model
 from src.system_config.service import config_service
 from src.files.storage import storage_service
+from src.services.cache import get_cache_service
 
 from .models import ChatMessage, MessageRole
 from .conversation_service import ConversationService
@@ -338,7 +339,7 @@ class LangchainChatService:
                     current_images=prompt_images,
                     language=language,
                 )
-                stream_generator = self._stream_ai_response(conversation.assistant, chat_messages)
+                stream_generator = self._stream_ai_response(conversation.assistant, chat_messages, conversation_id=conversation_id)
             
             # Process streaming events (unified handling for both modes)
             async for chunk_data in stream_generator:
@@ -578,7 +579,8 @@ class LangchainChatService:
     async def _stream_gemini_native(
         self,
         assistant: Assistant,
-        messages: List[ChatMessage]
+        messages: List[ChatMessage],
+        conversation_id: Optional[uuid.UUID] = None
     ) -> AsyncIterator[dict]:
         """Stream Gemini response using google-genai SDK to preserve thought_signature"""
         from google import genai
@@ -626,8 +628,16 @@ class LangchainChatService:
             logger.error("Failed to start Gemini stream: %s", exc, exc_info=True)
             raise ValueError("Gemini API call failed, cannot start streaming response") from exc
 
+        cache = get_cache_service()
+        
         try:
             async for chunk in response_stream:
+                # Check for stop signal
+                if conversation_id and await cache.exists(f"stop_signal:{conversation_id}"):
+                    # Clean up signal
+                    await cache.delete(f"stop_signal:{conversation_id}")
+                    break
+
                 candidates = getattr(chunk, "candidates", None)
                 if not candidates:
                     continue
@@ -776,13 +786,14 @@ class LangchainChatService:
     async def _stream_ai_response(
         self,
         assistant: Assistant,
-        messages: List[ChatMessage]
+        messages: List[ChatMessage],
+        conversation_id: Optional[uuid.UUID] = None
     ) -> AsyncIterator[dict]:
         """Stream AI response using LangChain clients directly with token usage tracking"""
         
         # For Gemini: Use native SDK to preserve thought_signature
         if self.google_adapter.is_google_provider(assistant):
-            async for event in self._stream_gemini_native(assistant, messages):
+            async for event in self._stream_gemini_native(assistant, messages, conversation_id=conversation_id):
                 yield event
             # End of Gemini path
             return  # This is fine - empty return in async generator
@@ -1000,8 +1011,14 @@ class LangchainChatService:
             await _walk(content_part)
             return "".join(text_segments), chunk_media
 
+        cache = get_cache_service()
         try:
             async for chunk in client.astream(lc_messages):
+                # Check for stop signal
+                if conversation_id and await cache.exists(f"stop_signal:{conversation_id}"):
+                    # await cache.delete(f"stop_signal:{conversation_id}")
+                    break
+
                 # Log chunk structure for debugging
                 if self.google_adapter.is_google_provider(assistant):
                     logger.debug(f"Gemini chunk attributes: {dir(chunk)}")

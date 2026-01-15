@@ -75,6 +75,34 @@ export function useStreamingChat() {
   const { $api } = useNuxtApp()
   const { t, locale } = useI18n()
 
+  const isGenerating = ref(false)
+  const abortController = ref<AbortController | null>(null)
+  const currentConversationId = ref<string | null>(null)
+
+  const stopGenerating = async () => {
+    if (!currentConversationId.value && !abortController.value) return
+
+    // 1. Abort frontend stream
+    if (abortController.value) {
+      abortController.value.abort()
+      abortController.value = null
+    }
+
+    // 2. Notify backend if we have a conversation ID
+    if (currentConversationId.value) {
+      try {
+        await $api(`/v1/chat/${currentConversationId.value}/stop`, {
+          method: 'POST'
+        })
+      } catch (e) {
+        console.error('Failed to notify backend of stop:', e)
+      }
+    }
+    
+    isGenerating.value = false
+    currentConversationId.value = null
+  }
+
   const sendStreamingMessage = async (
     content: string,
     conversationId?: string,
@@ -85,6 +113,10 @@ export function useStreamingChat() {
     images?: ImageAttachment[]
   ) => {
     try {
+      isGenerating.value = true
+      currentConversationId.value = conversationId || null
+      abortController.value = new AbortController()
+
       const requestBody: any = {
         content,
         language: locale.value,
@@ -104,6 +136,7 @@ export function useStreamingChat() {
         method: 'POST',
         body: requestBody,
         responseType: 'stream',
+        signal: abortController.value.signal
       })
 
       if (!response || typeof response.pipeThrough !== 'function') {
@@ -147,6 +180,10 @@ export function useStreamingChat() {
         }
       }
     } catch (error: any) {
+      if (error.name === 'AbortError') {
+        // console.log('Stream aborted by user')
+        return
+      }
       console.error('Streaming chat error:', error)
       
       // Check for 402 Payment Required error (insufficient balance)
@@ -232,6 +269,10 @@ export function useStreamingChat() {
         const syncErrorMessage = syncError instanceof Error ? syncError.message : t('chat.sendFailed')
         onError?.(syncErrorMessage)
       }
+    } finally {
+      isGenerating.value = false
+      abortController.value = null
+      currentConversationId.value = null
     }
   }
 
@@ -255,7 +296,9 @@ export function useStreamingChat() {
 
   return {
     sendStreamingMessage,
-    sendSyncMessage
+    sendSyncMessage,
+    stopGenerating,
+    isGenerating: computed(() => isGenerating.value)
   }
 }
 

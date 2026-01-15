@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowUp, Image as ImageIcon, Camera, X, Loader2, AlertTriangle } from 'lucide-vue-next'
+import { ArrowUp, Image as ImageIcon, Camera, X, Loader2, AlertTriangle, Square } from 'lucide-vue-next'
 import type { ImageAttachment } from '~/composables/useStreamingChat'
 
 type AttachmentStatus = 'uploading' | 'ready' | 'error'
@@ -16,12 +16,14 @@ interface Props {
   disabled?: boolean
   sendDisabled?: boolean
   supportsVision?: boolean  // Whether the model supports image input
+  loading?: boolean
   cameraCapture?: 'environment' | 'user' | 'any'
 }
 
 interface Emits {
   (e: 'update:modelValue', value: string): void
   (e: 'send', images?: ImageAttachment[]): void
+  (e: 'stop'): void
   (e: 'keydown', event: KeyboardEvent): void
 }
 
@@ -29,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   sendDisabled: false,
   supportsVision: false,
+  loading: false,
   cameraCapture: 'environment'
 })
 
@@ -96,6 +99,11 @@ const handleInput = (event: Event) => {
 }
 
 const handleSend = () => {
+  if (props.loading) {
+    emit('stop')
+    return
+  }
+
   if (hasPendingUploads.value) {
     showError(t('chat.input.pendingUploads'))
     return
@@ -410,10 +418,11 @@ defineExpose({
           <div class="overflow-hidden shrink-0">
             <Button 
               @click="handleSend" 
-              :disabled="sendDisabled || hasPendingUploads"
+              :disabled="(sendDisabled && !loading) || hasPendingUploads"
               class="size-8"
             >
               <Loader2 v-if="hasPendingUploads" class="animate-spin" />
+              <Square v-else-if="loading" class="fill-current" />
               <ArrowUp v-else />
             </Button>
           </div>

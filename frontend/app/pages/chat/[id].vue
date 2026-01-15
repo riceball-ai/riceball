@@ -221,7 +221,7 @@ const initializeAssistant = async () => {
   }
 }
 
-const { sendStreamingMessage, sendSyncMessage } = useStreamingChat()
+const { sendStreamingMessage, sendSyncMessage, isGenerating, stopGenerating } = useStreamingChat()
 const { showError, showSuccess } = useNotifications()
 const { $api } = useNuxtApp()
 const { t } = useI18n()
@@ -885,8 +885,10 @@ onUnmounted(() => {
             v-model="newMessage"
             :disabled="!isAssistantActive"
             :send-disabled="isLoading || !newMessage.trim() || !isAssistantActive"
+            :loading="isGenerating"
             :supports-vision="supportsVision"
             @send="sendMessage"
+            @stop="stopGenerating"
           />
         </div>
       </div>

@@ -20,6 +20,14 @@ RiceBall 支持通过 `.env` 文件或直接设置系统环境变量来进行配
 | `EXTERNAL_URL` | 后端 API 的外部访问 URL | `http://localhost:8000` |
 | `FRONTEND_URL` | 前端访问 URL | `http://localhost:3000` |
 
+#### Redis 缓存设置 (新增)
+用于系统配置缓存、停止信号管理等。
+
+| 变量名 | 描述 | 默认值 / 示例 |
+|--------|------|---------------|
+| `CACHE_DRIVER` | 缓存驱动 | `memory` (默认) 或 `redis` |
+| `REDIS_URL` | Redis 连接字符串 (仅当驱动为 redis 时生效) | `redis://localhost:6379/0` |
+
 #### 邮件设置
 用于发送验证邮件和通知。
 

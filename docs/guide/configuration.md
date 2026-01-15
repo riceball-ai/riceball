@@ -20,6 +20,14 @@ Copy `backend/.env.example` to `backend/.env` and modify the following values:
 | `EXTERNAL_URL` | Public URL of the backend API | `http://localhost:8000` |
 | `FRONTEND_URL` | Public URL of the frontend | `http://localhost:3000` |
 
+#### Redis Cache Settings (New)
+Used for system configuration caching, stop signal management, etc.
+
+| Variable | Description | Default / Example |
+|----------|-------------|-------------------|
+| `CACHE_DRIVER` | Cache driver | `memory` (default) or `redis` |
+| `REDIS_URL` | Redis connection info (if driver is redis) | `redis://localhost:6379/0` |
+
 #### Email Settings
 Used for sending verification emails and notifications.
 

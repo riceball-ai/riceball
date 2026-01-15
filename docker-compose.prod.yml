@@ -50,6 +50,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:8-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+
   backend:
     build:
       context: ./backend
@@ -67,10 +73,13 @@ services:
       CHROMA_CLIENT_TYPE: http
       SUPERUSER_EMAIL: admin@admin.com
       SUPERUSER_PASSWORD: admin123456
+      CACHE_DRIVER: redis
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       - minio
       - postgres
       - chromadb
+      - redis
 
   frontend:
     build:
@@ -89,3 +98,4 @@ volumes:
   minio_data:
   chroma_data:
   postgres_data:
+  redis_data:

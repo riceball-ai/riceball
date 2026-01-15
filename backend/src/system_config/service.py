@@ -5,34 +5,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from sqlalchemy.exc import IntegrityError
 
+from src.services.cache import get_cache_service
 from .models import SystemConfig
 from .api.v1.schemas import ConfigCreate, ConfigUpdate
-
-
-class ConfigCache:
-    """Simple in-memory cache class for public configurations"""
-    
-    def __init__(self):
-        self._public_cache: Dict[str, Any] = {}
-    
-    def get_public_configs(self) -> Dict[str, Any]:
-        """Get all public configurations cache"""
-        return self._public_cache.copy()
-    
-    def set_public_configs(self, configs: Dict[str, Any]) -> None:
-        """Set public configurations cache"""
-        self._public_cache = configs.copy()
-    
-    def clear(self) -> None:
-        """Clear all cache"""
-        self._public_cache.clear()
 
 
 class ConfigService:
     """Configuration management service"""
     
     def __init__(self):
-        self.cache = ConfigCache()
+        self.cache = get_cache_service()
+        self._public_config_key = "system_config:public"
     
     async def get_config(self, session: AsyncSession, key: str) -> Optional[SystemConfig]:
         """Get single configuration item"""
@@ -59,9 +42,16 @@ class ConfigService:
     async def get_public_configs(self, session: AsyncSession) -> Dict[str, Any]:
         """Get all public configurations"""
         # Try to get from cache first
-        cached_configs = self.cache.get_public_configs()
-        if cached_configs:
-            return cached_configs
+        try:
+            cached_data = await self.cache.get(self._public_config_key)
+            if cached_data:
+                # Handle both string (Redis) and dict (Memory) return types
+                if isinstance(cached_data, str):
+                    return json.loads(cached_data)
+                return cached_data
+        except Exception:
+            # If cache fails, fallback to DB
+            pass
         
         # Get from database
         result = await session.execute(
@@ -76,7 +66,7 @@ class ConfigService:
         config_dict = {config.key: config.get_value() for config in configs}
         
         # Update cache
-        self.cache.set_public_configs(config_dict)
+        await self.cache.set(self._public_config_key, json.dumps(config_dict), expire=300)
         
         return config_dict
     
@@ -101,7 +91,7 @@ class ConfigService:
             
             # Clear public config cache to force reload if this is a public config
             if config.is_public:
-                self.cache.clear()
+                await self.cache.delete(self._public_config_key)
             
             return config
             
@@ -157,7 +147,7 @@ class ConfigService:
             await session.refresh(config)
             
             # Clear public config cache to force reload
-            self.cache.clear()
+            await self.cache.delete(self._public_config_key)
         
         return config
     
@@ -170,7 +160,7 @@ class ConfigService:
         if result.rowcount > 0:
             await session.commit()
             # Clear public config cache to force reload
-            self.cache.clear()
+            await self.cache.delete(self._public_config_key)
             return True
         
         return False
@@ -187,9 +177,9 @@ class ConfigService:
         
         return updated_configs
     
-    def clear_cache(self) -> None:
+    async def clear_cache(self) -> None:
         """Clear cache"""
-        self.cache.clear()
+        await self.cache.delete(self._public_config_key)
     
     # Dedicated method for title generation model configuration
     async def get_title_generation_model_id(self, session: AsyncSession) -> Optional[str]:

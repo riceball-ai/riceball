@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 env:
@@ -37,8 +39,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=all-in-one-latest
+            type=raw,value=all-in-one-latest,enable={{is_default_branch}}
             type=sha,format=short,prefix=all-in-one-
+            type=semver,pattern=all-in-one-{{version}}
+            type=semver,pattern=all-in-one-{{major}}.{{minor}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

@@ -26,8 +26,7 @@ Used for system configuration caching, stop signal management, etc.
 | Variable | Description | Default / Example |
 |----------|-------------|-------------------|
 | `CACHE_DRIVER` | Cache driver | `memory` (default) or `redis` |
-| `REDIS_URL` | Redis connection info (if driver is redis) | `redis://localhost:6379/0` |
-
+| `REDIS_URL` | Redis connection info (if driver is redis) | `redis://localhost:6379/0` || `CACHE_PREFIX` | Cache Key Prefix (for multi-app isolation in shared Redis) | `riceball:` |
 #### Email Settings
 Used for sending verification emails and notifications.
 

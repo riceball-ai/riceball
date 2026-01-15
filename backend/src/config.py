@@ -51,6 +51,7 @@ class Settings(BaseSettings):
 
     # Cache
     CACHE_DRIVER: str = "memory"  # 'memory' or 'redis'
+    CACHE_PREFIX: str = "riceball:"  # Prefix for cache keys to avoid conflicts
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # Auth

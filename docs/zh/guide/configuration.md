@@ -27,6 +27,7 @@ RiceBall 支持通过 `.env` 文件或直接设置系统环境变量来进行配
 |--------|------|---------------|
 | `CACHE_DRIVER` | 缓存驱动 | `memory` (默认) 或 `redis` |
 | `REDIS_URL` | Redis 连接字符串 (仅当驱动为 redis 时生效) | `redis://localhost:6379/0` |
+| `CACHE_PREFIX` | 缓存Key前缀 (用于同一Redis实例下区分多应用) | `riceball:` |
 
 #### 邮件设置
 用于发送验证邮件和通知。

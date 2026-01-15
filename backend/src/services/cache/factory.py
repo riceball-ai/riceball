@@ -12,7 +12,7 @@ def get_cache_service() -> CacheBackend:
         if not settings.REDIS_URL:
             # Fallback or error? For now, let's error if configured but missing URL, or fallback.
             # But let's stick to the plan: use RedisDriver if configured.
-            return RedisDriver(settings.REDIS_URL)
-        return RedisDriver(settings.REDIS_URL)
+            return RedisDriver(settings.REDIS_URL, prefix=settings.CACHE_PREFIX)
+        return RedisDriver(settings.REDIS_URL, prefix=settings.CACHE_PREFIX)
         
-    return MemoryDriver()
+    return MemoryDriver(prefix=settings.CACHE_PREFIX)

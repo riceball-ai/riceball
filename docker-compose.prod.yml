@@ -62,17 +62,17 @@ services:
       dockerfile: Dockerfile
       target: pro
     restart: always
-    # env_file:
-    #   - ./backend/.env
+    env_file:
+      - ./backend/.env
     environment:
       ENVIRONMENT: production
       STORAGE_TYPE: s3
       S3_ENDPOINT_URL: http://minio:9000
       S3_EXTERNAL_ENDPOINT_URL: ${S3_EXTERNAL_ENDPOINT_URL:-http://localhost:9000/public-bucket}
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-riceball}:${POSTGRES_PASSWORD:-RiceBall999}@postgres:5432/${POSTGRES_DB:-riceball}
+      # DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-riceball}:${POSTGRES_PASSWORD:-RiceBall999}@postgres:5432/${POSTGRES_DB:-riceball}
       CHROMA_CLIENT_TYPE: http
-      SUPERUSER_EMAIL: admin@admin.com
-      SUPERUSER_PASSWORD: admin123456
+      # SUPERUSER_EMAIL: admin@admin.com
+      # SUPERUSER_PASSWORD: admin123456
       CACHE_DRIVER: redis
       REDIS_URL: redis://redis:6379/0
     depends_on:

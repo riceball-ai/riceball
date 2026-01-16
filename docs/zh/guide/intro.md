@@ -19,6 +19,9 @@ RiceBall 是一个开源的、全栈式的 **AI 智能体与知识库平台**。
 - **🔌 多模型支持**：
   - **拒绝厂商锁定**：在 OpenAI, Anthropic, Google Gemini, XAI (Grok) 以及任何兼容 OpenAI 接口的供应商之间切换。
   - **成本优化**：简单问题路由到低成本模型，复杂推理交给高性能模型。
+- **🛡️ 企业级 SSO & 认证**:
+  - 全面支持 **OAuth 2.0** (Google, GitHub, Keycloak, Auth0)。
+  - 原生集成 **企业微信 (WeCom)**，实现员工无缝登录。
 - **🚀 OpenAI 兼容 API**：
   - 将配置好的助手作为标准 OpenAI API 端点暴露。
   - 轻松集成现有工具（如 VS Code 插件或第三方客户端）。

@@ -45,6 +45,9 @@ graph TD
 - **🔌 Multi-Model Support**: 
   - **Vendor Agnostic**: Switch between OpenAI, Anthropic, Google Gemini, XAI (Grok), and any OpenAI-compatible provider (e.g., DeepSeek, DashScope).
   - **Cost Optimization**: Route simple queries to cheaper models and complex reasoning to high-performance models.
+- **🛡️ Enterprise SSO & Auth**:
+  - Full **OAuth 2.0** support (Google, GitHub, Keycloak, Auth0).
+  - Native integration with **WeCom (Enterprise WeChat)** for seamless employee login.
 - **🚀 OpenAI Compatible API**: 
   - Expose your configured Assistant as a standard OpenAI API endpoint.
   - Integrate easily with existing tools like VS Code extensions or third-party wrappers.

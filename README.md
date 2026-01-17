@@ -43,7 +43,8 @@ graph TD
   - **Guest Management**: Automatically maps external user identities to internal "Guest" accounts with isolated conversation history.
   - **Streaming**: Supports streaming responses even on platforms that require polling (like WeCom Smart Bot) via an intermediate stream buffer.
 - **🔌 Multi-Model Support**: 
-  - **Vendor Agnostic**: Switch between OpenAI, Anthropic, Google Gemini, XAI (Grok), and any OpenAI-compatible provider (e.g., DeepSeek, DashScope).
+  - **Vendor Agnostic**: Support OpenAI, Anthropic, Google Gemini, XAI (Grok), etc.
+  - **Ollama Integration**: One-click scan & import for local LLMs (DeepSeek, Llama3).
   - **Cost Optimization**: Route simple queries to cheaper models and complex reasoning to high-performance models.
 - **🛡️ Enterprise SSO & Auth**:
   - Full **OAuth 2.0** support (Google, GitHub, Keycloak, Auth0).

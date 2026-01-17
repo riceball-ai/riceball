@@ -119,7 +119,7 @@ const providerConfig = computed((): ModelViewConfig<Provider> => ({
       name: 'api_key',
       label: t('admin.pages.modelProviders.fields.apiKey'),
       type: 'text',
-      required: true,
+      required: false,
       placeholder: t('admin.pages.modelProviders.fields.apiKeyPlaceholder')
     },
     {
@@ -131,6 +131,7 @@ const providerConfig = computed((): ModelViewConfig<Provider> => ({
         { label: 'Anthropic', value: 'ANTHROPIC' },
         { label: 'DashScope', value: 'DASHSCOPE' },
         { label: 'Google', value: 'GOOGLE' },
+        { label: 'Ollama', value: 'OLLAMA' },
         { label: 'OpenAI', value: 'OPENAI' },
         { label: 'xAI', value: 'XAI' },
       ],

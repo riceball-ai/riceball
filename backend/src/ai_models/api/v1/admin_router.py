@@ -1,4 +1,5 @@
 import uuid
+import httpx
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi_pagination import Page
@@ -17,7 +18,8 @@ from .schemas import (
     ModelUpdate,
     ModelResponse,
     ModelStatusEnum,
-    ProviderStatusEnum
+    ProviderStatusEnum,
+    OllamaScanRequest
 )
 
 router = APIRouter()
@@ -336,4 +338,102 @@ async def delete_model(
     
     await session.delete(model)
     await session.commit()
+
+
+@router.post("/providers/ollama/scan", response_model=List[ModelResponse], summary="Scan and import Ollama models")
+async def scan_ollama_models(
+    request: OllamaScanRequest,
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Scan Ollama models from the given base URL and import them into the database."""
+    base_url = request.base_url.rstrip("/")
+    api_url = f"{base_url}/api/tags"
+    
+    # 1. Fetch models from Ollama
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(api_url)
+            if response.status_code != 200:
+                raise HTTPException(status_code=400, detail=f"Failed to fetch models from Ollama: {response.text}")
+            data = response.json()
+            ollama_models = data.get("models", [])
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=400, detail=f"Could not connect to Ollama at {base_url}: {str(e)}")
+    
+    if not ollama_models:
+        return []
+
+    # 2. Upsert Ollama Provider
+    query = select(ModelProvider).where(ModelProvider.interface_type == "OLLAMA")
+    result = await session.execute(query)
+    provider = result.scalars().first()
+    
+    if not provider:
+        # Create new provider
+        provider = ModelProvider(
+            display_name=request.provider_name,
+            description="Auto-configured Ollama provider",
+            api_base_url=f"{base_url}/v1",  # OpenAI compatible endpoint
+            interface_type="OLLAMA",
+            status=ProviderStatusEnum.ACTIVE,
+            api_key="ollama"  # Dummy key
+        )
+        session.add(provider)
+        await session.flush()  # Get ID
+    else:
+        # Update base_url if changed
+        expected_api_base = f"{base_url}/v1"
+        if provider.api_base_url != expected_api_base:
+            provider.api_base_url = expected_api_base
+            session.add(provider)
+            await session.flush()
+    
+    # 3. Import Models
+    # Get existing models for this provider
+    existing_models_query = select(Model).where(Model.provider_id == provider.id)
+    existing_models_result = await session.execute(existing_models_query)
+    existing_models = {m.name: m for m in existing_models_result.scalars().all()}
+    
+    imported_models = []
+    
+    for om in ollama_models:
+        model_name = om["name"]
+        family = om.get("details", {}).get("family", "unknown")
+        parameter_size = om.get("details", {}).get("parameter_size", "")
+        
+        display_name = f"{model_name} ({parameter_size})" if parameter_size else model_name
+        
+        # Decide capabilities (basic heuristic)
+        capabilities = ["chat"]
+        if family == "bert" or "embed" in model_name:
+             capabilities = ["embedding"]
+        
+        if model_name in existing_models:
+             model = existing_models[model_name]
+             if model.status != ModelStatusEnum.ACTIVE:
+                 model.status = ModelStatusEnum.ACTIVE
+                 session.add(model)
+             imported_models.append(model)
+        else:
+            # Create new model
+            model = Model(
+                name=model_name,
+                display_name=display_name,
+                description=f"Ollama model ({family})",
+                provider_id=provider.id,
+                status=ModelStatusEnum.ACTIVE,
+                capabilities=capabilities,
+                max_output_tokens=4096,  # Default guess
+                max_context_tokens=8192  # Default guess
+            )
+            session.add(model)
+            imported_models.append(model)
+    
+    await session.commit()
+    
+    # Refresh to get IDs
+    for m in imported_models:
+        await session.refresh(m)
+        
+    return imported_models
     return {"message": "Model deleted successfully"}

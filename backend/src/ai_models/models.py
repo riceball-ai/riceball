@@ -27,6 +27,7 @@ PROVIDER_INTERFACE_TYPES = {
     "XAI": "XAI",        # xAI interface
     "GOOGLE": "GOOGLE",      # Google interface
     "DASHSCOPE": "DASHSCOPE", # Alibaba DashScope interface
+    "OLLAMA": "OLLAMA",      # Ollama interface (OpenAI compatible)
     "CUSTOM": "CUSTOM",      # Custom interface (requires specific adapter)
 }
 

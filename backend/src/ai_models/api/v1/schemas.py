@@ -115,3 +115,8 @@ class ModelResponse(ModelBase):
 
     class Config:
         from_attributes = True
+
+
+class OllamaScanRequest(BaseModel):
+    base_url: str = Field("http://localhost:11434", description="Ollama API base URL")
+    provider_name: str = Field("Ollama Local", description="Name for the provider")

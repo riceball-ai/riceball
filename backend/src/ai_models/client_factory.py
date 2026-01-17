@@ -39,6 +39,7 @@ def create_chat_model(
         "ANTHROPIC": "anthropic",
         "XAI": "xai",
         "GOOGLE": "google-genai",
+        "OLLAMA": "openai",  # Reuse OpenAI client for Ollama
     }
     
     # Prepare model parameters
@@ -60,7 +61,7 @@ def create_chat_model(
     interface_type = provider.interface_type.upper()
     logger.debug(f"Creating chat model for interface type: {interface_type}")
     
-    if interface_type in ("OPENAI"):
+    if interface_type in ("OPENAI", "OLLAMA"):
         model_params["stream_usage"] = True
     
     # Get provider name - raise error if unsupported

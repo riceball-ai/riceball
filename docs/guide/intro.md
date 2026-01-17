@@ -17,7 +17,9 @@ RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. I
     - **SSE**: Connect to remote/Dockerized tools.
     - **Presets**: One-click install for common tools.
 - **🔌 Multi-Model Support**: 
-  - **Vendor Agnostic**: Switch between OpenAI, Anthropic, Google Gemini, XAI (Grok), and any OpenAI-compatible provider.
+  - **Vendor Agnostic**: Switch between OpenAI, Anthropic, Google Gemini, XAI (Grok).
+  - **Ollama Integration**: One-click scan & import for local models (DeepSeek, Llama3, etc.).
+  - **OpenAI Compatible**: Support any provider via standard protocol (e.g. DashScope).
   - **Cost Optimization**: Route simple queries to cheaper models and complex reasoning to high-performance models.
 - **�️ Enterprise SSO & Auth**:
   - Full **OAuth 2.0** support (Google, GitHub, Keycloak, Auth0).

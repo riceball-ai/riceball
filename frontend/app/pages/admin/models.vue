@@ -2,6 +2,7 @@
 
 import { computed, h } from 'vue'
 import { Badge } from '~/components/ui/badge'
+import OllamaScanner from '~/components/model-view/extra/OllamaScanner.vue'
 import type { ModelViewConfig } from '~/components/model-view/types'
 import type { Model, Provider } from '~/types/api'
 
@@ -235,5 +236,9 @@ const providerConfig = computed((): ModelViewConfig<Model> => ({
 </script>
 
 <template>
-  <ModelView :config="providerConfig" />
+  <ModelView :config="providerConfig">
+    <template #actions="{ refresh }">
+        <OllamaScanner @scanned="refresh" />
+    </template>
+  </ModelView>
 </template>

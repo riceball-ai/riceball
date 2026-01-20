@@ -431,9 +431,13 @@ async def scan_ollama_models(
     
     await session.commit()
     
-    # Refresh to get IDs
-    for m in imported_models:
-        await session.refresh(m)
+    # Re-fetch models with provider loaded to avoid MissingGreenlet error
+    model_ids = [m.id for m in imported_models]
+    if not model_ids:
+        return []
         
-    return imported_models
-    return {"message": "Model deleted successfully"}
+    stmt = select(Model).options(selectinload(Model.provider)).where(Model.id.in_(model_ids))
+    result = await session.execute(stmt)
+    final_models = result.scalars().all()
+        
+    return final_models

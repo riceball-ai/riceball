@@ -676,6 +676,17 @@ export default defineI18nLocale(async locale => {
 
     // Admin
     admin: {
+      scanner: {
+        button: 'Scan Ollama',
+        title: 'Import from Ollama',
+        description: 'Automatically detect and import models from your local Ollama instance.',
+        label_url: 'Ollama API URL',
+        start: 'Start Scan',
+        scanning: 'Scanning...',
+        connection_failed: 'Connection Failed',
+        hint_docker: 'Hint: If using Docker, try <code>{url}</code>',
+        import_success: 'Imported {count} models. Closing...',
+      },
       dashboard: 'Dashboard',
       create: 'Create',
       edit: 'Edit',

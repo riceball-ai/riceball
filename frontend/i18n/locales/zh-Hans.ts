@@ -676,6 +676,17 @@ export default defineI18nLocale(async locale => {
 
     // 管理后台
     admin: {
+      scanner: {
+        button: '扫描 Ollama',
+        title: '从 Ollama 导入',
+        description: '自动检测并导入本地 Ollama 实例中的模型。',
+        label_url: 'Ollama API 地址',
+        start: '开始扫描',
+        scanning: '扫描中...',
+        connection_failed: '连接失败',
+        hint_docker: '提示: 如果使用 Docker，尝试 <code>{url}</code>',
+        import_success: '导入了 {count} 个模型。正在关闭...',
+      },
       public: '公开',
       notSet: '未设置',
       dashboard: '管理后台',

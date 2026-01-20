@@ -20,8 +20,10 @@ jobs:
       - name: Get Tag Annotation
         id: tag_data
         run: |
+          # Ensure tags are fetched
+          git fetch origin +refs/tags/*:refs/tags/*
           # Get tag annotation
-          TAG_MSG=$(git tag -l --format='%(contents)' ${{ github.ref_name }})
+          TAG_MSG=$(git for-each-ref refs/tags/${{ github.ref_name }} --format='%(contents)')
           # Support multiline output
           echo "msg<<EOF" >> $GITHUB_OUTPUT
           echo "$TAG_MSG" >> $GITHUB_OUTPUT

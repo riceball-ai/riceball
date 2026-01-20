@@ -43,7 +43,8 @@ class KnowledgeBaseListTool(AgentTool):
             rag_service = RAGService(self.session)
             
             # Get KBs
-            kbs = await rag_service.get_knowledge_bases(self.owner_id, limit=100)
+            target_owner_id = self.owner_id if not self.is_superuser else None
+            kbs = await rag_service.get_knowledge_bases(target_owner_id, limit=100)
             
             if not kbs:
                 return "No Knowledge Bases found."

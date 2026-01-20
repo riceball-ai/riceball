@@ -123,19 +123,18 @@ class RAGService:
     
     async def get_knowledge_bases(
         self, 
-        owner_id: uuid.UUID,
+        owner_id: Optional[uuid.UUID],
         skip: int = 0,
         limit: int = 100
     ) -> List[KnowledgeBase]:
-        """Get user's knowledge base list"""
+        """Get user's knowledge base list. If owner_id is None, returns all (superuser mode)."""
+        query = select(KnowledgeBase).where(KnowledgeBase.status == "ACTIVE")
+        
+        if owner_id:
+            query = query.where(KnowledgeBase.owner_id == owner_id)
+            
         result = await self.session.execute(
-            select(KnowledgeBase)
-            .where(
-                and_(
-                    KnowledgeBase.owner_id == owner_id,
-                    KnowledgeBase.status == "ACTIVE"
-                )
-            )
+            query
             .offset(skip)
             .limit(limit)
             .order_by(KnowledgeBase.created_at.desc())

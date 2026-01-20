@@ -137,74 +137,61 @@ class WecomChannelAdapter(BaseChannelAdapter):
                 
             # Decrypt
             content_bytes = self.crypto.decrypt(encrypt_text, self.corp_id)
+            logger.debug(f"Decrypted WeCom content raw: {content_bytes.decode('utf-8', errors='replace')}")
             
             try:
-                xml_content = ET.fromstring(content_bytes)
-                logger.info("WeCom body successfully parsed as XML")
-                msg_type = xml_content.find("MsgType").text
+                # Smart Bot uses JSON
+                json_data = json.loads(content_bytes)
+                msg_type = json_data.get("msgtype")
                 
                 if msg_type == "text":
-                    content = xml_content.find("Content").text
-                    from_user = xml_content.find("FromUserName").text
-                    msg_id = xml_content.find("MsgId").text
+                    # Smart Bot Text Request
+                    self.is_smart_bot = True # Mark as smart bot to trigger streaming flow
+                    content = json_data.get("text", {}).get("content", "")
+                    
+                    # Handle quoted message
+                    quote = json_data.get("quote")
+                    if quote and quote.get("msgtype") == "text":
+                        quote_content = quote.get("text", {}).get("content", "")
+                        if quote_content:
+                            # Attach quote to content so AI has context
+                            content += f"\n\n[引用消息]\n{quote_content}"
+
+                    from_data = json_data.get("from", {})
+                    user_id = from_data.get("userid") or from_data.get("user_id") or "unknown"
+                    
+                    logger.info(f"Received WeCom Smart Bot text message: user_id={user_id}, content_len={len(content)}")
+                    logger.debug(f"Full text message data: {json_data}")
                     
                     return IncomingMessage(
-                        user_id=from_user,
-                        username=from_user,
+                        user_id=user_id,
+                        username=None,
                         content=content,
-                        message_id=msg_id,
+                        message_id=json_data.get("msgid", ""),
                         channel_id=str(self.channel.id)
                     )
-                else:
-                     logger.warning(f"WeCom unsupported XML msgtype: {msg_type}")
-                     return None
-            except ET.ParseError:
-                # Might be JSON (for Smart Bot / Stream requests)
-                logger.info("WeCom body content was NOT valid XML, trying JSON for Smart Bot...")
-                try:
-                    json_data = json.loads(content_bytes)
-                    msg_type = json_data.get("msgtype")
+                elif msg_type == "stream":
+                    # Stream Poll Request
+                    # Docs say 'from.userid' is available
+                    stream_id = json_data.get("stream", {}).get("id")
+                    user_id = json_data.get("from", {}).get("userid", "unknown")
+                    logger.debug(f"Received WeCom stream poll request: stream_id={stream_id}, user_id={user_id}")
+                    logger.debug(f"Full stream poll data: {json_data}")
                     
-                    if msg_type == "text":
-                        # Smart Bot Text Request
-                        self.is_smart_bot = True # Mark as smart bot to trigger streaming flow
-                        content = json_data.get("text", {}).get("content", "")
-                        
-                        from_data = json_data.get("from", {})
-                        user_id = from_data.get("userid") or from_data.get("user_id") or "unknown"
-                        
-                        logger.info(f"Received WeCom Smart Bot text message: user_id={user_id}, content_len={len(content)}")
-                        logger.debug(f"Full text message data: {json_data}")
-                        
-                        return IncomingMessage(
-                            user_id=user_id,
-                            username=None,
-                            content=content,
-                            message_id=json_data.get("msgid", ""),
-                            channel_id=str(self.channel.id)
-                        )
-                    elif msg_type == "stream":
-                        # Stream Poll Request
-                        # Docs say 'from.userid' is available
-                        stream_id = json_data.get("stream", {}).get("id")
-                        user_id = json_data.get("from", {}).get("userid", "unknown")
-                        logger.debug(f"Received WeCom stream poll request: stream_id={stream_id}, user_id={user_id}")
-                        logger.debug(f"Full stream poll data: {json_data}")
-                        
-                        return IncomingMessage(
-                            user_id=user_id,
-                            content="", # No content in poll
-                            message_id=json_data.get("msgid", "poll"),  # Use msgid from refresh packet
-                            channel_id=str(self.channel.id),
-                            is_stream_poll=True,
-                            stream_id=stream_id
-                        )
-                    
-                    logger.warning(f"WeCom unsupported JSON msgtype: {msg_type}")
-                    return None
-                except json.JSONDecodeError:
-                    logger.error("Failed to parse WeCom body as XML or JSON")
-                    return None
+                    return IncomingMessage(
+                        user_id=user_id,
+                        content="", # No content in poll
+                        message_id=json_data.get("msgid", "poll"),  # Use msgid from refresh packet
+                        channel_id=str(self.channel.id),
+                        is_stream_poll=True,
+                        stream_id=stream_id
+                    )
+                
+                logger.warning(f"WeCom unsupported JSON msgtype: {msg_type}")
+                return None
+            except json.JSONDecodeError:
+                logger.error("Failed to parse WeCom body as JSON")
+                return None
         except Exception as e:
             logger.error(f"Error parsing WeCom body: {e}")
             return None

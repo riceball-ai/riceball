@@ -27,6 +27,7 @@ from .assistants.api.v1.user_router import router as assistants_user_router_v1
 from .files.api.v1.user_router import router as files_user_router_v1
 from .files.api.v1.admin_router import router as files_admin_router_v1
 from .rag.api.v1.admin_router import router as rag_admin_router_v1
+from .rag.api.v1.scraper_router import router as rag_scraper_router_v1
 from .chat.api.v1.user_router import router as chat_user_router_v1
 from .chat.api.v1.admin_router import router as chat_admin_router_v1
 from .chat.api.v1.share_router import router as chat_share_router_v1
@@ -114,6 +115,8 @@ user_route_v1.include_router(api_key_router, tags=["API Keys"])
 user_route_v1.include_router(models_user_router_v1, tags=["AI Models"])
 
 user_route_v1.include_router(files_user_router_v1, tags=["Files"])
+
+user_route_v1.include_router(rag_scraper_router_v1, prefix="/rag", tags=["RAG Scraper"])
 
 user_route_v1.include_router(chat_user_router_v1, tags=["Chat"])
 

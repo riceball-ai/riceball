@@ -52,6 +52,7 @@ import {
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
 import FileUploadToKB from '~/components/admin/FileUploadToKB.vue'
+import ImportUrlToKB from '~/components/admin/ImportUrlToKB.vue'
 import { toast } from 'vue-sonner'
 import type { KnowledgeBase, Document } from '~/types/api'
 const { $api } = useNuxtApp()
@@ -529,7 +530,11 @@ onMounted(() => {
       <!-- Documents Tab -->
       <TabsContent value="documents" class="flex-1 overflow-auto p-6 m-0">
         <div class="space-y-4">
-          <div class="flex justify-end">
+          <div class="flex justify-end gap-2">
+            <ImportUrlToKB 
+                :knowledge-base-id="kbId" 
+                @imported="handleUploadComplete" 
+            />
             <Button 
               variant="outline" 
               :class="{ 'bg-muted': showUploadArea }"

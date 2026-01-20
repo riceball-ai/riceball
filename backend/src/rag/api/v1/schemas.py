@@ -194,3 +194,12 @@ class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None
     code: Optional[str] = None
+class ScrapeRequest(BaseModel):
+    url: str = Field(..., description="Target URL to scrape")
+    save_to_collection_id: Optional[uuid.UUID] = Field(None, description="Optional: Auto-save to this collection")
+
+class ScrapeResponse(BaseModel):
+    url: str
+    title: Optional[str]
+    content: str
+    metadata: Dict[str, Any] = {}

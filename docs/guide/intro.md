@@ -8,6 +8,7 @@ RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. I
 
 - **🔐 Private RAG Knowledge Base**: 
   - Upload documents (PDF, DOCX, XLSX, PPTX, Markdown) securely.
+  - **Web Reader**: Extract clean content from any webpage URL to your knowledge base.
   - Automatic chunking and vectorization using **ChromaDB**.
   - Citations and reference tracking.
 - **🤖 Agent Engine**: 

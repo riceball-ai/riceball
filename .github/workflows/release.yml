@@ -14,10 +14,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Tag Annotation
+        id: tag_data
+        run: |
+          # Get tag annotation
+          TAG_MSG=$(git tag -l --format='%(contents)' ${{ github.ref_name }})
+          # Support multiline output
+          echo "msg<<EOF" >> $GITHUB_OUTPUT
+          echo "$TAG_MSG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          body: ${{ steps.tag_data.outputs.msg }}
           draft: false
           prerelease: false
           generate_release_notes: true

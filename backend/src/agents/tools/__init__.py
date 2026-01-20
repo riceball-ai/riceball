@@ -10,6 +10,7 @@ from .datetime_tool import get_current_time
 
 # Import dynamic tools (classes that need dependency injection) - triggers @tool_registry.register
 from . import knowledge_base  # noqa: F401
+from . import knowledge_write  # noqa: F401
 from . import http_request  # noqa: F401
 
 # Register static tools

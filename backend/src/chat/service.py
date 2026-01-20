@@ -543,7 +543,9 @@ class LangchainChatService:
         agent_engine = AgentExecutionEngine(
             assistant=assistant,
             session=self.session,
-            system_prompt_override=system_prompt
+            system_prompt_override=system_prompt,
+            user_id=conversation.user_id,
+            is_superuser=conversation.user.is_superuser if conversation.user else False
         )
         
         # Yield agent start event

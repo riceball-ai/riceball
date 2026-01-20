@@ -17,6 +17,6 @@ features:
   - title: AI 驱动
     details: 深度集成 LangChain 和 MCP，支持多种 LLM 和 Agent 模式。
   - title: 知识库 RAG
-    details: 内置向量数据库支持，轻松构建基于私有数据的问答系统。
+    details: 内置向量数据库支持，轻松构建基于私有数据的问答系统。不仅支持网页与文档读取，更允许助手将记忆反写回知识库。
 footer: MIT Licensed | Copyright © 2025 RiceBall AI
 ---

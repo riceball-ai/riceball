@@ -139,6 +139,8 @@ async def chat_completions(
         agent_engine = AgentExecutionEngine(
             assistant=assistant,
             session=session,
+            user_id=user.id,
+            is_superuser=user.is_superuser
         )
         
         async def generate_agent_stream() -> AsyncGenerator[str, None]:

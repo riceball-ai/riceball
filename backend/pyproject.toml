@@ -1,7 +1,7 @@
 [project]
 name = "riceball"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.3.0"
+description = "RiceBall AI Agent & Knowledge Base Platform"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

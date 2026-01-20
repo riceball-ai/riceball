@@ -33,6 +33,7 @@ graph TD
   - **Web Reader**: Extract clean content from any webpage URL to your knowledge base.
   - Automatic chunking and vectorization using **ChromaDB**.
   - Citations and reference tracking.
+  - **Memory & Write-Back**: Empower Agents to save conversation summaries, notes, or new knowledge directly back into your Knowledge Base.
 - **🤖 Agent Engine**: 
   - Built on **LangChain**, utilizing robust **Tool Calling** capabilities to execute tasks.
   - **Universal MCP Support**: Full implementation of Model Context Protocol (MCP).

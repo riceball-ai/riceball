@@ -2,6 +2,7 @@
 Agent Execution Engine using LangChain
 """
 import logging
+import uuid
 from typing import List, Dict, Any, AsyncIterator, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +17,7 @@ from .tools.registry import tool_registry
 from .mcp.manager import mcp_manager
 from .mcp.tools_adapter import MCPToolAdapter
 from .tools.knowledge_base import KnowledgeBaseTool
+from .tools.knowledge_write import KnowledgeBaseListTool, KnowledgeBaseAddTool
 from .descriptions import get_action_description, get_observation_description, get_tool_display_name
 
 logger = logging.getLogger(__name__)
@@ -28,11 +30,15 @@ class AgentExecutionEngine:
         self, 
         assistant: Assistant, 
         session: Optional[AsyncSession] = None,
-        system_prompt_override: Optional[str] = None
+        system_prompt_override: Optional[str] = None,
+        user_id: Optional[uuid.UUID] = None,
+        is_superuser: bool = False
     ):
         self.assistant = assistant
         self.session = session
         self.system_prompt_override = system_prompt_override
+        self.user_id = user_id 
+        self.is_superuser = is_superuser
         self.tools: List[AgentTool] = []
         self.llm: Optional[BaseChatModel] = None
         self.agent = None  # LangGraph compiled agent
@@ -77,6 +83,10 @@ class AgentExecutionEngine:
                         }
                     )
                     tool = KnowledgeBaseTool(config=config, session=self.session)
+                elif tool_name == "knowledge_base_list":
+                    tool = KnowledgeBaseListTool(session=self.session, owner_id=self.user_id, is_superuser=self.is_superuser)
+                elif tool_name == "knowledge_base_add_document":
+                    tool = KnowledgeBaseAddTool(session=self.session, owner_id=self.user_id, is_superuser=self.is_superuser)
                 else:
                     tool = tool_registry.get_tool(tool_name)
                 

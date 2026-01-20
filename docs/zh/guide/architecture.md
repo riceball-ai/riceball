@@ -32,7 +32,9 @@ graph TD
 - **Model Provider & Model**: 
   - **Provider**: 管理 AI 服务商的凭证（如 OpenAI API Key）。
   - **Model**: 具体的模型配置（如 GPT-4o）。RiceBall 屏蔽了不同提供商的差异。
-- **RAG (知识库)**: 基于 **ChromaDB** 的向量存储。允许用户上传文档，助手在回答时会自动检索相关片段，实现"带书应考"。
+- **RAG (知识库)**: 基于 **ChromaDB** 的向量存储。
+  - **检索 (Retrieval)**: 允许用户上传文档，助手在回答时会自动检索相关片段，实现"带书应考"。
+  - **记忆与回写 (Write-Back)**: 一项独特功能，允许助手将信息*写回*知识库，实现长期记忆形成和自动笔记。
 - **Tools & MCP**: 
   - **Tools**: 助手可调用的功能函数。
   - **MCP**: 采用 Model Context Protocol 协议，实现了工具和上下文的标准化接入，使得扩展助手能力变得非常容易。

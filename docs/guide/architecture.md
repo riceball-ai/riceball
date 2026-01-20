@@ -32,7 +32,9 @@ graph TD
 - **Model Provider & Model**: 
   - **Provider**: Manages credentials for AI service providers (e.g., OpenAI API Key).
   - **Model**: Specific model configuration (e.g., GPT-4o). RiceBall abstracts away the differences between providers.
-- **RAG (Knowledge Base)**: Vector storage based on **ChromaDB**. Allows users to upload documents, and the Assistant automatically retrieves relevant snippets when answering, enabling "open-book exams".
+- **RAG (Knowledge Base)**: Vector storage based on **ChromaDB**. 
+  - **Retrieval**: Allows users to upload documents, and the Assistant automatically retrieves relevant snippets when answering, enabling "open-book exams".
+  - **Memory (Write-Back)**: A unique feature that allows Assistants to *write* information back to the knowledge base, enabling long-term memory formation and note-taking.
 - **Tools & MCP**: 
   - **Tools**: Functional capabilities that the Assistant can call.
   - **MCP**: Uses the Model Context Protocol to standardize the integration of tools and context, making it very easy to extend Assistant capabilities.

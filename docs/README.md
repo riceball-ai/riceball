@@ -17,6 +17,6 @@ features:
   - title: AI Driven
     details: Deep integration with LangChain and MCP, supporting various LLMs and Agent patterns.
   - title: Knowledge Base RAG
-    details: Built-in vector database support, easily build Q&A systems based on private data.
+    details: Built-in vector database support, easily build Q&A systems based on private data. Supports web & document reading, and allows Assistants to write memories back into the Knowledge Base.
 footer: MIT Licensed | Copyright © 2025 RiceBall AI
 ---

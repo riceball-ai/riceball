@@ -249,6 +249,7 @@ class LangchainChatService:
         user_id: uuid.UUID,
         content: str,
         images: Optional[List[Dict[str, Any]]] = None,
+        files: Optional[List[Dict[str, Any]]] = None,
         language: Optional[str] = None
     ) -> AsyncIterator[dict]:
         """Send a message and get streaming AI response (supports Agent mode)"""
@@ -269,6 +270,10 @@ class LangchainChatService:
                 user_extra_data["images"] = stored_images
         else:
             stored_images = None
+        
+        # Prepare file attachments (for persistence)
+        if files:
+            user_extra_data["files"] = files
         
         # Explicitly set created_at to ensure proper ordering
         # Add a small delay to assistant message to ensure it appears after user message
@@ -316,7 +321,8 @@ class LangchainChatService:
                     conversation,
                     assistant_message.id,
                     exclude_ids,
-                    language=language
+                    language=language,
+                    files=files
                 )
             else:
                 # Non-agent mode: direct LLM chat with optional RAG
@@ -498,16 +504,11 @@ class LangchainChatService:
         conversation: Conversation,
         assistant_message_id: uuid.UUID,
         exclude_message_ids: Optional[List[uuid.UUID]] = None,
-        language: Optional[str] = None
+        language: Optional[str] = None,
+        files: Optional[List[Dict[str, Any]]] = None
     ) -> AsyncIterator[dict]:
         """
         Stream Agent execution response with thought chain and history support
-        
-        Yields chunks in the format:
-        - {"type": "agent_action", "data": {"tool": str, "input": dict, "thought": str}}
-        - {"type": "agent_observation", "data": {"observation": str}}
-        - {"type": "content_chunk", "data": {"content": str, "is_final": bool}}
-        - {"type": "token_usage", "data": {"input_tokens": int, "output_tokens": int, "total_tokens": int}}
         """
         from src.agents.executor import AgentExecutionEngine
         
@@ -545,7 +546,8 @@ class LangchainChatService:
             session=self.session,
             system_prompt_override=system_prompt,
             user_id=conversation.user_id,
-            is_superuser=conversation.user.is_superuser if conversation.user else False
+            is_superuser=conversation.user.is_superuser if conversation.user else False,
+            conversation_id=str(conversation.id)
         )
         
         # Yield agent start event
@@ -563,7 +565,8 @@ class LangchainChatService:
             async for event in agent_engine.stream_execute(
                 user_input=user_input,
                 conversation_id=conversation.id,
-                chat_history=chat_history
+                chat_history=chat_history,
+                files=files
             ):
                 # Forward agent events to client
                 yield event

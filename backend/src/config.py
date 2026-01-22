@@ -49,6 +49,13 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///storage/database/riceball.db"
 
+    # Sandbox
+    SANDBOX_IMAGE_NAME: str = "ghcr.io/riceball-ai/riceball-sandbox:latest"
+    SANDBOX_MEMORY_LIMIT: str = "512m"
+    SANDBOX_CPU_LIMIT: float = 0.5
+    SANDBOX_ENABLE_NETWORK: bool = False
+    SANDBOX_WORK_DIR: str = "/home/sandbox"
+
     # Cache
     CACHE_DRIVER: str = "memory"  # 'memory' or 'redis'
     CACHE_PREFIX: str = "riceball:"  # Prefix for cache keys to avoid conflicts

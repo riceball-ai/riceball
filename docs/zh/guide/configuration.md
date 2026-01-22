@@ -53,6 +53,17 @@ RiceBall 使用 S3 兼容存储（如 MinIO 或 AWS S3）来存储文件。
 | `S3_BUCKET_NAME` | 用于存储文件的 Bucket 名称 |
 | `S3_REGION` | AWS 区域 (MinIO 可选) |
 
+#### 代码解释器 (Sandbox)
+用于配置代码执行的隔离沙箱环境。
+
+| 变量名 | 描述 | 默认值 / 示例 |
+|--------|------|---------------|
+| `SANDBOX_IMAGE_NAME` | 沙箱使用的 Docker 镜像 | `ghcr.io/riceball-ai/riceball-sandbox:latest` |
+| `SANDBOX_WORK_DIR` | 容器内的用来执行代码的工作目录 | `/home/sandbox` |
+| `SANDBOX_MEMORY_LIMIT` | 每个容器的最大内存限制 | `512m` |
+| `SANDBOX_CPU_LIMIT` | 每个容器的最大 CPU 核数 | `1.0` |
+| `SANDBOX_ENABLE_NETWORK` | 是否允许沙箱连接互联网 | `false` (建议关闭以确保安全) |
+
 #### 向量数据库 (ChromaDB)
 用于 RAG 的向量数据库配置。
 

@@ -34,6 +34,10 @@ graph TD
   - Automatic chunking and vectorization using **ChromaDB**.
   - Citations and reference tracking.
   - **Memory & Write-Back**: Empower Agents to save conversation summaries, notes, or new knowledge directly back into your Knowledge Base.
+- **🐍 Code Interpreter (Sandbox)**:
+  - **Secure Execution**: Run authorized Python code in a secure, isolated Docker container (Sandbox).
+  - **Data Analysis**: Perform complex calculations, data analysis, and visualization using Pandas, NumPy, Matplotlib, etc.
+  - **File Processing**: Generate and handle files (CSV, Excel, PDF, Images) seamlessly within the conversation.
 - **🤖 Agent Engine**: 
   - Built on **LangChain**, utilizing robust **Tool Calling** capabilities to execute tasks.
   - **Universal MCP Support**: Full implementation of Model Context Protocol (MCP).

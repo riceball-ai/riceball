@@ -234,12 +234,18 @@ async def chat_with_assistant(
                 }
                 for img in chat_data.images
             ]
+
+        # Extract files
+        files = None
+        if chat_data.files:
+            files = [file.model_dump(by_alias=True) for file in chat_data.files]
         
         async for event in service.send_message_stream(
             conversation_id=chat_data.conversation_id,
             user_id=current_user.id,
             content=chat_data.content,
             images=images,
+            files=files,
             language=chat_data.language
         ):
             yield f"data: {json.dumps(event)}\n\n"

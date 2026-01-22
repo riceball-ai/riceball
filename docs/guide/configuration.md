@@ -51,6 +51,17 @@ RiceBall uses S3-compatible storage (like MinIO or AWS S3) for files.
 | `S3_BUCKET_NAME` | Bucket name for file storage |
 | `S3_REGION` | AWS Region (optional for MinIO) |
 
+#### Code Interpreter (Sandbox)
+Configuration for the isolated Python execution environment.
+
+| Variable | Description | Default / Example |
+|----------|-------------|-------------------|
+| `SANDBOX_IMAGE_NAME` | Docker image to use for sandbox | `ghcr.io/riceball-ai/riceball-sandbox:latest` |
+| `SANDBOX_WORK_DIR` | Working directory inside container | `/home/sandbox` |
+| `SANDBOX_MEMORY_LIMIT` | Max memory per container | `512m` |
+| `SANDBOX_CPU_LIMIT` | Max CPU cores per container | `1.0` |
+| `SANDBOX_ENABLE_NETWORK` | Allow internet access in sandbox | `false` (Recommended for security) |
+
 #### Vector Store (ChromaDB)
 Settings for the vector database used for RAG.
 

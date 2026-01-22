@@ -11,6 +11,10 @@ RiceBall 是一个开源的、全栈式的 **AI 智能体与知识库平台**。
   - **网页阅读器 (Web Reader)**：自动提取任意网页正文并保存到知识库。
   - 基于 **ChromaDB** 自动进行切片和向量化。
   - 支持引用追踪。
+- **🐍 代码解释器 (Code Interpreter)**:
+  - **安全执行**：在隔离的 Docker 容器沙箱中运行 Python 代码。
+  - **数据分析**：内置 Pandas, NumPy, Scikit-learn 等库，支持数理统计与可视化绘图。
+  - **文件处理**：支持读取用户上传的文件，并生成图表、报表（Excel/CSV）等文件供用户下载。
 - **🤖 智能体 (Agent) 引擎**：
   - 基于 **LangChain** 构建，利用强大的 **工具调用 (Tool Calling)** 能力执行任务。
   - **通用 MCP 支持 (Universal MCP)**：完整实现 Model Context Protocol。

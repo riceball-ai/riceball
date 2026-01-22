@@ -265,11 +265,22 @@ class ImageAttachment(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
+class FileAttachment(BaseModel):
+    """Generic file attachment for chat message"""
+    name: str = Field(..., description="File name")
+    url: Optional[str] = Field(None, description="Server URL for uploaded file")
+    content_type: Optional[str] = Field(None, alias="contentType", description="MIME type")
+    size: Optional[int] = Field(None, description="File size in bytes")
+    file_key: Optional[str] = Field(None, alias="fileKey", description="Internal storage key")
+    
+    model_config = ConfigDict(populate_by_name=True)
+
 class ChatRequest(BaseModel):
     """Chat message request"""
     content: str = Field(..., description="Message content")
     conversation_id: uuid.UUID = Field(..., description="Conversation ID")
     images: Optional[List[ImageAttachment]] = Field(None, description="Image attachments (for vision models)")
+    files: Optional[List[FileAttachment]] = Field(None, description="File attachments (for code interpreter)")
     language: Optional[str] = Field(None, description="Language code for localization (e.g. zh-CN)")
 
 class ChatMessageResponse(BaseModel):

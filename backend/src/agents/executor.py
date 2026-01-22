@@ -18,6 +18,7 @@ from .mcp.manager import mcp_manager
 from .mcp.tools_adapter import MCPToolAdapter
 from .tools.knowledge_base import KnowledgeBaseTool
 from .tools.knowledge_write import KnowledgeBaseListTool, KnowledgeBaseAddTool
+from .tools.code_interpreter import CodeInterpreterTool
 from .descriptions import get_action_description, get_observation_description, get_tool_display_name
 
 logger = logging.getLogger(__name__)
@@ -32,13 +33,15 @@ class AgentExecutionEngine:
         session: Optional[AsyncSession] = None,
         system_prompt_override: Optional[str] = None,
         user_id: Optional[uuid.UUID] = None,
-        is_superuser: bool = False
+        is_superuser: bool = False,
+        conversation_id: Optional[str] = None
     ):
         self.assistant = assistant
         self.session = session
         self.system_prompt_override = system_prompt_override
         self.user_id = user_id 
         self.is_superuser = is_superuser
+        self.conversation_id = conversation_id
         self.tools: List[AgentTool] = []
         self.llm: Optional[BaseChatModel] = None
         self.agent = None  # LangGraph compiled agent
@@ -49,6 +52,49 @@ class AgentExecutionEngine:
         await self._load_tools()
         self.agent = self._create_agent()
     
+    async def _mount_files_to_sandbox(self, files: List[Dict[str, Any]]):
+        """Mount user files to sandbox environment"""
+        # data format expected: {"name": str, "url": str, "content_type": str, ...}
+        # Check if we have CodeInterpreterTool
+        has_interpreter = any(t.name == "python_code_interpreter" for t in self.tools)
+        if not has_interpreter:
+            return
+
+        try:
+            from src.agents.tools.code_interpreter import get_sandbox_service
+            import httpx
+            
+            sandbox = get_sandbox_service()
+            
+            for file_info in files:
+                url = file_info.get("url")
+                filename = file_info.get("name")
+                
+                if not url or not filename:
+                    continue
+                    
+                # Download file content
+                # Use internal storage client if possible, or http download
+                # Assuming URL is accessible
+                try:
+                    async with httpx.AsyncClient() as client:
+                        resp = await client.get(url, follow_redirects=True, timeout=30.0)
+                        if resp.status_code == 200:
+                            content = resp.content
+                            await sandbox.upload_file(
+                                conversation_id=str(self.conversation_id),
+                                filename=filename,
+                                data=content
+                            )
+                            logger.info(f"Mounted file {filename} to sandbox for {self.conversation_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to mount file {filename}: {e}")
+                    
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.error(f"Error mounting files to sandbox: {e}")
+
     def _create_llm(self) -> BaseChatModel:
         """Create LLM client using create_chat_model factory"""
         model = self.assistant.model
@@ -87,6 +133,8 @@ class AgentExecutionEngine:
                     tool = KnowledgeBaseListTool(session=self.session, owner_id=self.user_id, is_superuser=self.is_superuser)
                 elif tool_name == "knowledge_base_add_document":
                     tool = KnowledgeBaseAddTool(session=self.session, owner_id=self.user_id, is_superuser=self.is_superuser)
+                elif tool_name == "python_code_interpreter":
+                    tool = CodeInterpreterTool(conversation_id=self.conversation_id)
                 else:
                     tool = tool_registry.get_tool(tool_name)
                 
@@ -193,7 +241,8 @@ class AgentExecutionEngine:
         self,
         user_input: str,
         conversation_id: Optional[Any] = None,
-        chat_history: List[Dict] = None
+        chat_history: List[Dict] = None,
+        files: Optional[List[Dict[str, Any]]] = None
     ) -> AsyncIterator[Dict[str, Any]]:
         """
         Stream execute agent task with detailed events
@@ -205,6 +254,10 @@ class AgentExecutionEngine:
         """
         if not self.agent:
             await self.initialize()
+            
+        # Handle file attachments (mount to sandbox if available)
+        if files and self.conversation_id:
+            await self._mount_files_to_sandbox(files)
         
         try:
             # Build messages for the agent

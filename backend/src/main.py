@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from .config import settings, StorageType
 from .database import async_session_maker
 from .agents.mcp.manager import mcp_manager
+from .sandbox.service import close_sandbox_service
 from .auth import current_active_user, current_superuser
 from .auth.api.v1.user_router import router as auth_user_router
 from .auth.api.v1.refresh_router import router as auth_refresh_router
@@ -81,6 +82,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down RiceBall...")
     await mcp_manager.shutdown()
+    await close_sandbox_service()
 
 app = FastAPI(**app_config, lifespan=lifespan)
 

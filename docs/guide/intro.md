@@ -11,6 +11,10 @@ RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. I
   - **Web Reader**: Extract clean content from any webpage URL to your knowledge base.
   - Automatic chunking and vectorization using **ChromaDB**.
   - Citations and reference tracking.
+- **🐍 Code Interpreter (Sandbox)**:
+  - **Secure Execution**: Run Python code in an isolated Docker container.
+  - **Data Analysis**: Built-in support for Pandas, NumPy, Matplotlib for data processing and visualization.
+  - **File I/O**: Read uploaded files and generate new files (CSV, Charts, PDF) for download.
 - **🤖 Agent Engine**: 
   - Built on **LangChain**, utilizing robust **Tool Calling** capabilities to execute tasks.
   - **Universal MCP Support**: Full implementation of Model Context Protocol.

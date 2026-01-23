@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowUp, Image as ImageIcon, Camera, X, Loader2, AlertTriangle, Square } from 'lucide-vue-next'
+import { ArrowUp, Image as ImageIcon, Camera, X, Loader2, AlertTriangle, Square, File as FileIcon, Paperclip } from 'lucide-vue-next'
 import type { ImageAttachment } from '~/composables/useStreamingChat'
 import { InputGroup, InputGroupTextarea, InputGroupButton } from '~/components/ui/input-group'
 import type { ComponentPublicInstance } from 'vue'
@@ -10,6 +10,8 @@ type AttachmentItem = ImageAttachment & {
   dataUrl?: string
   status: AttachmentStatus
   errorMessage?: string
+  isImage?: boolean
+  file?: File
 }
 
 interface Props {
@@ -24,7 +26,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:modelValue', value: string): void
-  (e: 'send', images?: ImageAttachment[]): void
+  (e: 'send', attachments?: AttachmentItem[]): void
   (e: 'stop'): void
   (e: 'keydown', event: KeyboardEvent): void
 }
@@ -45,38 +47,40 @@ const { t } = useI18n()
 const textareaRef = ref<ComponentPublicInstance>()
 const fileInputRef = ref<HTMLInputElement>()
 const cameraInputRef = ref<HTMLInputElement>()
-const attachedImages = ref<AttachmentItem[]>([])
+const attachments = ref<AttachmentItem[]>([])
 const isDragActive = ref(false)
 const dragCounter = ref(0)
 const captureAttribute = computed(() => props.cameraCapture !== 'any' ? props.cameraCapture : undefined)
 const placeholderText = computed(() => props.placeholder || t('chat.input.placeholder'))
-const MAX_IMAGE_SIZE_MB = 5
-const MAX_IMAGE_SIZE = MAX_IMAGE_SIZE_MB * 1024 * 1024
+const MAX_FILE_SIZE_MB = 20
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024
 
-const pendingUploadsCount = computed(() => attachedImages.value.filter(img => img.status === 'uploading').length)
+const pendingUploadsCount = computed(() => attachments.value.filter(img => img.status === 'uploading').length)
 const hasPendingUploads = computed(() => pendingUploadsCount.value > 0)
-const erroredAttachments = computed(() => attachedImages.value.filter(img => img.status === 'error'))
+const erroredAttachments = computed(() => attachments.value.filter(img => img.status === 'error'))
 const readyAttachments = computed(() =>
-  attachedImages.value.filter((img) => img.status === 'ready' && (img.url || img.dataUrl))
+  attachments.value.filter((img) => img.status === 'ready' && (img.url || img.dataUrl || img.fileKey))
 )
 
-const buildSendPayload = (): ImageAttachment[] | undefined => {
+const buildSendPayload = (): AttachmentItem[] | undefined => {
   if (!readyAttachments.value.length) {
     return undefined
   }
 
-  return readyAttachments.value.map(({ id, url, alt, mimeType, size, fileKey }) => ({
+  return readyAttachments.value.map(({ id, url, alt, mimeType, size, fileKey, isImage }) => ({
     id,
     url,
-    alt,
+    alt, // alt acts as name/filename
+    name: alt, // Explicitly provide name for files
     mimeType,
     size,
-    fileKey
+    fileKey,
+    isImage
   }))
 }
 
 const resetAttachments = () => {
-  attachedImages.value = []
+  attachments.value = []
 }
 
 const handleKeyPress = (event: KeyboardEvent) => {
@@ -118,62 +122,72 @@ const handleCameraCapture = () => {
   cameraInputRef.value?.click()
 }
 
-const uploadImageFile = async (file: File, attachmentId: string) => {
+const uploadFile = async (file: File, attachmentId: string) => {
   try {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('file_type', 'image')
+    // Always send as 'file' or 'image' depending on type, or just 'document' if not image?
+    // Backend seems to differentiate 'avatar' vs 'document' in other places, but here usually 'image' was used.
+    // Let's use 'document' for non-images if backend supports it in this endpoint.
+    // Based on `UserRouter.py` it takes `FileType` enum.
+    // Assuming 'image' maps to 'image', let's check backend enum.
+    // For now, I'll trust 'image' or 'document'.
+    const type = file.type.startsWith('image/') ? 'image' : 'document'
+    formData.append('file_type', type)
 
     const response = await $api<{ url: string, id: string, file_path?: string, fileKey?: string }>("/v1/files/upload", {
       method: 'POST',
       body: formData
     })
 
-    const image = attachedImages.value.find(img => img.id === attachmentId)
-    if (image) {
-      image.url = response.url
-      image.fileKey = response.file_path || response.fileKey
-      image.status = 'ready'
+    const item = attachments.value.find(img => img.id === attachmentId)
+    if (item) {
+      item.url = response.url
+      item.fileKey = response.file_path || response.fileKey
+      item.status = 'ready'
     }
   } catch (error) {
-    console.error('Failed to upload image:', error)
+    console.error('Failed to upload file:', error)
     showError(t('chat.input.uploadFailed', { name: file.name }))
-    const image = attachedImages.value.find(img => img.id === attachmentId)
-    if (image) {
-      image.status = 'error'
-      image.errorMessage = t('chat.input.imageErrorMessage', { name: file.name })
+    const item = attachments.value.find(img => img.id === attachmentId)
+    if (item) {
+      item.status = 'error'
+      item.errorMessage = t('chat.input.imageErrorMessage', { name: file.name })
     }
   }
 }
 
 const processFile = (file: File) => {
-  if (!file.type.startsWith('image/')) {
-    showError(t('chat.input.fileNotImage', { name: file.name }))
+  if (file.size > MAX_FILE_SIZE) {
+    showError(t('chat.input.fileTooLarge', { name: file.name, max: `${MAX_FILE_SIZE_MB}MB` }))
     return
   }
-
-  if (file.size > MAX_IMAGE_SIZE) {
-    showError(t('chat.input.fileTooLarge', { name: file.name, max: `${MAX_IMAGE_SIZE_MB}MB` }))
-    return
+  
+  const isImage = file.type.startsWith('image/')
+  const attachmentId = `file-${Date.now()}-${Math.random()}`
+  
+  const tempItem: AttachmentItem = {
+    id: attachmentId,
+    alt: file.name,
+    mimeType: file.type,
+    size: file.size,
+    status: 'uploading',
+    isImage,
+    file
   }
 
-  const reader = new FileReader()
-  reader.onload = async (e) => {
-    const dataUrl = e.target?.result as string
-    const imageId = `img-${Date.now()}-${Math.random()}`
-
-    attachedImages.value.push({
-      id: imageId,
-      dataUrl,
-      alt: file.name,
-      mimeType: file.type,
-      size: file.size,
-      status: 'uploading'
-    })
-
-    await uploadImageFile(file, imageId)
+  if (isImage) {
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      tempItem.dataUrl = e.target?.result as string
+      attachments.value.push(tempItem)
+      await uploadFile(file, attachmentId)
+    }
+    reader.readAsDataURL(file)
+  } else {
+    attachments.value.push(tempItem)
+    uploadFile(file, attachmentId)
   }
-  reader.readAsDataURL(file)
 }
 
 const processFiles = (files: FileList | File[] | Iterable<File>) => {
@@ -202,31 +216,33 @@ const handleCameraChange = (event: Event) => {
 }
 
 const handlePaste = (event: ClipboardEvent) => {
-  if (!props.supportsVision) return
   const items = event.clipboardData?.items
   if (!items || items.length === 0) return
 
-  const imageFiles: File[] = []
+  const files: File[] = []
   for (const item of items) {
     if (item.kind === 'file') {
       const file = item.getAsFile()
-      if (file && file.type.startsWith('image/')) {
-        imageFiles.push(file)
+      if (file) {
+        files.push(file)
       }
     }
   }
 
-  if (imageFiles.length > 0) {
+  if (files.length > 0) {
+    // If text is also selected/copied, browser might not give it if we preventDefault?
+    // Actually we usually want to paste file OR text.
+    // If files are present, let's process them.
     const textData = event.clipboardData?.getData('text')
     if (!textData) {
+      // If no text, prevent default paste behavior (which does nothing for files usually in textarea)
       event.preventDefault()
     }
-    processFiles(imageFiles)
+    processFiles(files)
   }
 }
 
 const handleDragEnter = (event: DragEvent) => {
-  if (!props.supportsVision) return
   const hasFiles = event.dataTransfer?.types && Array.from(event.dataTransfer.types).includes('Files')
   if (!hasFiles) return
   event.preventDefault()
@@ -235,7 +251,6 @@ const handleDragEnter = (event: DragEvent) => {
 }
 
 const handleDragOver = (event: DragEvent) => {
-  if (!props.supportsVision) return
   const hasFiles = event.dataTransfer?.types && Array.from(event.dataTransfer.types).includes('Files')
   if (!hasFiles) return
   event.preventDefault()
@@ -243,7 +258,6 @@ const handleDragOver = (event: DragEvent) => {
 }
 
 const handleDragLeave = (event: DragEvent) => {
-  if (!props.supportsVision) return
   if (dragCounter.value > 0) {
     dragCounter.value -= 1
   }
@@ -253,7 +267,6 @@ const handleDragLeave = (event: DragEvent) => {
 }
 
 const handleDrop = (event: DragEvent) => {
-  if (!props.supportsVision) return
   event.preventDefault()
   dragCounter.value = 0
   isDragActive.value = false
@@ -263,8 +276,8 @@ const handleDrop = (event: DragEvent) => {
   }
 }
 
-const removeImage = (id: string) => {
-  attachedImages.value = attachedImages.value.filter(img => img.id !== id)
+const removeAttachment = (id: string) => {
+  attachments.value = attachments.value.filter(img => img.id !== id)
 }
 
 // Auto-resize textarea
@@ -305,32 +318,38 @@ defineExpose({
       class="flex-col h-auto bg-background items-stretch transition-all duration-200 relative cursor-text z-10 rounded-2xl hover:shadow-md"
       :class="{ 'ring-2 ring-primary/40 bg-accent/20': isDragActive }"
     >
-      <!-- 1. Image previews (Top) -->
-      <div v-if="attachedImages.length > 0" class="flex flex-wrap gap-2 px-3 pt-3">
+      <!-- 1. Image/File previews (Top) -->
+      <div v-if="attachments.length > 0" class="flex flex-wrap gap-2 px-3 pt-3">
         <div
-          v-for="image in attachedImages"
-          :key="image.id"
-          class="relative group w-20 h-20 rounded-lg overflow-hidden border border-border"
+          v-for="item in attachments"
+          :key="item.id"
+          class="relative group w-20 h-20 rounded-lg overflow-hidden border border-border bg-muted flex items-center justify-center"
         >
           <img
-            :src="image.dataUrl"
-            :alt="image.alt || t('chat.input.previewAlt')"
+            v-if="item.isImage && item.dataUrl"
+            :src="item.dataUrl"
+            :alt="item.alt || t('chat.input.previewAlt')"
             class="w-full h-full object-cover"
           />
+          <div v-else class="flex flex-col items-center justify-center p-2 text-center w-full h-full">
+             <FileIcon class="w-8 h-8 text-muted-foreground mb-1" />
+             <span class="text-[10px] leading-tight text-muted-foreground truncate w-full px-1">{{ item.alt }}</span>
+          </div>
+          
           <div
-            v-if="image.status === 'uploading'"
+            v-if="item.status === 'uploading'"
             class="absolute inset-0 bg-background/70 flex items-center justify-center"
           >
             <Loader2 class="w-4 h-4 animate-spin text-muted-foreground" />
           </div>
           <div
-            v-else-if="image.status === 'error'"
+            v-else-if="item.status === 'error'"
             class="absolute inset-0 bg-destructive/75 text-destructive-foreground text-[11px] font-medium flex items-center justify-center text-center px-1"
           >
             {{ t('chat.input.uploadFailedLabel') }}
           </div>
           <button
-            @click="removeImage(image.id)"
+            @click="removeAttachment(item.id)"
             class="absolute top-1 right-1 p-1.5 rounded-full border border-border bg-background/90 text-destructive shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
             type="button"
           >
@@ -358,34 +377,34 @@ defineExpose({
         <div class="relative flex-1 flex items-center gap-2 shrink min-w-0">
           <!-- Left side controls -->
           <div class="flex flex-row items-center gap-1 min-w-0">
-            <template v-if="supportsVision">
-              <InputGroupButton
-                @click="handleFileSelect"
-                type="button"
-                :disabled="disabled"
-                variant="ghost"
-                size="icon-sm"
-                :title="t('chat.input.uploadButton')"
-                class="text-muted-foreground hover:text-foreground"
-              >
-                <ImageIcon class="size-5" />
-              </InputGroupButton>
-              <InputGroupButton
-                @click="handleCameraCapture"
-                type="button"
-                :disabled="disabled"
-                variant="ghost"
-                size="icon-sm"
-                :title="t('chat.input.cameraButton')"
-                class="text-muted-foreground hover:text-foreground"
-              >
-                <Camera class="size-5" />
-              </InputGroupButton>
-            </template>
+            <InputGroupButton
+              @click="handleFileSelect"
+              type="button"
+              :disabled="disabled"
+              variant="ghost"
+              size="icon-sm"
+              :title="t('chat.input.uploadButton')"
+              class="text-muted-foreground hover:text-foreground"
+            >
+              <Paperclip class="size-5" />
+            </InputGroupButton>
+            
+            <InputGroupButton
+              v-if="supportsVision"
+              @click="handleCameraCapture"
+              type="button"
+              :disabled="disabled"
+              variant="ghost"
+              size="icon-sm"
+              :title="t('chat.input.cameraButton')"
+              class="text-muted-foreground hover:text-foreground"
+            >
+              <Camera class="size-5" />
+            </InputGroupButton>
+            
             <input
               ref="fileInputRef"
               type="file"
-              accept="image/*"
               multiple
               class="hidden"
               @change="handleFileChange"
@@ -406,15 +425,12 @@ defineExpose({
               <Loader2 class="w-3 h-3 animate-spin" />
               {{ t('chat.input.uploadingStatus', { count: pendingUploadsCount }) }}
             </span>
-            <span v-else-if="attachedImages.length > 0">
+            <span v-else-if="attachments.length > 0">
               {{ t('chat.input.readyStatus', { count: readyAttachments.length }) }}
             </span>
             <span v-if="erroredAttachments.length" class="flex items-center gap-1 text-destructive">
               <AlertTriangle class="w-3 h-3" />
               {{ t('chat.input.failedStatus', { count: erroredAttachments.length }) }}
-            </span>
-            <span v-if="supportsVision && attachedImages.length === 0 && !modelValue" class="block text-muted-foreground">
-              {{ t('chat.input.visionHint') }}
             </span>
           </div>
         </div>

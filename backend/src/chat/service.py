@@ -274,6 +274,11 @@ class LangchainChatService:
         # Prepare file attachments (for persistence)
         if files:
             user_extra_data["files"] = files
+            # Appending file info to content so non-agent models are aware of them
+            if not conversation.assistant.enable_agent:
+                file_names = [f.get('name') for f in files if f.get("name")]
+                if file_names:
+                    content += f"\n\n[System: User uploaded files: {', '.join(file_names)}]"
         
         # Explicitly set created_at to ensure proper ordering
         # Add a small delay to assistant message to ensure it appears after user message

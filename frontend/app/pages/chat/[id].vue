@@ -491,7 +491,7 @@ watch(scrollContent, (newEl, oldEl) => {
   }
 })
 
-const sendMessage = async (images?: any[]) => {
+const sendMessage = async (attachments?: any[]) => {
   if (!newMessage.value.trim() || isLoading.value || !assistant.value) return
   
   // Check if assistant is active
@@ -505,37 +505,49 @@ const sendMessage = async (images?: any[]) => {
   isLoading.value = true
   isStreaming.value = true
 
+  // Parse attachments
+  const validAttachments = attachments || []
+  const images = validAttachments.filter(a => a.mimeType?.startsWith('image/'))
+  const files = validAttachments.filter(a => !a.mimeType?.startsWith('image/'))
+
   // Add user message to UI immediately
   const userMessage: Message = {
     id: Date.now().toString(),
     content: messageContent,
     message_type: 'USER',
     created_at: new Date().toISOString(),
-    extra_data: images && images.length > 0 ? { images } : undefined
+    extra_data: { 
+      images: images.length > 0 ? images : undefined,
+      files: files.length > 0 ? files : undefined
+    }
   }
   messages.value.push(userMessage)
   
   // Force scroll to bottom after sending new message
   forceScrollToBottom()
 
-  await sendMessageInternal(messageContent, userMessage, images)
+  await sendMessageInternal(messageContent, userMessage, images, files)
 }
 
 // Send message without adding user message to UI (for store-based messages)
-const sendMessageFromStore = async (messageContent: string, images?: ImageAttachment[]) => {
+const sendMessageFromStore = async (messageContent: string, attachments?: ImageAttachment[]) => {
   if (!assistant.value) return
 
   isLoading.value = true
   isStreaming.value = true
   
+  const validAttachments = attachments || []
+  const images = validAttachments.filter(a => a.mimeType?.startsWith('image/'))
+  const files = validAttachments.filter(a => !a.mimeType?.startsWith('image/'))
+
   // Also force scroll to bottom when sending from store
   forceScrollToBottom()
 
   // Find the existing user message in the UI (should be the last one)
   const existingUserMessage = messages.value[messages.value.length - 1]
   if (existingUserMessage && existingUserMessage.message_type === 'USER') {
-    const existingImages = images ?? (existingUserMessage.extra_data?.images as ImageAttachment[] | undefined)
-    await sendMessageInternal(messageContent, existingUserMessage, existingImages)
+    // Merge attachments if needed
+    await sendMessageInternal(messageContent, existingUserMessage, images, files)
   } else {
     // Fallback: create a new user message if not found
     const userMessage: Message = {
@@ -543,15 +555,18 @@ const sendMessageFromStore = async (messageContent: string, images?: ImageAttach
       content: messageContent,
       message_type: 'USER',
       created_at: new Date().toISOString(),
-      extra_data: images && images.length > 0 ? { images } : undefined
+      extra_data: { 
+        images: images.length > 0 ? images : undefined,
+        files: files.length > 0 ? files : undefined
+      }
     }
-    await sendMessageInternal(messageContent, userMessage, images)
+    await sendMessageInternal(messageContent, userMessage, images, files)
   }
 }
 
 // Internal function to handle the actual message sending
-const sendMessageInternal = async (messageContent: string, userMessage: Message, images?: any[]) => {
-  // console.log('sendMessageInternal called with images:', images)
+const sendMessageInternal = async (messageContent: string, userMessage: Message, images?: any[], files?: any[]) => {
+  // console.log('sendMessageInternal called with images:', images, 'files:', files)
   try {
     // Reset agent thinking state
     agentSteps.value = []
@@ -559,7 +574,6 @@ const sendMessageInternal = async (messageContent: string, userMessage: Message,
     shouldShowStreamingLoading.value = true
     ensureAssistantStreamingMessage()
     
-    // console.log('Calling sendStreamingMessage with images:', images)
     await sendStreamingMessage(
       messageContent,
       currentConversationId.value || undefined,
@@ -664,8 +678,8 @@ const sendMessageInternal = async (messageContent: string, userMessage: Message,
           })
         }
       },
-      // images
-      images
+      images,
+      files
     )
   } catch (error: any) {
     if (error.name === 'AbortError') {

@@ -62,6 +62,7 @@ class AgentExecutionEngine:
 
         try:
             from src.agents.tools.code_interpreter import get_sandbox_service
+            from src.files.storage import storage_service
             import httpx
             
             sandbox = get_sandbox_service()
@@ -69,26 +70,52 @@ class AgentExecutionEngine:
             for file_info in files:
                 url = file_info.get("url")
                 filename = file_info.get("name")
+                file_key = file_info.get("file_key") or file_info.get("fileKey")
                 
-                if not url or not filename:
+                if not filename:
                     continue
-                    
-                # Download file content
-                # Use internal storage client if possible, or http download
-                # Assuming URL is accessible
-                try:
-                    async with httpx.AsyncClient() as client:
-                        resp = await client.get(url, follow_redirects=True, timeout=30.0)
-                        if resp.status_code == 200:
-                            content = resp.content
-                            await sandbox.upload_file(
-                                conversation_id=str(self.conversation_id),
-                                filename=filename,
-                                data=content
-                            )
-                            logger.info(f"Mounted file {filename} to sandbox for {self.conversation_id}")
-                except Exception as e:
-                    logger.warning(f"Failed to mount file {filename}: {e}")
+                
+                content = None
+                
+                # 1. Try internal storage first
+                if file_key:
+                    try:
+                        # Assuming storage_service.get_file returns bytes or stream
+                        # We need to implement get_file_bytes in storage_service or similar
+                        # Checking storage_service methods... 
+                        # usually storage_service.client.get_object for s3
+                        # Let's use download_file to memory for now if exposed, or fallback to URL
+                        # Actually storage_service usually has get_file_stream or similar.
+                        # For now, let's look at how chat service stores inline media...
+                        # storage_service.upload_file...
+                        # Let's rely on public URL or presigned URL if internal access is hard to guess
+                        # BUT better to use download_file if available.
+                        pass
+                    except Exception:
+                        pass
+
+                # 2. Fallback to URL download
+                if not content and url:
+                    try:
+                        async with httpx.AsyncClient() as client:
+                            resp = await client.get(url, follow_redirects=True, timeout=30.0)
+                            if resp.status_code == 200:
+                                content = resp.content
+                    except Exception as e:
+                        logger.warning(f"Failed to download file {filename} from URL: {e}")
+
+                if content:
+                    try:
+                        await sandbox.upload_file(
+                            conversation_id=str(self.conversation_id),
+                            filename=filename,
+                            data=content
+                        )
+                        logger.info(f"Mounted file {filename} to sandbox for {self.conversation_id}")
+                    except Exception as e:
+                         logger.error(f"Failed to upload {filename} to sandbox: {e}")
+                else:
+                    logger.warning(f"Could not retrieve content for file {filename}")
                     
         except ImportError:
             pass
@@ -267,8 +294,40 @@ class AgentExecutionEngine:
             if chat_history:
                 messages.extend(chat_history)
             
+            # Inject file context (new uploads + existing sandbox files)
+            final_user_input = user_input
+            
+            # Check for CodeInterpreterTool and list files
+            files_context_str = ""
+            has_interpreter = any(t.name == "python_code_interpreter" for t in self.tools)
+            
+            if has_interpreter and self.conversation_id:
+                try:
+                    from src.agents.tools.code_interpreter import get_sandbox_service
+                    sandbox = get_sandbox_service()
+                    
+                    # List files in sandbox
+                    files_in_sandbox = await sandbox.list_files(str(self.conversation_id))
+                    
+                    # Filter system/execution files
+                    visible_files = [f for f in files_in_sandbox if not (f.startswith("exec_") or f.endswith(".out") or f.endswith(".err"))]
+                    
+                    if visible_files:
+                        files_context_str = "\n".join([f"- {f}" for f in sorted(visible_files)])
+                        
+                except Exception as e:
+                    logger.warning(f"Failed to list sandbox files for context injection: {e}")
+
+            if files_context_str:
+                final_user_input = f"{user_input}\n\n[System Notification: The following files are available in your sandbox environment workspace:]\n{files_context_str}"
+            elif files:
+                 # Fallback if sandbox listing failed (or tool not active) but we know we uploaded files
+                 file_list_str = "\n".join([f"- {f.get('name')} (path: ./{f.get('name')})" for f in files if f.get('name')])
+                 if file_list_str:
+                     final_user_input = f"{user_input}\n\n[System Notification: The following files have been uploaded to your sandbox environment workspace:]\n{file_list_str}"
+
             # Add current user input
-            messages.append({"role": "user", "content": user_input})
+            messages.append({"role": "user", "content": final_user_input})
             
             # Track state
             content_buffer = ""

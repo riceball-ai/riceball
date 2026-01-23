@@ -34,7 +34,9 @@ class CodeInterpreterTool(AgentTool):
             "Input should be a valid Python script. "
             "The environment has internet access disabled. "
             "You can assume standard libraries and pandas/numpy are available. "
-            "The tool returns stdout, stderr, and exit code."
+            "The tool returns stdout, stderr, and exit code. "
+            "CRITICAL: You MUST use print() to output any values or results. "
+            "Expressions that are not printed will NOT be visible."
         )
     
     async def execute(self, code: str) -> Dict[str, Any]:
@@ -127,7 +129,7 @@ class CodeInterpreterTool(AgentTool):
                  output += "\nGenerated Files:" + generated_files_output
             
             if not output:
-                output = "Code executed successfully with no output."
+                output = "Code executed successfully but with NO OUTPUT. Remember to use print() to see results."
                 
             return output
             

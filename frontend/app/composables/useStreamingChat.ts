@@ -35,6 +35,15 @@ export interface ImageAttachment {
   fileKey?: string
 }
 
+export interface FileAttachment {
+  id: string
+  name: string
+  url?: string
+  contentType?: string
+  size?: number
+  fileKey?: string
+}
+
 const serializeImagePayload = (images?: ImageAttachment[]) => {
   if (!images || images.length === 0) {
     return undefined
@@ -67,6 +76,40 @@ const serializeImagePayload = (images?: ImageAttachment[]) => {
       return normalized
     })
     .filter(Boolean)
+
+  return payload.length ? payload : undefined
+}
+
+const serializeFilePayload = (files?: FileAttachment[]) => {
+  if (!files || files.length === 0) {
+    return undefined
+  }
+
+  const payload = files
+    .map((file) => {
+      const normalized: Record<string, any> = {}
+      
+      normalized.name = file.name
+
+      if (file.url) {
+        normalized.url = file.url
+      }
+      // Note: files might not ideally require URL if backend handles fileKey internally, 
+      // but ChatRequest schema has url as Optional. CodeExecutor downloads from URL.
+      
+      if (file.contentType) {
+        normalized.contentType = file.contentType
+      }
+      if (typeof file.size === 'number') {
+        normalized.size = file.size
+      }
+      if (file.fileKey) {
+        normalized.fileKey = file.fileKey
+      }
+      
+      return normalized
+    })
+    //.filter(Boolean) // All objects are valid as long as they have name
 
   return payload.length ? payload : undefined
 }
@@ -110,7 +153,8 @@ export function useStreamingChat() {
     onComplete?: (finalMessage: Message) => void,
     onError?: (error: string) => void,
     onAgentStep?: (step: AgentStep) => void,
-    images?: ImageAttachment[]
+    images?: ImageAttachment[],
+    files?: FileAttachment[]
   ) => {
     try {
       isGenerating.value = true
@@ -127,6 +171,12 @@ export function useStreamingChat() {
       const serializedImages = serializeImagePayload(images)
       if (serializedImages) {
         requestBody.images = serializedImages
+      }
+
+      // Add files if provided
+      const serializedFiles = serializeFilePayload(files)
+      if (serializedFiles) {
+        requestBody.files = serializedFiles
       }
 
       // console.log('Sending request to /v1/chat with body:', requestBody)

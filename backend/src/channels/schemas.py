@@ -33,7 +33,7 @@ class ChannelBase(BaseModel):
     settings: Dict[str, Any] = {}
 
 class ChannelCreate(ChannelBase):
-    assistant_id: UUID4
+    assistant_id: Optional[UUID4] = None
     credentials: Dict[str, Any]  # Value structure depends on provider
     
 class ChannelUpdate(BaseModel):
@@ -41,10 +41,12 @@ class ChannelUpdate(BaseModel):
     is_active: Optional[bool] = None
     credentials: Optional[Dict[str, Any]] = None
     settings: Optional[Dict[str, Any]] = None
+    assistant_id: Optional[UUID4] = None
 
 class ChannelRead(ChannelBase):
     id: UUID4
-    assistant_id: UUID4
+    owner_id: Optional[UUID4] = None
+    assistant_id: Optional[UUID4] = None
     credentials: Dict[str, Any] # <--- Changed from implicit to explicit, although ChannelBase doesn't have it
     metadata: Dict[str, Any] = Field(alias="metadata_")
     created_at: datetime

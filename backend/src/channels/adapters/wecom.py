@@ -7,7 +7,7 @@ import json
 import xml.etree.ElementTree as ET
 
 from src.channels.adapters.base import BaseChannelAdapter, IncomingMessage
-from src.channels.models import AssistantChannel
+from src.channels.models import ChannelConfig
 from src.channels.adapters.wecom_crypto import WeComCrypto
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class WecomChannelAdapter(BaseChannelAdapter):
     API_BASE = "https://qyapi.weixin.qq.com/cgi-bin"
 
-    def __init__(self, channel: AssistantChannel):
+    def __init__(self, channel: ChannelConfig):
         super().__init__(channel)
         self.corp_id = self.credentials.get("corp_id")
         self.secret = self.credentials.get("secret")

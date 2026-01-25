@@ -7,6 +7,15 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 
 from src.main import app
 from src.models import Base
+
+# Import all models to ensure they are registered with Base.metadata
+import src.users.models
+import src.ai_models.models
+import src.assistants.models
+import src.channels.models
+import src.scheduler.models
+# Add others as needed
+
 from src.database import get_async_session
 
 

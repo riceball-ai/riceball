@@ -4,14 +4,14 @@ import httpx
 import logging
 
 from src.channels.adapters.base import BaseChannelAdapter, IncomingMessage
-from src.channels.models import AssistantChannel
+from src.channels.models import ChannelConfig
 
 logger = logging.getLogger(__name__)
 
 class TelegramChannelAdapter(BaseChannelAdapter):
     BASE_URL = "https://api.telegram.org/bot"
 
-    def __init__(self, channel: AssistantChannel):
+    def __init__(self, channel: ChannelConfig):
         super().__init__(channel)
         self.token = self.credentials.get("bot_token")
         if not self.token:

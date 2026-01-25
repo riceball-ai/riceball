@@ -7,7 +7,7 @@ from fastapi import Request, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
 
-from src.channels.models import AssistantChannel, ChannelProvider
+from src.channels.models import ChannelConfig, ChannelProvider, UserChannelBinding
 from src.channels.schemas import ChannelCreate, ChannelUpdate
 from src.channels.adapters.base import BaseChannelAdapter, IncomingMessage
 from src.channels.adapters.telegram import TelegramChannelAdapter
@@ -23,7 +23,7 @@ class ChannelService:
         self.session = session
         self.chat_service = LangchainChatService(session)
 
-    async def get_adapter(self, channel: AssistantChannel) -> BaseChannelAdapter:
+    async def get_adapter(self, channel: ChannelConfig) -> BaseChannelAdapter:
         if channel.provider == ChannelProvider.TELEGRAM:
             return TelegramChannelAdapter(channel)
         elif channel.provider == ChannelProvider.WECOM:
@@ -31,21 +31,23 @@ class ChannelService:
         else:
             raise ValueError(f"Provider {channel.provider} not supported")
 
-    async def get_channel(self, channel_id: uuid.UUID) -> Optional[AssistantChannel]:
-        stmt = select(AssistantChannel).where(AssistantChannel.id == channel_id)
+    async def get_channel(self, channel_id: uuid.UUID) -> Optional[ChannelConfig]:
+        stmt = select(ChannelConfig).where(ChannelConfig.id == channel_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
         
-    async def create_channel(self, data: ChannelCreate) -> AssistantChannel:
-        # Check if assistant exists
-        assistant = await self.session.get(Assistant, data.assistant_id)
-        if not assistant:
-            raise HTTPException(status_code=404, detail="Assistant not found")
+    async def create_channel(self, data: ChannelCreate, owner_id: Optional[uuid.UUID] = None) -> ChannelConfig:
+        # Check if assistant exists only if assistant_id is provided
+        if data.assistant_id:
+            assistant = await self.session.get(Assistant, data.assistant_id)
+            if not assistant:
+                raise HTTPException(status_code=404, detail="Assistant not found")
             
-        channel = AssistantChannel(
+        channel = ChannelConfig(
             name=data.name,
             provider=data.provider,
             assistant_id=data.assistant_id,
+            owner_id=owner_id,
             credentials=data.credentials,
             settings=data.settings,
             is_active=data.is_active,
@@ -65,7 +67,7 @@ class ChannelService:
             
         return channel
 
-    async def update_channel(self, channel_id: uuid.UUID, data: ChannelUpdate) -> AssistantChannel:
+    async def update_channel(self, channel_id: uuid.UUID, data: ChannelUpdate) -> ChannelConfig:
         channel = await self.get_channel(channel_id)
         if not channel:
             raise HTTPException(status_code=404, detail="Channel not found")
@@ -78,6 +80,8 @@ class ChannelService:
             channel.credentials = data.credentials
         if data.settings is not None:
             channel.settings = data.settings
+        if data.assistant_id is not None:
+            channel.assistant_id = data.assistant_id
             
         await self.session.commit()
         await self.session.refresh(channel)
@@ -89,8 +93,8 @@ class ChannelService:
             await self.session.delete(channel)
             await self.session.commit()
 
-    async def get_channels_by_assistant(self, assistant_id: uuid.UUID) -> List[AssistantChannel]:
-        stmt = select(AssistantChannel).where(AssistantChannel.assistant_id == assistant_id)
+    async def get_channels_by_assistant(self, assistant_id: uuid.UUID) -> List[ChannelConfig]:
+        stmt = select(ChannelConfig).where(ChannelConfig.assistant_id == assistant_id)
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
@@ -126,7 +130,16 @@ class ChannelService:
             logger.warning("No incoming message parsed")
             return {"status": "no_content"}
             
-        logger.info(f"Incoming message parsed. Is Poll={incoming.is_stream_poll}. Content len={len(incoming.content)}. SmartBot={getattr(adapter, 'is_smart_bot', False)}")
+        logger.info(f"Incoming message parsed. Content len={len(incoming.content)}. Processing strategy: ASYNC")
+        
+        # New Async Strategy: Return payload for background task
+        return {
+            "async_task_payload": {
+                "user_id": incoming.user_id,
+                "content": incoming.content,
+                # "username": incoming.username
+            }
+        }
             
         # 1. Handle Stream Polling (Generic)
         if incoming.is_stream_poll:
@@ -169,7 +182,7 @@ class ChannelService:
         
     async def process_stream_generation_logic(
         self, 
-        channel: AssistantChannel, 
+        channel: ChannelConfig, 
         incoming: IncomingMessage,
         stream_id: str
     ):
@@ -201,7 +214,7 @@ class ChannelService:
 
     async def _process_stream_generation(
         self, 
-        channel: AssistantChannel, 
+        channel: ChannelConfig, 
         adapter: BaseChannelAdapter, 
         incoming: IncomingMessage,
         stream_id: str
@@ -211,7 +224,7 @@ class ChannelService:
 
     async def _process_incoming_message(
         self, 
-        channel: AssistantChannel, 
+        channel: ChannelConfig, 
         adapter: BaseChannelAdapter, 
         incoming: IncomingMessage
     ):
@@ -238,7 +251,7 @@ class ChannelService:
             logger.error(f"Error processing channel message: {e}", exc_info=True)
             await adapter.send_text(incoming.user_id, "I'm sorry, I encountered an error.")
 
-    async def _ensure_conversation_context(self, channel: AssistantChannel, incoming: IncomingMessage):
+    async def _ensure_conversation_context(self, channel: ChannelConfig, incoming: IncomingMessage):
         """Find or create a conversation for the incoming message"""
         # Resolve the effective user (create a new internal user if this is a new external user)
         user = await self._get_or_create_channel_user(channel, incoming)
@@ -275,7 +288,7 @@ class ChannelService:
             
         return conversation, user.id
 
-    async def _get_or_create_channel_user(self, channel: AssistantChannel, incoming: IncomingMessage):
+    async def _get_or_create_channel_user(self, channel: ChannelConfig, incoming: IncomingMessage):
         """
         Map external identity (e.g. WeCom UserId) to internal User.
         If mapped user doesn't exist, create a new 'visitor' User.
@@ -380,7 +393,7 @@ class ChannelService:
 
     async def _process_stream_generation(
         self, 
-        channel: AssistantChannel, 
+        channel: ChannelConfig, 
         adapter: BaseChannelAdapter, 
         incoming: IncomingMessage,
         stream_id: str

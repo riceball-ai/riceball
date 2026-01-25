@@ -36,6 +36,9 @@ from .chat.api.v1.openai_router import router as chat_openai_router_v1
 from .agents.api.v1.admin_router import router as agents_admin_router_v1
 from .channels.api.v1.admin_router import router as channels_config_router
 from .channels.api.v1.webhook_router import router as channels_webhook_router
+from .channels.api.v1.user_router import router as channels_binding_router
+from .scheduler.api.v1.user_router import router as scheduler_user_router_v1
+from .scheduler.core import start_scheduler, scheduler
 
 logging.basicConfig(level=settings.LOG_LEVEL)
 
@@ -76,11 +79,21 @@ async def lifespan(app: FastAPI):
             await mcp_manager.load_and_connect_all(session)
     except Exception as e:
         logger.error(f"Failed to initialize MCP manager: {e}")
+
+    # Start Scheduler
+    try:
+        await start_scheduler()
+    except Exception as e:
+        logger.error(f"Failed to start scheduler: {e}")
         
     yield
     
     # Shutdown
     logger.info("Shutting down RiceBall...")
+    try:
+        scheduler.shutdown()
+    except Exception as e:
+        logger.error(f"Error shutting down scheduler: {e}")
     await mcp_manager.shutdown()
     await close_sandbox_service()
 
@@ -123,6 +136,10 @@ user_route_v1.include_router(rag_scraper_router_v1, prefix="/rag", tags=["RAG Sc
 user_route_v1.include_router(chat_user_router_v1, tags=["Chat"])
 
 user_route_v1.include_router(channels_config_router, tags=["Channels Config"])
+
+user_route_v1.include_router(channels_binding_router)
+
+user_route_v1.include_router(scheduler_user_router_v1)
 
 app.include_router(user_route_v1)
 

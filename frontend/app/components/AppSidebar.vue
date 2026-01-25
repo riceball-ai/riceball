@@ -5,7 +5,8 @@ import {
     MonitorCog,
     ReceiptText,
     ChevronsRight,
-    Gift
+    Gift,
+    CalendarClock
 } from 'lucide-vue-next'
 import { Button } from '~/components/ui/button'
 import { useSidebar } from '~/components/ui/sidebar'
@@ -40,6 +41,14 @@ const handleSignUp = () => navigateTo('/sign-up')
                         <NuxtLink to="/assistants">
                             <SquarePen />
                             <span>{{ $t('nav.newChat') }}</span>
+                        </NuxtLink>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton as-child>
+                        <NuxtLink to="/scheduled-tasks">
+                            <CalendarClock />
+                            <span>{{ $t('nav.tasks') }}</span>
                         </NuxtLink>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

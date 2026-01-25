@@ -213,6 +213,7 @@ export default defineI18nLocale(async locale => {
     // 导航
     nav: {
       newChat: '新对话',
+      tasks: '定时任务',
       history: '历史记录',
       adminPanel: '管理后台',
       profile: '个人资料',
@@ -233,6 +234,29 @@ export default defineI18nLocale(async locale => {
       writingTemplates: '写作模板',
       codingTemplates: '编程模板',
       templates: '模板',
+    },
+
+    tasks: {
+      title: '定时任务',
+      description: '自动化您的 AI 助手交互',
+      create: '创建任务',
+      name: '任务名称',
+      cron: 'Cron 表达式',
+      assistant: '助手',
+      target: '目标渠道',
+      prompt: '提示词模板',
+      status: '状态',
+      lastRun: '上次运行',
+      active: '激活',
+      inactive: '已停用',
+      created: '任务创建成功',
+      updated: '任务更新成功',
+      deleted: '任务删除成功',
+      promptPlaceholder: '输入给 AI 的提示词或指令...',
+      cronHint: '例如："0 9 * * *" 表示每天上午9点',
+      noBindings: '未找到渠道绑定信息。请先与机器人进行互动。',
+      selectAssistant: '选择一个助手',
+      selectBinding: '选择目标渠道',
     },
 
     // 设置

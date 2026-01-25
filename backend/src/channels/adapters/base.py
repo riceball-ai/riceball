@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, Union
 from fastapi import Request, Response
 from pydantic import BaseModel
 
-from src.channels.models import AssistantChannel
+from src.channels.models import ChannelConfig
 
 class IncomingMessage(BaseModel):
     """Normalized message from external channel"""
@@ -19,7 +19,7 @@ class IncomingMessage(BaseModel):
 
 
 class BaseChannelAdapter(ABC):
-    def __init__(self, channel: AssistantChannel):
+    def __init__(self, channel: ChannelConfig):
         self.channel = channel
         self.credentials = channel.credentials
         self.settings = channel.settings

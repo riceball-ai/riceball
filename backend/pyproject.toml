@@ -47,6 +47,7 @@ dependencies = [
     "trafilatura>=2.0.0",
     "beautifulsoup4>=4.14.2",
     "aiodocker>=0.25.0",
+    "apscheduler>=3.11.2",
 ]
 
 [dependency-groups]

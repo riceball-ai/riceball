@@ -213,6 +213,7 @@ export default defineI18nLocale(async locale => {
     // Navigation
     nav: {
       newChat: 'New Chat',
+      tasks: 'Scheduled Tasks',
       history: 'History',
       adminPanel: 'Admin Panel',
       profile: 'Profile',
@@ -233,6 +234,29 @@ export default defineI18nLocale(async locale => {
       writingTemplates: 'Writing Templates',
       codingTemplates: 'Coding Templates',
       templates: 'Templates',
+    },
+
+    tasks: {
+      title: 'Scheduled Tasks',
+      description: 'Automate interactions with AI assistants',
+      create: 'Create Task',
+      name: 'Task Name',
+      cron: 'Cron Expression',
+      assistant: 'Assistant',
+      target: 'Target Channel',
+      prompt: 'Prompt Template',
+      status: 'Status',
+      lastRun: 'Last Run',
+      active: 'Active',
+      inactive: 'Inactive',
+      created: 'Task created successfully',
+      updated: 'Task updated successfully',
+      deleted: 'Task deleted successfully',
+      promptPlaceholder: 'Enter the prompt/instruction for the AI...',
+      cronHint: 'e.g., "0 9 * * *" for daily at 9am',
+      noBindings: 'No channel bindings found. Interact with a bot first.',
+      selectAssistant: 'Select an assistant',
+      selectBinding: 'Select a target channel',
     },
 
     // Settings

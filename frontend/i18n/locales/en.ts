@@ -16,8 +16,11 @@ export default defineI18nLocale(async locale => {
       delete: 'Delete',
       edit: 'Edit',
       create: 'Create',
+      createSuccess: 'Created successfully',
+      actions: 'Actions',
       update: 'Update',
       confirm: 'Confirm',
+      confirmUnlink: 'Are you sure you want to unlink this item?',
       back: 'Back',
       next: 'Next',
       previous: 'Previous',
@@ -443,6 +446,13 @@ export default defineI18nLocale(async locale => {
         failed_load: 'Failed to load assistant',
       },
       channels: {
+        linked_title: 'Linked Channels',
+        link_existing: 'Link Existing Channel',
+        no_linked: 'No channels linked to this assistant.',
+        link_title: 'Link Channel',
+        link_description: 'Select an existing channel to link to this assistant.',
+        select_channel: 'Select Channel',
+        select_placeholder: 'Choose a channel...',
         list_title: 'Integration Channels',
         list_description: 'Connect this assistant to external messaging platforms.',
         add: 'Add Channel',
@@ -745,6 +755,7 @@ export default defineI18nLocale(async locale => {
       sidebar: {
         dashboard: 'Dashboard',
         assistants: 'Assistants',
+        channels: 'Channels',
         conversations: 'Conversations',
         feedbacks: 'Feedback Review',
         users: 'Users',
@@ -1626,6 +1637,51 @@ export default defineI18nLocale(async locale => {
       profile: 'Profile',
       admin: 'Admin Panel',
       adminUsers: 'User Management',
+      adminChannels: 'Channels',
+    },
+
+    // User Integrations (Channels)
+    channels: {
+      title: 'Integrations',
+      list_description: 'Manage your connected messaging channels.',
+      add: 'Add Channel',
+      empty: 'No channels configured yet.',
+      webhook_copied: 'Webhook URL copied!',
+      description: 'Manage your connected messaging channels.',
+      myBindings: 'My Bindings',
+      noBindings: 'No channels connected.',
+      howToBind: 'To bind a channel, start a chat with the bot.',
+      provider: 'Provider',
+      externalUser: 'External User ID',
+      metadata: 'Metadata',
+      confirmUnbind: 'Are you sure you want to unbind this channel?',
+      unbound: 'Channel unbound.',
+      form: {
+           edit_title: 'Edit Channel',
+           add_title: 'Add New Channel',
+           description: 'Connect your assistant to external platforms.',
+           platform: 'Platform',
+           select_provider: 'Select provider',
+           name: 'Channel Name',
+           telegram: {
+               bot_token: 'Bot Token',
+               bot_token_hint: "Obtain from {'@'}BotFather on Telegram"
+           },
+           wecom: {
+               corp_id: 'Corp ID',
+               agent_id: 'Agent ID',
+               secret: 'Secret',
+               token: 'Token',
+               aes_key: 'EncodingAESKey',
+               generate_random: 'Generate Random Keys'
+           },
+           is_active: 'Enable this channel',
+           error_missing_creds: 'Missing required credentials',
+           error_failed: 'Operation failed',
+           webhook_url: 'Webhook URL',
+           webhook_hint: 'Configure this URL in your platform settings to receive messages.',
+           save_to_get_webhook: 'Please save the channel first to generate the Webhook URL.'
+      }
     }
   }
 })

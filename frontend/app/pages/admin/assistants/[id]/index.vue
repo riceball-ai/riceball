@@ -24,7 +24,7 @@ import KnowledgeBaseConfig from '~/components/admin/KnowledgeBaseConfig.vue'
 import AgentConfig from '~/components/admin/AgentConfig.vue'
 import TranslationManager from '~/components/assistants/form/TranslationManager.vue'
 import RetrievalTester from '~/components/assistants/form/RetrievalTester.vue'
-import ChannelList from '~/components/channels/ChannelList.vue'
+import AssistantChannelSelector from '~/components/channels/AssistantChannelSelector.vue'
 import type { Assistant, Model, RagConfig } from '~/types/api'
 import { useConfigStore } from '~/stores/config'
 
@@ -258,7 +258,7 @@ const handleDelete = async () => {
       </TabsContent>
 
       <TabsContent value="integrations">
-        <ChannelList :assistant-id="assistantId" />
+        <AssistantChannelSelector :assistant-id="assistantId" />
       </TabsContent>
 
       <TabsContent value="translations">

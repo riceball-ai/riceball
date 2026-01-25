@@ -14,6 +14,7 @@ import {
     Files,
     Shield,
     ThumbsUp,
+    Radio
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -149,6 +150,14 @@ const configStore = useConfigStore()
                                 <NuxtLink to="/admin/system-config">
                                     <Settings />
                                     <span>{{ $t('admin.sidebar.systemConfig') }}</span>
+                                </NuxtLink>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton as-child :is-active="route.path === '/admin/channels'">
+                                <NuxtLink to="/admin/channels">
+                                    <Radio />
+                                    <span>{{ $t('admin.sidebar.channels') }}</span>
                                 </NuxtLink>
                             </SidebarMenuButton>
                         </SidebarMenuItem>                        <SidebarMenuItem>

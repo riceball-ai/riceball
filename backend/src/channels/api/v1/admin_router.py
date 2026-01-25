@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_async_session
-from src.auth import current_active_user, current_superuser
+from src.auth import current_active_user
 from src.users.models import User
-from src.channels.schemas import ChannelRead, ChannelCreate, ChannelUpdate, ChannelProvider
+from src.channels.schemas import ChannelRead, ChannelCreate, ChannelUpdate
 from src.channels.service import ChannelService
 from src.assistants.models import Assistant
 
@@ -19,16 +19,25 @@ async def create_channel(
     session: AsyncSession = Depends(get_async_session)
 ):
     """Create a new channel"""
-    # Verify assistant ownership
-    assistant = await session.get(Assistant, channel_data.assistant_id)
-    if not assistant:
-        raise HTTPException(status_code=404, detail="Assistant not found")
+    if channel_data.assistant_id:
+        assistant = await session.get(Assistant, channel_data.assistant_id)
+        if not assistant:
+            raise HTTPException(status_code=404, detail="Assistant not found")
         
-    if assistant.owner_id != current_user.id and not current_user.is_superuser:
-         raise HTTPException(status_code=403, detail="Not authorized")
+        if assistant.owner_id != current_user.id and not current_user.is_superuser:
+            raise HTTPException(status_code=403, detail="Not authorized")
 
     service = ChannelService(session)
-    return await service.create_channel(channel_data)
+    return await service.create_channel(channel_data, owner_id=current_user.id)
+
+@router.get("", response_model=List[ChannelRead])
+async def list_my_channels(
+    current_user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """List all channels owned by the current user"""
+    service = ChannelService(session)
+    return await service.get_channels_by_owner(current_user.id)
 
 @router.get("/assistant/{assistant_id}", response_model=List[ChannelRead])
 async def list_channels_by_assistant(
@@ -47,22 +56,33 @@ async def list_channels_by_assistant(
     service = ChannelService(session)
     return await service.get_channels_by_assistant(assistant_id)
 
+async def check_channel_ownership(channel_id: uuid.UUID, user: User, session: AsyncSession):
+    service = ChannelService(session)
+    channel = await service.get_channel(channel_id)
+    if not channel:
+        raise HTTPException(status_code=404, detail="Channel not found")
+        
+    # Check ownership
+    is_owner = (channel.owner_id == user.id)
+    
+    # Check via assistant if direct ownership fails (for legacy or shared cases)
+    if not is_owner and channel.assistant_id:
+        assistant = await session.get(Assistant, channel.assistant_id)
+        if assistant and assistant.owner_id == user.id:
+            is_owner = True
+            
+    if not is_owner and not user.is_superuser:
+         raise HTTPException(status_code=403, detail="Not authorized")
+    
+    return service, channel
+
 @router.get("/{channel_id}", response_model=ChannelRead)
 async def get_channel(
     channel_id: uuid.UUID,
     current_user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session)
 ):
-    service = ChannelService(session)
-    channel = await service.get_channel(channel_id)
-    if not channel:
-        raise HTTPException(status_code=404, detail="Channel not found")
-        
-    # Check ownership via assistant
-    assistant = await session.get(Assistant, channel.assistant_id)
-    if assistant.owner_id != current_user.id and not current_user.is_superuser:
-         raise HTTPException(status_code=403, detail="Not authorized")
-         
+    service, channel = await check_channel_ownership(channel_id, current_user, session)
     return channel
 
 @router.put("/{channel_id}", response_model=ChannelRead)
@@ -72,15 +92,7 @@ async def update_channel(
     current_user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session)
 ):
-    service = ChannelService(session)
-    channel = await service.get_channel(channel_id)
-    if not channel:
-        raise HTTPException(status_code=404, detail="Channel not found")
-        
-    assistant = await session.get(Assistant, channel.assistant_id)
-    if assistant.owner_id != current_user.id and not current_user.is_superuser:
-         raise HTTPException(status_code=403, detail="Not authorized")
-
+    service, channel = await check_channel_ownership(channel_id, current_user, session)
     return await service.update_channel(channel_id, channel_data)
 
 @router.delete("/{channel_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -89,11 +101,5 @@ async def delete_channel(
     current_user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session)
 ):
-    service = ChannelService(session)
-    channel = await service.get_channel(channel_id)
-    if channel:
-        assistant = await session.get(Assistant, channel.assistant_id)
-        if assistant.owner_id != current_user.id and not current_user.is_superuser:
-             raise HTTPException(status_code=403, detail="Not authorized")
-        
-        await service.delete_channel(channel_id)
+    service, channel = await check_channel_ownership(channel_id, current_user, session)
+    await service.delete_channel(channel_id)

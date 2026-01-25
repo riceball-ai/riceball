@@ -34,3 +34,20 @@ async def list_my_bindings(
     result = await session.execute(query)
     # Return bindings
     return result.scalars().all()
+
+@router.delete("/{binding_id}", status_code=204)
+async def delete_my_binding(
+    binding_id: uuid.UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """
+    Remove a channel binding.
+    """
+    binding = await session.get(UserChannelBinding, binding_id)
+    if not binding or binding.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Binding not found")
+    
+    await session.delete(binding)
+    await session.commit()
+

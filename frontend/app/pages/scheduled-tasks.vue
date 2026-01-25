@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Plus, Pencil, Trash2, CalendarClock, Play } from 'lucide-vue-next'
-import { useToast } from '~/components/ui/toast'
+import { toast } from 'vue-sonner'
 import type { ScheduledTask, ScheduledTaskCreate } from '~/types/scheduler'
 import type { UserChannelBinding } from '~/types/channels'
 import type { Assistant } from '~/types/api'
@@ -37,7 +37,6 @@ import {
 import { Badge } from '~/components/ui/badge'
 
 const { t } = useI18n()
-const { toast } = useToast()
 const { $api } = useNuxtApp()
 
 // Fetch Data
@@ -94,7 +93,7 @@ const openEditDialog = (task: ScheduledTask) => {
 
 const onSubmit = async () => {
     if (!form.value.name || !form.value.cron_expression || !form.value.assistant_id || !form.value.target_binding_id || !form.value.prompt_template) {
-        toast({ title: t('common.error'), description: t('common.fixValidationErrors'), variant: 'destructive' })
+        toast.error(t('common.error'), { description: t('common.fixValidationErrors') })
         return
     }
 
@@ -105,18 +104,18 @@ const onSubmit = async () => {
                 method: 'PATCH',
                 body: form.value
             })
-            toast({ title: t('common.success'), description: t('tasks.updated') })
+            toast.success(t('common.success'), { description: t('tasks.updated') })
         } else {
             await $api('/api/v1/scheduled-tasks/', {
                 method: 'POST',
                 body: form.value
             })
-            toast({ title: t('common.success'), description: t('tasks.created') })
+            toast.success(t('common.success'), { description: t('tasks.created') })
         }
         isDialogOpen.value = false
         refreshTasks()
     } catch (e: any) {
-        toast({ title: t('common.error'), description: e.message || 'Unknown Error', variant: 'destructive' })
+        toast.error(t('common.error'), { description: e.message || 'Unknown Error' })
     } finally {
         isLoading.value = false
     }
@@ -126,10 +125,10 @@ const deleteTask = async (id: string) => {
     if (!confirm(t('common.confirmDelete'))) return
     try {
         await $api(`/api/v1/scheduled-tasks/${id}`, { method: 'DELETE' })
-        toast({ title: t('common.success'), description: t('tasks.deleted') })
+        toast.success(t('common.success'), { description: t('tasks.deleted') })
         refreshTasks()
     } catch (e: any) {
-        toast({ title: t('common.error'), description: e.message, variant: 'destructive' })
+        toast.error(t('common.error'), { description: e.message })
     }
 }
 

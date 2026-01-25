@@ -32,6 +32,7 @@ export interface ChannelUpdate {
   credentials?: Record<string, any>
   settings?: Record<string, any>
   is_active?: boolean
+  assistant_id?: string | null
 }
 
 export const useChannels = () => {

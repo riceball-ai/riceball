@@ -98,6 +98,12 @@ class ChannelService:
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
+    async def get_channels_by_owner(self, owner_id: uuid.UUID) -> List[ChannelConfig]:
+        stmt = select(ChannelConfig).where(ChannelConfig.owner_id == owner_id)
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+
     async def handle_webhook(self, channel_id: uuid.UUID, request: Request):
         logger.info(f"Handling webhook for channel {channel_id}, method: {request.method}")
         channel = await self.get_channel(channel_id)

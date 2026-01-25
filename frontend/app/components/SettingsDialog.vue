@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Loader2 } from "lucide-vue-next"
+import { Loader2, Smartphone } from "lucide-vue-next"
 import { toTypedSchema } from "@vee-validate/zod"
 import * as z from "zod"
 import { toast } from "vue-sonner"
+import UserBindingList from '~/components/channels/UserBindingList.vue'
 
 const { $api } = useNuxtApp()
 const { t } = useI18n()
@@ -192,6 +193,19 @@ async function onPasswordSubmit(values: any) {
               </svg>
               {{ $t('profile.tabs.security') }}
             </button>
+
+            <button
+              @click="activeTab = 'channels'"
+              :class="[
+                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors text-left',
+                activeTab === 'channels'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+              ]"
+            >
+              <Smartphone class="w-4 h-4" />
+              {{ $t('channels.title') }}
+            </button>
           </nav>
         </div>
 
@@ -310,6 +324,11 @@ async function onPasswordSubmit(values: any) {
                 </div>
               </form>
             </Form>
+          </div>
+
+          <!-- Channels -->
+          <div v-if="activeTab === 'channels'" class="space-y-6">
+              <UserBindingList />
           </div>
         </div>
       </div>

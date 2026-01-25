@@ -16,8 +16,11 @@ export default defineI18nLocale(async locale => {
       delete: '删除',
       edit: '编辑',
       create: '创建',
+      createSuccess: '创建成功',
+      actions: '操作',
       update: '更新',
       confirm: '确认',
+      confirmUnlink: '确定要取消关联吗？',
       back: '返回',
       next: '下一步',
       previous: '上一步',
@@ -443,6 +446,13 @@ export default defineI18nLocale(async locale => {
         failed_load: '加载助理失败',
       },
       channels: {
+        linked_title: '已关联渠道',
+        link_existing: '关联现有渠道',
+        no_linked: '此助理暂无关联渠道。',
+        link_title: '关联渠道',
+        link_description: '选择一个现有渠道绑定到此助理。',
+        select_channel: '选择渠道',
+        select_placeholder: '请选择渠道...',
         list_title: '集成渠道',
         list_description: '将此助理连接到外部消息平台。',
         add: '添加渠道',
@@ -745,6 +755,7 @@ export default defineI18nLocale(async locale => {
       sidebar: {
         dashboard: '仪表盘',
         assistants: '助手管理',
+        channels: '渠道管理',
         conversations: '对话管理',
         feedbacks: '反馈审查',
         users: '用户管理',
@@ -1625,6 +1636,51 @@ export default defineI18nLocale(async locale => {
       profile: '个人资料',
       admin: '管理后台',
       adminUsers: '用户管理',
+      adminChannels: '渠道管理',
+    },
+
+    // 用户集成 (Channels)
+    channels: {
+      title: '集成管理',
+      list_description: '管理您的已连接消息渠道。',
+      add: '添加渠道',
+      empty: '暂无配置渠道。',
+      webhook_copied: 'Webhook URL 已复制！',
+      description: '管理您的已连接消息渠道。',
+      myBindings: '我的绑定',
+      noBindings: '未连接任何渠道。',
+      howToBind: '要绑定渠道，请与机器人开始对话。',
+      provider: '提供商',
+      externalUser: '外部用户 ID',
+      metadata: '元数据',
+      confirmUnbind: '确定要解绑此渠道吗？',
+      unbound: '渠道已解绑。',
+      form: {
+           edit_title: '编辑渠道',
+           add_title: '添加新渠道',
+           description: '将您的助理连接到外部平台。',
+           platform: '平台',
+           select_provider: '选择提供商',
+           name: '渠道名称',
+           telegram: {
+               bot_token: 'Bot Token',
+               bot_token_hint: "从 Telegram {'@'}BotFather 获取"
+           },
+           wecom: {
+               corp_id: '企业ID (Corp ID)',
+               agent_id: '应用ID (Agent ID)',
+               secret: 'Secret',
+               token: 'Token',
+               aes_key: 'EncodingAESKey',
+               generate_random: '生成随机密钥'
+           },
+           is_active: '启用此渠道',
+           error_missing_creds: '缺失必要的凭据',
+           error_failed: '操作失败',
+           webhook_url: 'Webhook URL',
+           webhook_hint: '在您的平台设置中配置此 URL 以接收消息。',
+           save_to_get_webhook: '请先保存渠道以生成 Webhook URL。'
+      }
     }
   }
 })

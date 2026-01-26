@@ -20,9 +20,12 @@ graph TD
         
         Model -->|Configured from| Provider["Model Provider"]
         Tools -.->|Standard Protocol| MCP["MCP (Model Context Protocol)"]
+
+        Scheduler["Scheduler (Cron)"] -->|Triggers| Assistant
     end
     
     ExternalApps["External Apps<br/>(WeCom/Telegram)"] -->|Webhook| Assistant
+    Assistant -.->|Push Message| ExternalApps
     Provider -.->|API| ExternalServices["External AI Services (OpenAI/Ollama/etc.)"]
 ```
 

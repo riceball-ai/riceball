@@ -11,7 +11,9 @@ from src.models import Base
 class ChannelProvider(str, enum.Enum):
     TELEGRAM = "telegram"
     DISCORD = "discord"
-    WECOM = "wecom"
+    WECOM = "wecom"      # Traditional WeCom App
+    WECOM_SMART_BOT = "wecom_smart_bot" # WeCom Smart Bot (No AgentID)
+    WECOM_WEBHOOK = "wecom_webhook" # WeCom Group Robot Webhook
     SLACK = "slack"
 
 

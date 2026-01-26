@@ -125,16 +125,13 @@ class ConversationService:
         self,
         *,
         conversation_id: uuid.UUID,
-        user_id: uuid.UUID,
+        user_id: Optional[uuid.UUID] = None,
     ) -> bool:
-        result = await self.session.execute(
-            select(Conversation).where(
-                and_(
-                    Conversation.id == conversation_id,
-                    Conversation.user_id == user_id,
-                )
-            )
-        )
+        stmt = select(Conversation).where(Conversation.id == conversation_id)
+        if user_id:
+            stmt = stmt.where(Conversation.user_id == user_id)
+            
+        result = await self.session.execute(stmt)
         conversation = result.scalar_one_or_none()
         if not conversation:
             return False

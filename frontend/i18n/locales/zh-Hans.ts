@@ -34,7 +34,7 @@ export default defineI18nLocale(async locale => {
       retry: '重试',
       refresh: '刷新',
       or: '或',
-      actions: '操作',
+      none: '无',
       noData: '暂无数据',
       bulkOperationSuccess: '批量{action}操作成功，影响 {count} 条记录',
       importSuccess: '导入成功，共导入 {count} 条记录',
@@ -246,7 +246,9 @@ export default defineI18nLocale(async locale => {
       name: '任务名称',
       cron: 'Cron 表达式',
       assistant: '助手',
-      target: '目标渠道',
+      target: '目标',
+      channel: '渠道配置',
+      targetId: '目标标识 (ID)',
       prompt: '提示词模板',
       status: '状态',
       lastRun: '上次运行',
@@ -260,6 +262,8 @@ export default defineI18nLocale(async locale => {
       noBindings: '未找到渠道绑定信息。请先与机器人进行互动。',
       selectAssistant: '选择一个助手',
       selectBinding: '选择目标渠道',
+      selectChannel: '选择渠道',
+      targetHint: '输入 UserID，群组 ID。如果渠道已配置默认目标（如 Webhook），此处可留空。',
     },
 
     // 设置
@@ -471,6 +475,9 @@ export default defineI18nLocale(async locale => {
              platform: '平台',
              select_provider: '选择提供商',
              name: '渠道名称',
+             assistant: '关联助理',
+             select_assistant: '选择一个助理...',
+             assistant_desc: '选择一个助理来处理该渠道收到的消息',
              telegram: {
                  bot_token: 'Bot Token',
                  bot_token_hint: "从 Telegram {'@'}BotFather 获取"
@@ -1662,6 +1669,9 @@ export default defineI18nLocale(async locale => {
            platform: '平台',
            select_provider: '选择提供商',
            name: '渠道名称',
+           assistant: '负责人助理',
+           select_assistant: '选择一个助理...',
+           assistant_desc: '为此渠道指定默认响应的助理',
            telegram: {
                bot_token: 'Bot Token',
                bot_token_hint: "从 Telegram {'@'}BotFather 获取"
@@ -1671,7 +1681,7 @@ export default defineI18nLocale(async locale => {
                agent_id: '应用ID (Agent ID)',
                secret: 'Secret',
                token: 'Token',
-               aes_key: 'EncodingAESKey',
+               encoding_aes_key: 'EncodingAESKey',
                generate_random: '生成随机密钥'
            },
            is_active: '启用此渠道',

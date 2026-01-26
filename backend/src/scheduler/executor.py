@@ -2,7 +2,7 @@
 import asyncio
 import logging
 import uuid
-from typing import Optional
+from typing import Optional, AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -11,13 +11,14 @@ from src.database import async_session_maker
 from src.channels.models import ChannelConfig, UserChannelBinding, ChannelProvider
 from src.channels.services.telegram import TelegramChannelService
 from src.channels.services.wecom import WecomChannelService
+from src.channels.services.wecom_smart_bot import WecomSmartBotChannelService
+from src.channels.services.wecom_webhook import WecomWebhookChannelService
 
-from src.assistants.models import Assistant
+from src.assistants.models import Assistant, Conversation, ConversationStatusEnum
+from src.users.models import User
 from src.scheduler.models import ScheduledTask
 from datetime import datetime
-# Assuming we will import something to run assistant (e.g. from chat.service)
 from src.chat.service import LangchainChatService
-from src.chat.models import MessageRole
 
 logger = logging.getLogger(__name__)
 
@@ -28,127 +29,194 @@ class ChannelServiceFactory:
             return TelegramChannelService(channel)
         elif channel.provider == ChannelProvider.WECOM:
             return WecomChannelService(channel)
+        elif channel.provider == ChannelProvider.WECOM_SMART_BOT:
+            return WecomSmartBotChannelService(channel)
+        elif channel.provider == ChannelProvider.WECOM_WEBHOOK:
+            return WecomWebhookChannelService(channel)
         else:
             raise ValueError(f"Provider {channel.provider} not supported for outbound service")
 
+async def _ensure_channel_user(
+    session: AsyncSession,
+    channel: ChannelConfig,
+    external_user_id: str,
+    username: Optional[str] = None
+) -> User:
+    """
+    Resolve external user ID to internal User via Binding.
+    Creates a Guest User if no binding exists.
+    """
+    # 1. Try strict match first (Same Channel)
+    stmt = select(UserChannelBinding).where(
+        UserChannelBinding.channel_config_id == channel.id,
+        UserChannelBinding.external_user_id == external_user_id
+    )
+    result = await session.execute(stmt)
+    binding = result.scalar_one_or_none()
+
+    # 2. If not found, try loose match by Provider + ExternalID
+    # (To handle cases where user is bound globally to provider but not this specific channel instance yet,
+    #  OR to prevent Unique Constraint violation if binding exists for another channel)
+    if not binding:
+        provider_val = channel.provider.value if hasattr(channel.provider, "value") else channel.provider
+        stmt = select(UserChannelBinding).where(
+            UserChannelBinding.provider == provider_val,
+            UserChannelBinding.external_user_id == external_user_id
+        )
+        result = await session.execute(stmt)
+        binding = result.scalar_one_or_none()
+
+    if binding:
+        # If we found a binding (either specific or global), use that user.
+        # Ideally we might want to update the binding to point to this channel if it was null?
+        # But 'channel_config_id' implies "Source of registration".
+        user = await session.get(User, binding.user_id)
+        if user:
+            return user
+        else:
+             # Zombie binding (user deleted). Clean up?
+             await session.delete(binding)
+             await session.flush()
+             # Fall through to create new
+
+    # Create Guest User
+    logger.info(f"Creating Guest User for external_id={external_user_id} on channel={channel.id}")
+    
+    # Use channel provider as prefix for guest users
+    prefix = str(channel.provider).capitalize() # e.g. "Wecom", "Telegram"
+    
+    new_user = User(
+        email=None,
+        hashed_password="",
+        is_active=True,
+        is_superuser=False,
+        is_verified=True,
+        name=username or f"{prefix}-{external_user_id[:6]}"
+    )
+    session.add(new_user)
+    await session.flush()
+
+    # Create Binding
+    new_binding = UserChannelBinding(
+        user_id=new_user.id,
+        channel_config_id=channel.id,
+        external_user_id=external_user_id,
+        provider=channel.provider,
+        metadata_={"username": username}
+    )
+    session.add(new_binding)
+    await session.commit()
+    
+    return new_user
+
+async def _get_active_conversation(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    assistant_id: uuid.UUID,
+    title_context: str = "Chat"
+) -> Conversation:
+    """
+    Find or create an active conversation for the user/assistant pair.
+    """
+    stmt = select(Conversation).where(
+        Conversation.user_id == user_id,
+        Conversation.assistant_id == assistant_id,
+        Conversation.status == ConversationStatusEnum.ACTIVE
+    ).order_by(Conversation.updated_at.desc()).limit(1)
+    
+    result = await session.execute(stmt)
+    existing_conv = result.scalar_one_or_none()
+    
+    if existing_conv:
+        return existing_conv
+
+    # Create new conversation
+    conv = Conversation(
+        assistant_id=assistant_id,
+        title=title_context,
+        user_id=user_id,
+        status=ConversationStatusEnum.ACTIVE
+    )
+    session.add(conv)
+    await session.commit()
+    await session.refresh(conv)
+    return conv
+
+async def _stream_response_generator(
+    chat_service: LangchainChatService,
+    conversation_id: uuid.UUID,
+    user_id: uuid.UUID,
+    text: str
+) -> AsyncGenerator[str, None]:
+    """
+    Wraps the chat service stream to yield only text content.
+    """
+    async for chunk in chat_service.send_message_stream(
+        conversation_id=conversation_id,
+        user_id=user_id,
+        content=text
+    ):
+        if isinstance(chunk, dict):
+            msg_type = chunk.get("type")
+            if msg_type == "content_chunk":
+                yield chunk.get("data", {}).get("content", "")
+            elif "chunk" in chunk:
+                yield chunk.get("chunk", "")
+        elif isinstance(chunk, str):
+            yield chunk
+
 async def process_incoming_message(
     channel_id: uuid.UUID,
-    user_id: str, # External User ID
+    user_id: str,
     text: str,
-    username: Optional[str] = None
+    username: Optional[str] = None,
+    stream_id: Optional[str] = None
 ):
     """
-    Background Task Executor for Webhook events.
-    Running in a separate context from the HTTP request.
+    Background Task: Process incoming webhook message.
+    1. Resolve Channel & User
+    2. Invoke Assistant (Langchain)
+    3. Stream response back via Channel Adapter
     """
-    logger.info(f"Background processing message from {user_id} on channel {channel_id}")
+    logger.info(f"Processing message task: channel={channel_id}, user={user_id}")
     
     async with async_session_maker() as session:
         try:
-            # 1. Load Channel Config
+            # 1. Validation
             channel = await session.get(ChannelConfig, channel_id)
             if not channel or not channel.is_active:
-                logger.warning(f"Channel {channel_id} not found or inactive")
+                logger.warning(f"Task ignored: Channel {channel_id} inactive or missing")
                 return
 
-            # 2. Find or Create User Binding
-            # Ideally we should resolve this to an internal system user.
-            # For now, we assume simple binding or anonymous usage if needed.
-            # But "active push" requires knowing where to push back.
+            if not channel.assistant_id:
+                logger.warning(f"Task ignored: Channel {channel.name} has no assistant")
+                return
             
-            # Simple Logic: Check if we have seen this external user before
-            stmt = select(UserChannelBinding).where(
-                UserChannelBinding.channel_config_id == channel_id,
-                UserChannelBinding.external_user_id == user_id
-            )
-            result = await session.execute(stmt)
-            binding = result.scalar_one_or_none()
-            
-            # If not exists, maybe create it? (Auto-registration flow)
-            # This part depends on how strict we want to be.
-            # Let's auto-register for now to keep it working like before.
-            if not binding:
-                 # TODO: Link to a real User if possible. 
-                 # For now, we might fail or need a guest user strategy.
-                 # Let's assume we find a user via some logic or create a guest.
-                 pass
-
-            # 3. Determine Assistant
-            # If channel has specific assistant_id, use it.
-            assistant: Assistant | None = None
-            if channel.assistant_id:
-                assistant = await session.get(Assistant, channel.assistant_id)
-            
+            assistant = await session.get(Assistant, channel.assistant_id)
             if not assistant:
-                logger.warning("No assistant configured for this channel")
-                # Should we reply "Not configured"?
+                logger.warning("Task ignored: Assistant configuration missing")
                 return
 
-            # 4. Run Inference (This is where RAG/Agent magic happens)
-            # We reuse LangchainChatService but need to be careful about conversation state.
-            
-            # Create a transient chat service
-            chat_service = LangchainChatService(session)
-            
-            # We need a conversation ID. 
-            # Strategy: Maintain one conversation per External User per Channel?
-            # Or create new one every time? Usually "Chat Bot" style implies persistent session.
-            
-            # Simple Session Management:
-            # Check for last active conversation for this binding
-            # (Omitting complex session logic for brevity, creating on fly or fetching latest)
-            conversation_id = await _get_or_create_conversation_for_external_user(session, assistant.id, user_id, channel.provider)
-            
-            # Prepare generator
-            # LangchainChatService.send_message usually returns a stream response (generator)
-            # But it requires 'user' object for permission checks.
-            # We might need to bypass auth checks or mock a user object.
-            
-            # Since Channel Events often don't map to a real authenticated internal user securely,
-            # We pass a flag or mock user_id if the method requires it.
-            # However, looking at LangchainChatService.send_message_stream signature:
-            # def send_message_stream(self, conversation_id: uuid.UUID, user_id: uuid.UUID, ...)
-            
-            # The user_id is mainly used for permission check "get_conversation_with_model(conversation_id, user_id)".
-            # If we pass user_id=None or a system ID, we need to ensure get_conversation_with_model handles it or we bypass it.
-            
-            # PROPOSAL: We should implement a specialized method in ChatService for System/Bot calls 
-            # OR ensure our conversation fetching logic in ChatService is flexible.
-            # For now, let's assume the conversation we created/fetched is accessible.
-            # We might need to fetch the user_id that generated the conversation.
-            
-            # Strategy: use the user_id from the conversation owner.
-            # (Assuming _get_or_create has returned a valid conversation ID)
-            
-            # Fetch conversation to get owner
-            stmt_conv = select(Conversation).where(Conversation.id == conversation_id)
-            conv_res = await session.execute(stmt_conv)
-            conv = conv_res.scalar_one()
-            
-            # Call Service
-            async def response_wrapper():
-                async for chunk in chat_service.send_message_stream(
-                    conversation_id=conversation_id,
-                    user_id=conv.user_id, # Assumes conv.user_id is set. If System/None, ChatService might break.
-                    content=text
-                ):
-                    # ChatService yields dicts like {'chunk': 'Server', 'status': 'streaming'}
-                    # We need to extract the text content and yield it
-                    if isinstance(chunk, dict):
-                         yield chunk.get("chunk", "")
-                    elif isinstance(chunk, str):
-                         yield chunk
+            # 2. Resolve User & Conversation
+            user = await _ensure_channel_user(session, channel, user_id, username)
+            conversation = await _get_active_conversation(
+                session, 
+                user.id, 
+                assistant.id, 
+                title_context=f"Chat via {channel.provider}"
+            )
 
-            response_generator = response_wrapper()
+            # 3. Execution
+            chat_service = LangchainChatService(session)
+            response_gen = _stream_response_generator(chat_service, conversation.id, user.id, text)
             
-            # 5. Push Response via Channel Service
+            # 4. Response
             service = ChannelServiceFactory.get_service(channel)
-            await service.send_stream(user_id, response_generator)
+            target_id = stream_id if stream_id else user_id
+            await service.send_stream(target_id, response_gen)
             
         except Exception as e:
-            logger.exception(f"Error processing message task: {e}")
-            # Optional: Send error message back to user?
-
+            logger.exception(f"Error in process_incoming_message: {e}")
 
 async def execute_scheduled_task(task_id: uuid.UUID):
     """
@@ -157,149 +225,48 @@ async def execute_scheduled_task(task_id: uuid.UUID):
     logger.info(f"Executing scheduled task {task_id}")
     async with async_session_maker() as session:
         try:
-            # 1. Load Task
+            # 1. Load Task & Dependencies
             task = await session.get(ScheduledTask, task_id)
             if not task or not task.is_active:
-                logger.warning(f"Task {task_id} skipped (not found or inactive)")
+                logger.warning(f"Task {task_id} skipped")
                 return
                 
-            # Update last run timestamp
             task.last_run_at = datetime.utcnow()
-            await session.commit() # Commit early to mark run start? Or end. Let's do prompt updates.
             
-            # 2. Resolve Target
-            binding = await session.get(UserChannelBinding, task.target_binding_id)
-            if not binding:
-                logger.error(f"Task {task_id} failed: Target binding {task.target_binding_id} not found")
-                return
-
-            channel = await session.get(ChannelConfig, binding.channel_config_id)
+            # Load Channel directly
+            channel = await session.get(ChannelConfig, task.channel_config_id)
             if not channel or not channel.is_active:
-                logger.error(f"Task {task_id} failed: Channel not active or found")
+                logger.error(f"Task {task_id} failed: Channel {task.channel_config_id} unavailable")
                 return
 
-            # 3. Resolve Assistant
             assistant = await session.get(Assistant, task.assistant_id)
             if not assistant:
-                 logger.error(f"Task {task_id} failed: Assistant {task.assistant_id} not found")
+                 logger.error(f"Task {task_id} failed: Assistant unavailable")
                  return
-                 
-            # 4. Prepare Context
-            chat_service = LangchainChatService(session)
             
-            # We need a conversation. 
-            # Reuse/Create conversation logic
-            conversation_id = await _get_or_create_conversation_for_external_user(
-                session, 
-                assistant.id, 
-                binding.external_user_id, 
-                binding.provider
-            )
-            
-            # Need Owner User ID for ChatService
-            # We use the internal user_id linked in binding
-            internal_user_id = binding.user_id
-            
-            logger.info(f"Task {task_id}: Triggering assistant {assistant.id} for user {internal_user_id}")
+            await session.commit()
 
-            # 5. Execute & Stream
-            async def response_wrapper():
-                async for chunk in chat_service.send_message_stream(
-                    conversation_id=conversation_id,
-                    user_id=internal_user_id,
-                    content=task.prompt_template
-                ):
-                    if isinstance(chunk, dict):
-                         yield chunk.get("chunk", "")
-                    elif isinstance(chunk, str):
-                         yield chunk
+            # 2. Execution Context
+            # Use Task Owner as the context user for this execution
+            # This ensures the conversation history is linked to the user who scheduled it.
+            context_user_id = task.owner_id
+            
+            conversation = await _get_active_conversation(
+                session, 
+                context_user_id,
+                assistant.id, 
+                title_context=f"Scheduled Task: {task.name}"
+            )
+
+            # 3. Stream & Send
+            chat_service = LangchainChatService(session)
+            response_gen = _stream_response_generator(chat_service, conversation.id, context_user_id, task.prompt_template)
             
             service = ChannelServiceFactory.get_service(channel)
-            await service.send_stream(binding.external_user_id, response_wrapper())
+            await service.send_stream(task.target_identifier, response_gen)
             
-            logger.info(f"Task {task_id} completed successfully")
+            logger.info(f"Task {task_id} completed. Sent to {task.target_identifier} via {channel.name}")
             
         except Exception as e:
             logger.exception(f"Scheduled Task {task_id} failed: {e}")
 
-
-async def _get_or_create_conversation_for_external_user(
-    session: AsyncSession, 
-    assistant_id: uuid.UUID,
-    external_user_id: str,
-    provider: str
-) -> uuid.UUID:
-    """
-    Helper to manage conversation state for external users.
-    """
-    from src.assistants.models import Conversation
-    from src.users.models import User
-    
-    # Check if we have an existing open conversation
-    # Ideally should join with Binding -> User -> Conversations
-    # But simplifying: Search conversation by unique title pattern? No that's bad.
-    
-    # Correct way: use UserChannelBinding to find internal user.
-    stmt = select(UserChannelBinding).where(
-        UserChannelBinding.external_user_id == external_user_id
-        # and provider...
-    )
-    result = await session.execute(stmt)
-    binding = result.scalar_one_or_none()
-    
-    internal_user_id = binding.user_id if binding else None
-    
-    if not internal_user_id:
-        # Create a temporary guest user? Or use a dedicated "Bot User"?
-        # For this refactor to work without login, we need a System User concept.
-        # Let's try to find a user with email "bot@system" or similar, or create one.
-        logger.info(f"External user {external_user_id} has no binding. Creating Guest User.")
-        
-        # Create Guest User
-        new_user = User(
-            email=None, 
-            hashed_password="",
-            is_active=True,
-            is_superuser=False,
-            is_verified=True,
-            name=f"Guest-{external_user_id[:6]}"
-        )
-        session.add(new_user)
-        await session.flush() # get ID
-        
-        # Create Binding
-        new_binding = UserChannelBinding(
-            user_id=new_user.id,
-            external_user_id=external_user_id,
-            provider=provider
-        )
-        session.add(new_binding)
-        await session.flush()
-        internal_user_id = new_user.id
-
-    # Find latest conversation
-    # We might want to "timeout" sessions after 24h?
-    # For now, just create new one for every "start" command or reuse last one?
-    # Simple logic: Always use the latest active one.
-    
-    stmt_conv = select(Conversation).where(
-        Conversation.user_id == internal_user_id,
-        Conversation.assistant_id == assistant_id,
-        Conversation.is_pinned == False # usage as 'active' flag? No.
-    ).order_by(Conversation.updated_at.desc()).limit(1)
-    
-    conv_res = await session.execute(stmt_conv)
-    existing_conv = conv_res.scalar_one_or_none()
-    
-    if existing_conv:
-        return existing_conv.id
-        
-    # Create new
-    conv = Conversation(
-        assistant_id=assistant_id,
-        title=f"Chat via {provider}",
-        user_id=internal_user_id
-    )
-    session.add(conv)
-    await session.commit()
-    return conv.id

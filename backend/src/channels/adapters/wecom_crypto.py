@@ -2,8 +2,6 @@ import base64
 import struct
 import socket
 import hashlib
-import time
-import secrets
 from typing import Tuple, Optional
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend

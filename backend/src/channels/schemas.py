@@ -7,6 +7,8 @@ class ChannelProvider(str, Enum):
     TELEGRAM = "telegram"
     DISCORD = "discord"
     WECOM = "wecom"
+    WECOM_SMART_BOT = "wecom_smart_bot"
+    WECOM_WEBHOOK = "wecom_webhook"
     SLACK = "slack"
 
 # --- Credentials Schemas ---

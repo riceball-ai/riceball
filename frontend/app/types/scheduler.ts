@@ -6,7 +6,8 @@ export interface ScheduledTask {
   cron_expression: string
   assistant_id: string
   prompt_template: string
-  target_binding_id: string
+  channel_config_id: string
+  target_identifier: string
   is_active: boolean
   last_run_at?: string
   created_at: string
@@ -19,7 +20,8 @@ export interface ScheduledTaskCreate {
   cron_expression: string
   assistant_id: string
   prompt_template: string
-  target_binding_id: string
+  channel_config_id: string
+  target_identifier: string
   is_active: boolean
 }
 
@@ -29,6 +31,7 @@ export interface ScheduledTaskUpdate {
   cron_expression?: string
   assistant_id?: string
   prompt_template?: string
-  target_binding_id?: string
+  channel_config_id?: string
+  target_identifier?: string
   is_active?: boolean
 }

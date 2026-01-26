@@ -1250,7 +1250,7 @@ class LangchainChatService:
     async def delete_conversation(
         self,
         conversation_id: uuid.UUID,
-        user_id: uuid.UUID
+        user_id: Optional[uuid.UUID] = None
     ) -> bool:
         return await self.conversation_service.delete_conversation(
             conversation_id=conversation_id,

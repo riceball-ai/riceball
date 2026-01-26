@@ -24,7 +24,6 @@ import KnowledgeBaseConfig from '~/components/admin/KnowledgeBaseConfig.vue'
 import AgentConfig from '~/components/admin/AgentConfig.vue'
 import TranslationManager from '~/components/assistants/form/TranslationManager.vue'
 import RetrievalTester from '~/components/assistants/form/RetrievalTester.vue'
-import AssistantChannelSelector from '~/components/channels/AssistantChannelSelector.vue'
 import type { Assistant, Model, RagConfig } from '~/types/api'
 import { useConfigStore } from '~/stores/config'
 
@@ -211,7 +210,6 @@ const handleDelete = async () => {
         <TabsTrigger value="knowledge">{{ t('admin.knowledgeBase.title') }}</TabsTrigger>
         <TabsTrigger value="retrieval">{{ t('assistants.retrievalTest.title') }}</TabsTrigger>
         <TabsTrigger value="agent">{{ t('admin.agent.title') }}</TabsTrigger>
-        <TabsTrigger value="integrations">{{ t('assistants.integrations.title') }}</TabsTrigger>
         <TabsTrigger value="translations">{{ t('admin.pages.assistants.translations.title') }}</TabsTrigger>
       </TabsList>
 
@@ -255,10 +253,6 @@ const handleDelete = async () => {
           v-model="agentData"
           :disabled="loading"
         />
-      </TabsContent>
-
-      <TabsContent value="integrations">
-        <AssistantChannelSelector :assistant-id="assistantId" />
       </TabsContent>
 
       <TabsContent value="translations">

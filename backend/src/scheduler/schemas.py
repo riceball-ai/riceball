@@ -8,7 +8,8 @@ class ScheduledTaskBase(BaseModel):
     cron_expression: str = Field(..., json_schema_extra={"example": "0 9 * * *"})
     assistant_id: UUID4
     prompt_template: str
-    target_binding_id: UUID4
+    channel_config_id: UUID4
+    target_identifier: str = Field(..., min_length=0)
     is_active: bool = True
 
 class ScheduledTaskCreate(ScheduledTaskBase):
@@ -20,7 +21,8 @@ class ScheduledTaskUpdate(BaseModel):
     cron_expression: Optional[str] = None
     assistant_id: Optional[UUID4] = None
     prompt_template: Optional[str] = None
-    target_binding_id: Optional[UUID4] = None
+    channel_config_id: Optional[UUID4] = None
+    target_identifier: Optional[str] = None
     is_active: Optional[bool] = None
 
 class ScheduledTaskRead(ScheduledTaskBase):

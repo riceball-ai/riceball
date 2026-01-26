@@ -23,6 +23,7 @@ class BaseChannelAdapter(ABC):
         self.channel = channel
         self.credentials = channel.credentials
         self.settings = channel.settings
+        self.direct_response: Optional[Response] = None # Store synchronous response if needed
 
     @abstractmethod
     async def verify_request(self, request: Request) -> bool:

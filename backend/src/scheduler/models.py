@@ -28,7 +28,9 @@ class ScheduledTask(Base):
     prompt_template: Mapped[str] = mapped_column(Text, nullable=False)
     
     # Target / Output
-    target_binding_id: Mapped[uuid.UUID] = mapped_column(GUID, ForeignKey("user_channel_bindings.id", ondelete="RESTRICT"), nullable=False)
+    # Refactored: Generic Channel + Target ID
+    channel_config_id: Mapped[uuid.UUID] = mapped_column(GUID, ForeignKey("channel_configs.id", ondelete="CASCADE"), nullable=False)
+    target_identifier: Mapped[str] = mapped_column(String(255), nullable=False) # e.g. WeCom ChatID, UserID, TG ChatID
     
     # State
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

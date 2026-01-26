@@ -253,7 +253,8 @@ async def delete_conversation(
         success = await service.hard_delete_conversation(conversation_id)
         message = "Conversation permanently deleted"
     else:
-        success = await service.delete_conversation(conversation_id, current_user.id)
+        # Admin can delete any conversation, so we don't enforce user ownership check
+        success = await service.delete_conversation(conversation_id, user_id=None)
         message = "Conversation deleted successfully"
     
     if not success:

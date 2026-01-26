@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Plus, Pencil, Trash2, Sliders, Smartphone, MessageSquare } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, Sliders, Smartphone, MessageSquare, Bot } from 'lucide-vue-next'
 import { v4 as uuidv4 } from 'uuid'
 import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'
@@ -91,6 +91,7 @@ const handleDelete = async (id: string) => {
 const getProviderIcon = (provider: string) => {
     if (provider === 'telegram') return Smartphone
     if (provider === 'wecom') return MessageSquare
+    if (provider === 'wecom_smart_bot') return Bot
     return Sliders
 }
 
@@ -102,11 +103,9 @@ const getWebhookUrl = (channelId: string) => {
 }
 
 const copyWebhook = (id: string, provider: string) => {
-    if (provider === 'wecom' || provider === 'telegram') {
-        const url = getWebhookUrl(id)
-        navigator.clipboard.writeText(url)
-        toast.success(t('channels.webhook_copied'))
-    }
+    const url = getWebhookUrl(id)
+    navigator.clipboard.writeText(url)
+    toast.success(t('channels.webhook_copied'))
 }
 </script>
 
@@ -196,6 +195,7 @@ const copyWebhook = (id: string, provider: string) => {
                 <DialogDescription>{{ $t('channels.form.description') }}</DialogDescription>
             </DialogHeader>
             <ChannelForm 
+                :key="selectedChannel ? selectedChannel.id : 'create'"
                 :initial-data="selectedChannel"
                 :loading="formLoading"
                 @submit="handleSubmit"

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { Plus, Pencil, Trash2, CalendarClock, Play } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { ScheduledTask, ScheduledTaskCreate } from '~/types/scheduler'
-import type { UserChannelBinding } from '~/types/channels'
+import type { UserChannelBinding, ChannelConfig } from '~/types/channels'
 import type { Assistant } from '~/types/api'
 
 import { Button } from '~/components/ui/button'
@@ -42,6 +42,7 @@ const { $api } = useNuxtApp()
 // Fetch Data
 const { data: tasks, refresh: refreshTasks } = await useAPI<ScheduledTask[]>('/api/v1/scheduled-tasks/')
 const { data: assistants } = await useAPI<Assistant[]>('/api/v1/assistants/')
+const { data: channels } = await useAPI<ChannelConfig[]>('/api/v1/channels/')
 const { data: bindings } = await useAPI<UserChannelBinding[]>('/api/v1/channel-bindings/')
 
 // State
@@ -56,7 +57,8 @@ const form = ref<ScheduledTaskCreate>({
     cron_expression: '',
     assistant_id: '',
     prompt_template: '',
-    target_binding_id: '',
+    channel_config_id: '',
+    target_identifier: '',
     is_active: true
 })
 
@@ -70,7 +72,8 @@ const openCreateDialog = () => {
         cron_expression: '0 9 * * *',
         assistant_id: assistants.value?.[0]?.id || '',
         prompt_template: '',
-        target_binding_id: bindings.value?.[0]?.id || '',
+        channel_config_id: channels.value?.[0]?.id || '',
+        target_identifier: '',
         is_active: true
     }
     isDialogOpen.value = true
@@ -85,14 +88,15 @@ const openEditDialog = (task: ScheduledTask) => {
         cron_expression: task.cron_expression,
         assistant_id: task.assistant_id,
         prompt_template: task.prompt_template,
-        target_binding_id: task.target_binding_id,
+        channel_config_id: task.channel_config_id,
+        target_identifier: task.target_identifier,
         is_active: task.is_active
     }
     isDialogOpen.value = true
 }
 
 const onSubmit = async () => {
-    if (!form.value.name || !form.value.cron_expression || !form.value.assistant_id || !form.value.target_binding_id || !form.value.prompt_template) {
+    if (!form.value.name || !form.value.cron_expression || !form.value.assistant_id || !form.value.channel_config_id || !form.value.prompt_template) {
         toast.error(t('common.error'), { description: t('common.fixValidationErrors') })
         return
     }
@@ -136,10 +140,8 @@ const getAssistantName = (id: string) => {
     return assistants.value?.find(a => a.id === id)?.name || id
 }
 
-const getBindingLabel = (id: string) => {
-    const b = bindings.value?.find(b => b.id === id)
-    if (!b) return id
-    return `${b.provider} - ${b.external_user_id}`
+const getChannelName = (id: string) => {
+    return channels.value?.find(c => c.id === id)?.name || id
 }
 
 const formatDate = (dateStr?: string) => {
@@ -206,7 +208,12 @@ const formatDate = (dateStr?: string) => {
                 </code>
             </TableCell>
             <TableCell>{{ getAssistantName(task.assistant_id) }}</TableCell>
-            <TableCell>{{ getBindingLabel(task.target_binding_id) }}</TableCell>
+            <TableCell>
+                <div class="flex flex-col">
+                    <span class="font-medium">{{ getChannelName(task.channel_config_id) }}</span>
+                    <span class="text-xs text-muted-foreground">{{ task.target_identifier }}</span>
+                </div>
+            </TableCell>
             <TableCell>{{ formatDate(task.last_run_at) }}</TableCell>
             <TableCell>
                 <Badge :variant="task.is_active ? 'default' : 'secondary'">
@@ -272,23 +279,36 @@ const formatDate = (dateStr?: string) => {
                  </Select>
             </div>
             
-            <!-- Target Binding -->
+            <!-- Channel -->
              <div class="grid grid-cols-4 items-center gap-4">
-                <Label for="target" class="text-right">{{ $t('tasks.target') }}</Label>
+                <Label for="channel" class="text-right">{{ $t('tasks.channel') }}</Label>
                  <div class="col-span-3">
-                    <Select v-model="form.target_binding_id">
+                    <Select v-model="form.channel_config_id">
                         <SelectTrigger>
-                            <SelectValue :placeholder="$t('tasks.selectBinding')" />
+                            <SelectValue :placeholder="$t('tasks.selectChannel')" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem v-for="b in bindings" :key="b.id" :value="b.id">
-                                {{ b.provider }} - {{ b.external_user_id }}
+                            <SelectItem v-for="c in channels" :key="c.id" :value="c.id">
+                                {{ c.name }} ({{ c.provider }})
                             </SelectItem>
                         </SelectContent>
                     </Select>
-                     <p v-if="!bindings || bindings.length === 0" class="text-xs text-destructive mt-1">
-                         {{ $t('tasks.noBindings') }}
-                     </p>
+                 </div>
+            </div>
+
+            <!-- Target ID -->
+             <div class="grid grid-cols-4 items-center gap-4">
+                <Label for="target" class="text-right">{{ $t('tasks.targetId') }}</Label>
+                 <div class="col-span-3">
+                    <Input id="target" list="binding-options" v-model="form.target_identifier" placeholder="UserID, ChatID, etc" />
+                    <datalist id="binding-options">
+                        <option v-for="b in bindings" :key="b.id" :value="b.external_user_id">
+                            {{ b.external_user_id }} ({{ b.provider }})
+                        </option>
+                    </datalist>
+                    <p class="text-xs text-muted-foreground mt-1">
+                        {{ $t('tasks.targetHint') }}
+                    </p>
                  </div>
             </div>
             
@@ -307,7 +327,7 @@ const formatDate = (dateStr?: string) => {
             <div class="grid grid-cols-4 items-center gap-4">
                 <Label for="active" class="text-right">{{ $t('tasks.status') }}</Label>
                 <div class="col-span-3 flex items-center space-x-2">
-                    <Switch id="active" :checked="form.is_active" @update:checked="val => form.is_active = val" />
+                    <Switch id="active" :model-value="form.is_active" @update:model-value="val => form.is_active = val" />
                     <span>{{ form.is_active ? $t('tasks.active') : $t('tasks.inactive') }}</span>
                 </div>
             </div>

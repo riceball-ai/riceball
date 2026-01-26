@@ -21,15 +21,23 @@ RiceBall is an open-source, full-stack **AI Agent & Knowledge Base Platform**. I
     - **Stdio**: Connect to local tools.
     - **SSE**: Connect to remote/Dockerized tools.
     - **Presets**: One-click install for common tools.
-- **🔌 Multi-Model Support**: 
+- **📱 Multi-Channel Integrations**:
+  - **Omnichannel**: Deploy your Assistant to **WeCom (App / Group Robot)**, **Telegram**, and more. 
+  - **Guest Management**: Automatically maps external user identities to internal "Guest" accounts with isolated conversation history.
+  - **Streaming**: Supports streaming responses even on platforms that require polling (like WeCom Smart Bot) via an intermediate stream buffer.
+- **⏰ Scheduled Tasks**:
+  - **Cron Automation**: Automate AI interactions with Cron-based scheduling.
+  - **Push Notifications**: Send proactive messages to dedicated channels (WeCom, Telegram).
+  - **Targeted Delivery**: Support sending to generic targets (Group Chats, Departments) or specific users.
+- **🧠 Multi-Model Support**: 
   - **Vendor Agnostic**: Switch between OpenAI, Anthropic, Google Gemini, XAI (Grok).
   - **Ollama Integration**: One-click scan & import for local models (DeepSeek, Llama3, etc.).
   - **OpenAI Compatible**: Support any provider via standard protocol (e.g. DashScope).
   - **Cost Optimization**: Route simple queries to cheaper models and complex reasoning to high-performance models.
-- **�️ Enterprise SSO & Auth**:
+- **🛡️ Enterprise SSO & Auth**:
   - Full **OAuth 2.0** support (Google, GitHub, Keycloak, Auth0).
   - Native integration with **WeCom (Enterprise WeChat)** for seamless employee login.
-- **�🚀 OpenAI Compatible API**: 
+- **🔌 OpenAI Compatible API**: 
   - Expose your configured Assistant as a standard OpenAI API endpoint.
   - Integrate easily with existing tools like VS Code extensions or third-party wrappers.
 

@@ -46,12 +46,16 @@ class WecomChannelService(BaseChannelService):
     async def send_text(self, target_id: str, text: str) -> None:
         """
         Send text message.
-        target_id: WeCom User ID (touser). Supports multiple with '|' but here we assume single flow context.
+        target_id: 
+          - Default: User ID (touser).
+          - Prefix 'chat:': AppChat ID (chatid).
+          - Prefix 'party:': Party ID (toparty).
+          - Prefix 'tag:': Tag ID (totag).
         """
         token = await self.get_access_token()
         
+        url = f"{self.API_BASE}/message/send"
         payload = {
-            "touser": target_id,
             "msgtype": "text",
             "agentid": self.agent_id,
             "text": {
@@ -59,10 +63,31 @@ class WecomChannelService(BaseChannelService):
             },
             "safe": 0
         }
+
+        if target_id.startswith("chat:"):
+            # AppChat (Group Chat)
+            # API: https://developer.work.weixin.qq.com/document/path/90248
+            url = f"{self.API_BASE}/appchat/send"
+            payload["chatid"] = target_id[5:]
+            # AppChat does not need 'agentid' in the payload, but having it shouldn't hurt? 
+            # Docs say: chatid, msgtype, text, safe. 'agentid' is NOT listed.
+            payload.pop("agentid", None)
+        
+        elif target_id.startswith("party:"):
+            # Department
+            payload["toparty"] = target_id[6:]
+        
+        elif target_id.startswith("tag:"):
+            # Tag
+            payload["totag"] = target_id[4:]
+            
+        else:
+            # Default: User
+            payload["touser"] = target_id
         
         async with httpx.AsyncClient() as client:
             resp = await client.post(
-                f"{self.API_BASE}/message/send",
+                url,
                 params={"access_token": token},
                 json=payload
             )

@@ -34,6 +34,7 @@ export default defineI18nLocale(async locale => {
       retry: 'Retry',
       refresh: 'Refresh',
       or: 'Or',
+      none: 'None',
       actions: 'Actions',
       noData: 'No data available',
       bulkOperationSuccess: 'Batch {action} operation successful, affected {count} records',
@@ -246,7 +247,9 @@ export default defineI18nLocale(async locale => {
       name: 'Task Name',
       cron: 'Cron Expression',
       assistant: 'Assistant',
-      target: 'Target Channel',
+      target: 'Target',
+      channel: 'Channel',
+      targetId: 'Target ID',
       prompt: 'Prompt Template',
       status: 'Status',
       lastRun: 'Last Run',
@@ -260,6 +263,8 @@ export default defineI18nLocale(async locale => {
       noBindings: 'No channel bindings found. Interact with a bot first.',
       selectAssistant: 'Select an assistant',
       selectBinding: 'Select a target channel',
+      selectChannel: 'Select a channel',
+      targetHint: 'Enter UserID (WeCom/Telegram), Group ID, or leave empty if Channel has a default target (e.g. Webhook).',
     },
 
     // Settings
@@ -471,6 +476,9 @@ export default defineI18nLocale(async locale => {
              platform: 'Platform',
              select_provider: 'Select provider',
              name: 'Channel Name',
+             assistant: 'Linked Assistant',
+             select_assistant: 'Select an assistant...',
+             assistant_desc: 'Select an assistant to handle messages on this channel',
              telegram: {
                  bot_token: 'Bot Token',
                  bot_token_hint: "Obtain from {'@'}BotFather on Telegram"
@@ -1663,6 +1671,9 @@ export default defineI18nLocale(async locale => {
            platform: 'Platform',
            select_provider: 'Select provider',
            name: 'Channel Name',
+           assistant: 'Primary Assistant',
+           select_assistant: 'Select an assistant...',
+           assistant_desc: 'Assign an assistant to respond to messages on this channel',
            telegram: {
                bot_token: 'Bot Token',
                bot_token_hint: "Obtain from {'@'}BotFather on Telegram"
@@ -1672,7 +1683,7 @@ export default defineI18nLocale(async locale => {
                agent_id: 'Agent ID',
                secret: 'Secret',
                token: 'Token',
-               aes_key: 'EncodingAESKey',
+               encoding_aes_key: 'EncodingAESKey',
                generate_random: 'Generate Random Keys'
            },
            is_active: 'Enable this channel',

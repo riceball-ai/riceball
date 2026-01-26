@@ -27,6 +27,14 @@ import { Textarea } from '~/components/ui/textarea'
 
 import type { Channel, ChannelProvider } from '~/composables/useChannels'
 
+const { data: assistantsData } = useAPI<any>('/v1/admin/assistants?limit=100') // Fetch assistants for selection
+const assistantOptions = computed(() => {
+    const list = Array.isArray(assistantsData.value) 
+        ? assistantsData.value 
+        : (assistantsData.value?.items || [])
+    return list.map((a: any) => ({ label: a.name, value: a.id }))
+})
+
 const props = defineProps<{
   initialData?: Channel | null
   loading?: boolean
@@ -46,8 +54,9 @@ const toggleSecret = (key: string) => {
 
 const formSchema = toTypedSchema(z.object({
   name: z.string().min(2),
-  provider: z.enum(['telegram', 'wecom', 'discord', 'slack']),
+  provider: z.enum(['telegram', 'wecom', 'wecom_smart_bot', 'wecom_webhook', 'discord', 'slack']),
   is_active: z.boolean().default(true),
+  assistant_id: z.string().optional().nullable(),
   // Dynamic credentials validation would be better, but z.record(z.any()) is good enough for now
   credentials: z.record(z.any()),
   settings: z.record(z.any()).optional(),
@@ -60,6 +69,7 @@ const getInitialValues = () => {
       name: props.initialData.name,
       provider: props.initialData.provider,
       is_active: props.initialData.is_active,
+      assistant_id: props.initialData.assistant_id || 'none', // Use 'none' for select when null
       credentials: props.initialData.credentials || {},
       settings: props.initialData.settings || {},
     }
@@ -68,12 +78,18 @@ const getInitialValues = () => {
     name: '',
     provider: 'telegram' as ChannelProvider,
     is_active: true,
+    assistant_id: 'none',
     credentials: {},
     settings: {},
   }
 }
 
 const onSubmit = (values: any) => {
+    // Handle special "none" value for clearing assistant
+    if (values.assistant_id === 'none') {
+        values.assistant_id = null
+    }
+
     // If WeCom, perform custom transformation if needed (e.g. ensure empty strings are handled)
     if (values.provider === 'wecom') {
         if (!values.credentials.token) values.credentials.token = uuidv4().replace(/-/g, '')
@@ -104,6 +120,30 @@ const generateRandomSecret = (field: string, length = 32) => {
             <FormMessage />
           </FormItem>
         </FormField>
+        
+        <!-- Assistant Selection -->
+        <FormField v-slot="{ componentField }" name="assistant_id">
+          <FormItem>
+            <FormLabel>{{ t('channels.form.assistant') }}</FormLabel>
+             <Select v-bind="componentField">
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue :placeholder="t('channels.form.select_assistant')" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                   <SelectItem value="none">
+                      <span class="text-muted-foreground">{{ t('common.none') }}</span>
+                   </SelectItem>
+                   <SelectItem v-for="assistant in assistantOptions" :key="assistant.value" :value="assistant.value">
+                      {{ assistant.label }}
+                   </SelectItem>
+                </SelectContent>
+              </Select>
+            <FormDescription>{{ t('channels.form.assistant_desc') }}</FormDescription>
+            <FormMessage />
+          </FormItem>
+        </FormField>
 
         <FormField v-slot="{ componentField }" name="provider">
           <FormItem>
@@ -116,7 +156,9 @@ const generateRandomSecret = (field: string, length = 32) => {
               </FormControl>
               <SelectContent>
                 <SelectItem value="telegram">Telegram</SelectItem>
-                <SelectItem value="wecom">WeCom (企业微信)</SelectItem>
+                <SelectItem value="wecom">WeCom App</SelectItem>
+                <SelectItem value="wecom_smart_bot">WeCom Smart Bot</SelectItem>
+                <SelectItem value="wecom_webhook">WeCom Group Robot</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />
@@ -132,7 +174,7 @@ const generateRandomSecret = (field: string, length = 32) => {
                     </FormDescription>
                 </div>
                 <FormControl>
-                    <Switch :checked="value" @update:checked="handleChange" />
+                    <Switch :model-value="value" @update:model-value="handleChange" />
                 </FormControl>
             </FormItem>
         </FormField>
@@ -168,9 +210,9 @@ const generateRandomSecret = (field: string, length = 32) => {
          </FormField>
       </div>
 
-      <!-- WeCom Credentials -->
+      <!-- WeCom Configuration (Standard App) -->
       <div v-if="values.provider === 'wecom'" class="space-y-4 border-t pt-4">
-         <h4 class="text-sm font-semibold">WeCom Configuration</h4>
+         <h4 class="text-sm font-semibold">WeCom App Configuration</h4>
          
          <FormField v-slot="{ componentField }" name="credentials.corp_id">
             <FormItem>
@@ -222,31 +264,95 @@ const generateRandomSecret = (field: string, length = 32) => {
                     <FormLabel>{{ t('channels.form.wecom.token') }}</FormLabel>
                     <FormControl>
                         <div class="flex gap-2">
+                             <Input v-bind="componentField" />
+                             <!-- Refresh button logic if needed -->
+                        </div>
+                    </FormControl>
+                    <FormDescription>For Webhook Encoding</FormDescription>
+                    <FormMessage />
+                </FormItem>
+            </FormField>
+
+             <FormField v-slot="{ componentField }" name="credentials.encoding_aes_key">
+                <FormItem>
+                    <FormLabel>{{ t('channels.form.wecom.encoding_aes_key') }}</FormLabel>
+                    <FormControl>
+                        <div class="flex gap-2">
                             <Input v-bind="componentField" />
-                            <Button type="button" variant="outline" size="icon" @click="setFieldValue('credentials.token', generateRandomSecret('token', 16))">
-                                <Loader2 class="h-4 w-4" /> <!-- Using loader as refresh icon placeholder -->
+                             <Button type="button" variant="outline" size="icon" @click="setFieldValue('credentials.encoding_aes_key', generateRandomSecret('aes', 43))">
+                                <Loader2 class="h-4 w-4" />
                             </Button>
                         </div>
                     </FormControl>
                     <FormMessage />
                 </FormItem>
             </FormField>
+         </div>
+      </div>
 
-            <FormField v-slot="{ componentField }" name="credentials.aes_key">
+      <!-- WeCom Smart Bot Configuration -->
+      <div v-if="values.provider === 'wecom_smart_bot'" class="space-y-4 border-t pt-4">
+         <h4 class="text-sm font-semibold">WeCom Smart Bot Configuration</h4>
+         
+         <!-- CorpID is optional or required depending on env, let's keep it optional or hidden if auto-detected -->
+         <!-- Usually specific Bots don't need CorpID for basic reply, but adapter might use it for construction -->
+         
+         <div class="grid grid-cols-2 gap-4">
+            <FormField v-slot="{ componentField }" name="credentials.token">
                 <FormItem>
-                    <FormLabel>{{ t('channels.form.wecom.aes_key') }}</FormLabel>
+                    <FormLabel>{{ t('channels.form.wecom.token') }}</FormLabel>
                     <FormControl>
-                         <div class="flex gap-2">
-                             <Input v-bind="componentField" />
-                             <Button type="button" variant="outline" size="icon" @click="setFieldValue('credentials.aes_key', generateRandomSecret('aes', 43))">
-                                <Loader2 class="h-4 w-4" />
-                            </Button>
-                         </div>
+                        <Input v-bind="componentField" />
                     </FormControl>
+                    <FormDescription>Webhook Token</FormDescription>
+                    <FormMessage />
+                </FormItem>
+            </FormField>
+
+             <FormField v-slot="{ componentField }" name="credentials.encoding_aes_key">
+                <FormItem>
+                    <FormLabel>{{ t('channels.form.wecom.encoding_aes_key') }}</FormLabel>
+                    <FormControl>
+                        <Input v-bind="componentField" />
+                    </FormControl>
+                    <FormDescription>EncodingAESKey</FormDescription>
                     <FormMessage />
                 </FormItem>
             </FormField>
          </div>
+      </div>
+
+      <!-- WeCom Webhook Configuration -->
+      <div v-if="values.provider === 'wecom_webhook'" class="space-y-4 border-t pt-4">
+         <h4 class="text-sm font-semibold">WeCom Group Robot Configuration</h4>
+         
+         <FormField v-slot="{ componentField }" name="credentials.webhook_url">
+            <FormItem>
+                <FormLabel>Webhook URL / Key</FormLabel>
+                <FormControl>
+                    <div class="relative">
+                        <Input 
+                            v-bind="componentField" 
+                            :type="showSecrets.webhook_url ? 'text' : 'password'" 
+                            placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send..."
+                        />
+                         <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            class="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            @click="toggleSecret('webhook_url')"
+                        >
+                            <component :is="showSecrets.webhook_url ? EyeOff : Eye" class="h-4 w-4" />
+                        </Button>
+                    </div>
+                </FormControl>
+                <FormDescription>
+                    Enter the full Webhook URL or just the "key" parameter.
+                </FormDescription>
+                <FormMessage />
+            </FormItem>
+         </FormField>
       </div>
 
       <div class="flex justify-end pt-4">

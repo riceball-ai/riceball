@@ -45,9 +45,13 @@ graph TD
     - **HTTP (SSE)**: Uses HTTP POST for client-to-server messages with optional Server-Sent Events, enabling remote or Dockerized MCP server connections.
     - **Presets**: One-click install for common tools like Filesystem, Brave Search, etc.
 - **📢 Multi-Channel Integrations**:
-  - **Omnichannel**: Deploy your Assistant to **WeCom (Enterprise WeChat)**, **Telegram**, and more. 
+  - **Omnichannel**: Deploy your Assistant to **WeCom (App / Group Robot)**, **Telegram**, and more. 
   - **Guest Management**: Automatically maps external user identities to internal "Guest" accounts with isolated conversation history.
   - **Streaming**: Supports streaming responses even on platforms that require polling (like WeCom Smart Bot) via an intermediate stream buffer.
+- **⏰ Scheduled Tasks**:
+  - **Cron Automation**: Automate AI interactions with Cron-based scheduling.
+  - **Push Notifications**: Send proactive messages to dedicated channels (WeCom, Telegram).
+  - **Targeted Delivery**: Support sending to generic targets (Group Chats, Departments) or specific users.
 - **🔌 Multi-Model Support**: 
   - **Vendor Agnostic**: Support OpenAI, Anthropic, Google Gemini, XAI (Grok), etc.
   - **Ollama Integration**: One-click scan & import for local LLMs (DeepSeek, Llama3).

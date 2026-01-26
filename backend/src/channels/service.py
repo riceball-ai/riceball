@@ -12,6 +12,7 @@ from src.channels.schemas import ChannelCreate, ChannelUpdate
 from src.channels.adapters.base import BaseChannelAdapter, IncomingMessage
 from src.channels.adapters.telegram import TelegramChannelAdapter
 from src.channels.adapters.wecom import WecomChannelAdapter
+from src.channels.adapters.wecom_smart_bot import WecomSmartBotChannelAdapter
 from src.assistants.models import Conversation, Assistant, ConversationStatusEnum
 from src.chat.service import LangchainChatService 
 from src.chat.models import MessageRole
@@ -28,6 +29,8 @@ class ChannelService:
             return TelegramChannelAdapter(channel)
         elif channel.provider == ChannelProvider.WECOM:
             return WecomChannelAdapter(channel)
+        elif channel.provider == ChannelProvider.WECOM_SMART_BOT:
+            return WecomSmartBotChannelAdapter(channel)
         else:
             raise ValueError(f"Provider {channel.provider} not supported")
 
@@ -80,7 +83,11 @@ class ChannelService:
             channel.credentials = data.credentials
         if data.settings is not None:
             channel.settings = data.settings
-        if data.assistant_id is not None:
+        
+        # Explicit check for assistant_id update from the request dict
+        # This allows setting assistant_id to None (unlinking)
+        update_dict = data.dict(exclude_unset=True)
+        if 'assistant_id' in update_dict:
             channel.assistant_id = data.assistant_id
             
         await self.session.commit()
@@ -123,68 +130,38 @@ class ChannelService:
             raise HTTPException(status_code=400, detail="Invalid handshake")
 
         # Parse
-        logger.info("Verifying request signature...")
+        logger.debug("Verifying request signature...")
         # Verify
         if not await adapter.verify_request(request):
             logger.warning("Signature verification failed")
             raise HTTPException(status_code=401, detail="Invalid signature")
             
         # Parse
-        logger.info("Parsing webhook body...")
+        logger.debug("Parsing webhook body...")
         incoming = await adapter.parse_webhook_body(request)
         if not incoming:
             logger.warning("No incoming message parsed")
             return {"status": "no_content"}
             
-        logger.info(f"Incoming message parsed. Content len={len(incoming.content)}. Processing strategy: ASYNC")
+        logger.debug(f"Incoming message parsed. Content len={len(incoming.content)}. Processing strategy: ASYNC")
+        
+        result = {}
         
         # New Async Strategy: Return payload for background task
-        return {
-            "async_task_payload": {
+        # Only if we have a valid incoming message that needs processing.
+        # For Poll requests, we might NOT want to spawn a new task, just return response.
+        if not incoming.is_stream_poll:
+             result["async_task_payload"] = {
                 "user_id": incoming.user_id,
                 "content": incoming.content,
+                "stream_id": incoming.stream_id
                 # "username": incoming.username
             }
-        }
             
-        # 1. Handle Stream Polling (Generic)
-        if incoming.is_stream_poll:
-            from src.utils.stream_buffer import stream_buffer
+        if adapter.direct_response:
+            result["direct_response"] = adapter.direct_response
             
-            logger.debug(f"Processing stream poll request: stream_id={incoming.stream_id}")
-            state = await stream_buffer.get_state(incoming.stream_id)
-            if not state:
-                logger.warning(f"Stream {incoming.stream_id} not found or expired")
-                return adapter.format_stream_response(incoming.stream_id, "Stream expired", True, request.query_params)
-            
-            logger.debug(f"Returning stream state: stream_id={incoming.stream_id}, finished={state['finished']}")
-            return adapter.format_stream_response(
-                incoming.stream_id, 
-                state["content"], 
-                state["finished"], 
-                request.query_params
-            )
-
-        # 2. Initiate New Stream (If adapter supports/requires it, e.g. WeCom Smart Bot)
-        if adapter.should_stream_response(incoming):
-            from src.utils.stream_buffer import stream_buffer
-            import uuid
-            
-            stream_id = str(uuid.uuid4().hex[:10])
-            await stream_buffer.init_stream(stream_id)
-             
-            # Fire and forget processing using asyncio task
-            # Warning: Passing 'self.session' to background task is dangerous as request session closes.
-            # We should create a new scope or session.
-            asyncio.create_task(run_stream_generation_task(channel.id, incoming, stream_id))
-             
-            logger.info(f"Initialized stream {stream_id} for user {incoming.user_id}. Returning initial packet.")
-            resp = adapter.format_stream_response(stream_id, "Thinking...", False, request.query_params)
-            return resp
-
-        # 3. Standard / Legacy Handling (Wait for full response)
-        await self._process_incoming_message(channel, adapter, incoming)
-        return {"status": "ok"}
+        return result
         
     async def process_stream_generation_logic(
         self, 

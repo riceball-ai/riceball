@@ -33,14 +33,24 @@ from src.services.cache import get_cache_service, CacheBackend
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+import asyncio
+
 async def generate_title_background_task(conversation_id: uuid.UUID, user_id: uuid.UUID):
     """Background task to generate conversation title"""
+    # Wait briefly to ensure transaction is committed and visible
+    await asyncio.sleep(2)
+    
     try:
         async with async_session_maker() as session:
             service = LangchainChatService(session)
             # Use auto_update=True to save to DB
             await service.generate_conversation_title(conversation_id, user_id, auto_update=True)
             logger.info(f"Background title generation completed for {conversation_id}")
+    except ValueError as e:
+        if "No messages found" in str(e):
+             logger.warning(f"Background title generation skipped for {conversation_id}: No messages found (conversation might be empty)")
+        else:
+             logger.error(f"Background title generation failed for {conversation_id}: {e}")
     except Exception as e:
         logger.error(f"Background title generation failed for {conversation_id}: {e}")
 

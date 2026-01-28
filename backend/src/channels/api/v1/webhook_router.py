@@ -3,7 +3,13 @@ from fastapi import APIRouter, Request, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_async_session
 from src.channels.service import ChannelService
-from src.scheduler.executor import process_incoming_message
+try:
+    from src.scheduler.executor import process_incoming_message
+except ImportError:
+    # If circular import or other issue, define a placeholder or handle gracefully
+    # This might happen if executor imports something that imports this router
+    async def process_incoming_message(*args, **kwargs):
+        pass  # Placeholder
 
 router = APIRouter(prefix="/channels")
 

@@ -70,6 +70,47 @@ export default defineI18nLocale(async locale => {
 
     // Components
     components: {
+      cron: {
+        frequency: 'Frequency',
+        once: 'Once',
+        daily: 'Daily',
+        weekly: 'Weekly',
+        monthly: 'Monthly',
+        yearly: 'Yearly',
+        custom: 'Custom',
+        time: 'Time',
+        date: 'Date',
+        onDays: 'On Days',
+        onDay: 'On Day',
+        ofTheMonth: 'of the month',
+        inMonth: 'In Month',
+        expression: 'Expression',
+        invalid: 'Invalid cron expression',
+        selectFrequency: 'Select frequency',
+        days: {
+          mon: 'Mon',
+          tue: 'Tue',
+          wed: 'Wed',
+          thu: 'Thu',
+          fri: 'Fri',
+          sat: 'Sat',
+          sun: 'Sun',
+        },
+        months: {
+          jan: 'January',
+          feb: 'February',
+          mar: 'March',
+          apr: 'April',
+          may: 'May',
+          jun: 'June',
+          jul: 'July',
+          aug: 'August',
+          sep: 'September',
+          oct: 'October',
+          nov: 'November',
+          dec: 'December',
+        }
+      },
       avatarUpload: {
         label: 'Avatar',
         previewAlt: 'Avatar preview',
@@ -265,6 +306,8 @@ export default defineI18nLocale(async locale => {
       selectBinding: 'Select a target channel',
       selectChannel: 'Select a channel',
       targetHint: 'Enter UserID (WeCom/Telegram), Group ID, or leave empty if Channel has a default target (e.g. Webhook).',
+      history: 'History',
+      historyTitle: 'Execution History',
     },
 
     // Settings

@@ -30,3 +30,15 @@ class ScheduledTaskRead(ScheduledTaskBase):
     owner_id: UUID4
     last_run_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+
+class ScheduledTaskExecutionRead(BaseModel):
+    id: UUID4
+    task_id: UUID4
+    status: str
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    duration: Optional[str] = None
+    result_summary: Optional[str] = None
+    error_message: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)

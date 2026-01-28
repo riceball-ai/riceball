@@ -362,7 +362,7 @@ class AgentExecutionEngine:
                             token_usage["input_tokens"] += input_tokens
                             token_usage["output_tokens"] += output_tokens
                             token_usage["total_tokens"] += total_tokens
-                            logger.info(f"✅ Accumulated token usage: {token_usage} (this call: +{total_tokens})")
+                            logger.debug(f"✅ Accumulated token usage: {token_usage} (this call: +{total_tokens})")
                 
                 # Process content_blocks
                 if hasattr(message_chunk, "content_blocks") and message_chunk.content_blocks:

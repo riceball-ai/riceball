@@ -7,8 +7,8 @@ from sqlalchemy import select
 from src.database import get_async_session
 from src.auth import current_active_user, current_superuser
 from src.users.models import User
-from src.scheduler.models import ScheduledTask
-from src.scheduler.schemas import ScheduledTaskCreate, ScheduledTaskRead, ScheduledTaskUpdate
+from src.scheduler.models import ScheduledTask, ScheduledTaskExecution
+from src.scheduler.schemas import ScheduledTaskCreate, ScheduledTaskRead, ScheduledTaskUpdate, ScheduledTaskExecutionRead
 from src.scheduler.core import add_job_to_scheduler, remove_job_from_scheduler
 
 router = APIRouter(prefix="/scheduled-tasks", tags=["Scheduled Tasks"])
@@ -82,3 +82,21 @@ async def delete_scheduled_task(
     await session.commit()
     
     remove_job_from_scheduler(str(task.id))
+
+@router.get("/{task_id}/executions", response_model=List[ScheduledTaskExecutionRead])
+async def list_task_executions(
+    task_id: uuid.UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session)
+):
+    task = await session.get(ScheduledTask, task_id)
+    if not task or task.owner_id != user.id:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    query = select(ScheduledTaskExecution)\
+        .where(ScheduledTaskExecution.task_id == task_id)\
+        .order_by(ScheduledTaskExecution.started_at.desc())\
+        .limit(50) 
+    
+    result = await session.execute(query)
+    return result.scalars().all()

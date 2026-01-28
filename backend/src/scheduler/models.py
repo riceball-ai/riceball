@@ -35,3 +35,26 @@ class ScheduledTask(Base):
     # State
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     last_run_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class ScheduledTaskExecution(Base):
+    """
+    Log of scheduled task executions
+    """
+    __tablename__ = "scheduled_task_executions"
+
+    task_id: Mapped[uuid.UUID] = mapped_column(GUID, ForeignKey("scheduled_tasks.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    status: Mapped[str] = mapped_column(String(50), default="PENDING") # PENDING, RUNNING, COMPLETED, FAILED
+    
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    
+    duration: Mapped[Optional[float]] = mapped_column(String(50), nullable=True) # Stored as float seconds or string "1.2s"
+    
+    # We store the final text result here. 
+    # If the response is huge, consider truncation or separate storage.
+    result_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+

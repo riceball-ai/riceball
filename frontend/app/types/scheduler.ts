@@ -25,6 +25,17 @@ export interface ScheduledTaskCreate {
   is_active: boolean
 }
 
+export interface ScheduledTaskExecution {
+  id: string
+  task_id: string
+  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED'
+  started_at: string
+  completed_at?: string
+  duration?: string
+  result_summary?: string
+  error_message?: string
+}
+
 export interface ScheduledTaskUpdate {
   name?: string
   description?: string
@@ -35,3 +46,4 @@ export interface ScheduledTaskUpdate {
   target_identifier?: string
   is_active?: boolean
 }
+

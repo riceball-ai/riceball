@@ -69,6 +69,47 @@ export default defineI18nLocale(async locale => {
 
     // 组件
     components: {
+      cron: {
+        frequency: '频率',
+        once: '单次',
+        daily: '每天',
+        weekly: '每周',
+        monthly: '每月',
+        yearly: '每年',
+        custom: '自定义',
+        time: '时间',
+        date: '日期',
+        onDays: '在星期',
+        onDay: '在几号',
+        ofTheMonth: '号',
+        inMonth: '在几月',
+        expression: 'Cron 表达式',
+        invalid: '无效的 cron 表达式',
+        selectFrequency: '选择频率',
+        days: {
+          mon: '一',
+          tue: '二',
+          wed: '三',
+          thu: '四',
+          fri: '五',
+          sat: '六',
+          sun: '日',
+        },
+        months: {
+          jan: '一月',
+          feb: '二月',
+          mar: '三月',
+          apr: '四月',
+          may: '五月',
+          jun: '六月',
+          jul: '七月',
+          aug: '八月',
+          sep: '九月',
+          oct: '十月',
+          nov: '十一月',
+          dec: '十二月',
+        }
+      },
       avatarUpload: {
         label: '头像',
         previewAlt: '头像预览',
@@ -264,6 +305,8 @@ export default defineI18nLocale(async locale => {
       selectBinding: '选择目标渠道',
       selectChannel: '选择渠道',
       targetHint: '输入 UserID，群组 ID。如果渠道已配置默认目标（如 Webhook），此处可留空。',
+      history: '执行记录',
+      historyTitle: '任务执行历史',
     },
 
     // 设置

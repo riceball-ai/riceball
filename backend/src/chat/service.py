@@ -27,6 +27,7 @@ from .models import ChatMessage, MessageRole
 from .conversation_service import ConversationService
 from .prompt_builder import PromptBuilder
 from .providers.google_adapter import GoogleProviderAdapter
+from .engine import AIEngine
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class LangchainChatService:
             session=session,
             google_adapter=self.google_adapter,
         )
+        self.engine = AIEngine(session)
 
     async def _store_inline_media_to_s3(
         self,
@@ -317,40 +319,43 @@ class LangchainChatService:
         exclude_ids = [user_message.id, assistant_message.id]
 
         try:
-            # Choose streaming method based on mode
-            if conversation.assistant.enable_agent:
-                # Agent mode: use agent execution engine with tools
-                stream_generator = self._stream_agent_response(
-                    conversation.assistant,
-                    content,
-                    conversation,
-                    assistant_message.id,
-                    exclude_ids,
-                    language=language,
-                    files=files
-                )
-            else:
-                # Non-agent mode: direct LLM chat with optional RAG
-                # Yield assistant message start event
-                yield {
-                    "type": "assistant_message_start",
-                    "data": {
-                        "id": str(assistant_message.id),
-                        "conversation_id": str(conversation_id),
-                        "message_type": "ASSISTANT",
-                        "model": conversation.assistant.model.name,
-                        "created_at": assistant_message.created_at.isoformat()
-                    }
+            # Common handling: Yield assistant message start event
+            yield {
+                "type": "assistant_message_start",
+                "data": {
+                    "id": str(assistant_message.id),
+                    "conversation_id": str(conversation_id),
+                    "message_type": "ASSISTANT",
+                    "model": conversation.assistant.model.name,
+                    "created_at": assistant_message.created_at.isoformat()
                 }
-                
-                chat_messages = await self.build_prompt_messages(
-                    conversation,
-                    content,
-                    exclude_ids,
-                    current_images=prompt_images,
-                    language=language,
-                )
-                stream_generator = self._stream_ai_response(conversation.assistant, chat_messages, conversation_id=conversation_id)
+            }
+            
+            # Build messages (History + RAG + Prompt)
+            chat_messages = await self.build_prompt_messages(
+                conversation,
+                content,
+                exclude_ids,
+                current_images=prompt_images,
+                language=language,
+            )
+            
+            # Convert to dicts for Engine
+            messages_payload = [
+                {"role": m.role.value, "content": m.content} 
+                for m in chat_messages
+            ]
+
+            # Call Engine
+            stream_generator = self.engine.generate_stream(
+                assistant=conversation.assistant,
+                messages=messages_payload,
+                context_files=files,
+                context_images=prompt_images,
+                language=language,
+                context_id=conversation.id,
+                user_id=user_id
+            )
             
             # Process streaming events (unified handling for both modes)
             async for chunk_data in stream_generator:

@@ -80,7 +80,10 @@ const agentData = computed({
 // Fetch options
 const { data: models } = useAPI<Model[]>('/v1/admin/all-models?capabilities=chat', { server: false })
 const modelOptions = computed(() => {
-  return (models.value ?? []).map(m => ({ label: m.display_name, value: m.id }))
+  return (models.value ?? []).map(m => ({ 
+    label: m.display_name, 
+    value: m.id
+  }))
 })
 
 // Validation

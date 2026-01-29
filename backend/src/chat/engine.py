@@ -74,12 +74,17 @@ class AIEngine:
         if not self.prompt_builder:
             raise ValueError("PromptBuilder required for simple chat")
             
+        # Get model parameters
+        model_kwargs = assistant.model_parameters or {}
+        logger.debug(f"Creating chat model with parameters: {model_kwargs}")
+        
         llm = create_chat_model(
             provider=assistant.model.provider,
             model_name=assistant.model.name,
             temperature=assistant.temperature,
             max_tokens=assistant.max_tokens,
-            streaming=True
+            streaming=True,
+            **model_kwargs
         )
 
         try:

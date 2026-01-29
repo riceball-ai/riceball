@@ -42,7 +42,10 @@ const formData = ref<Partial<Assistant>>({
 // Fetch models
 const { data: models } = useAPI<Model[]>('/v1/models', { server: false })
 const modelOptions = computed(() => {
-  return (models.value ?? []).map(m => ({ label: m.display_name, value: m.id }))
+  return (models.value ?? []).map(m => ({ 
+    label: m.display_name, 
+    value: m.id
+  }))
 })
 
 // Load from source if needed

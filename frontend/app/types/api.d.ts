@@ -226,6 +226,8 @@ interface Assistant {
   temperature: number
   max_tokens: number
   max_history_messages?: number | null
+  config?: Record<string, any>
+  model_parameters?: Record<string, any>
   status: 'ACTIVE' | 'INACTIVE' | 'DRAFT'
   is_public: boolean
   category?: string

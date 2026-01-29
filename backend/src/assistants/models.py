@@ -100,6 +100,14 @@ class Assistant(Base):
     # Model configuration (temperature, max_tokens, etc.)
     config: Mapped[Dict[str, Any]] = mapped_column(MutableDict.as_mutable(JSON), nullable=False, default=dict)
 
+    # Model Parameters - Native parameters passed directly to LLM API (e.g. tools, top_p)
+    model_parameters: Mapped[Dict[str, Any]] = mapped_column(
+        MutableDict.as_mutable(JSON), 
+        nullable=False, 
+        default=dict,
+        server_default="{}"
+    )
+
     # Temperature setting for the assistant (0.0 to 2.0, default 1.0)
     temperature: Mapped[float] = mapped_column(
         default=1.0,

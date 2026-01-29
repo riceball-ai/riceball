@@ -366,8 +366,23 @@ class LangchainChatService:
                 # Collect content chunks (both modes)
                 if chunk_data["type"] == "content_chunk":
                     chunk_content = chunk_data["data"].get("content", "")
+                    
+                    # Handle structured content (e.g. xAI returns list of dicts)
+                    if isinstance(chunk_content, list):
+                        parts = []
+                        for item in chunk_content:
+                            if isinstance(item, dict) and item.get("type") == "text":
+                                parts.append(item.get("text", ""))
+                            elif isinstance(item, str):
+                                parts.append(item)
+                        
+                        chunk_content = "".join(parts)
+                        # CRITICAL: Update the data payload so frontend receives string
+                        chunk_data["data"]["content"] = chunk_content
+
                     if chunk_content:
-                        content_chunks.append(chunk_content)
+                        content_chunks.append(str(chunk_content))
+                    
                     chunk_media = chunk_data["data"].get("media")
                     if chunk_media:
                         logger.info(f"Collecting {len(chunk_media)} media items from chunk")
@@ -609,6 +624,10 @@ class LangchainChatService:
             raise ValueError("No content to send to Gemini")
 
         overrides: Dict[str, Any] = {}
+        # Merge native model parameters (Blind Forward)
+        if assistant.model_parameters:
+            overrides.update(assistant.model_parameters)
+            
         if assistant.temperature is not None:
             overrides["temperature"] = assistant.temperature
 
@@ -831,6 +850,10 @@ class LangchainChatService:
         model_generation_config = getattr(assistant.model, "generation_config", None)
         assistant_overrides = (assistant.config or {}).get("additional_params", {})
         generation_params = _merge_generation_params(model_generation_config, assistant_overrides)
+
+        # Merge new model_parameters (Blind Forward)
+        if assistant.model_parameters:
+             generation_params.update(assistant.model_parameters)
 
         if self.google_adapter.is_google_provider(assistant):
             generation_params = self.google_adapter.normalize_generation_params(generation_params, assistant)

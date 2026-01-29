@@ -7,6 +7,8 @@ import { Textarea } from '~/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { Switch } from '~/components/ui/switch'
 
+import { Button } from '~/components/ui/button'
+
 const { t } = useI18n()
 
 interface ModelSettingsData {
@@ -14,11 +16,13 @@ interface ModelSettingsData {
   model_id: string
   temperature: number
   max_history_messages: number | null
+  model_parameters?: Record<string, any>
 }
 
 interface CommonOption {
   label: string
   value: string | number
+  provider?: string
 }
 
 interface Props {
@@ -61,6 +65,45 @@ const handleMaxHistoryToggle = (enabled: boolean) => {
     updateField('max_history_messages', null)
   }
 }
+
+// Advanced Parameters (JSON)
+const showAdvanced = ref(false)
+const modelParametersJson = ref('{}')
+const jsonError = ref('')
+
+// Initialize JSON string from prop
+watch(() => props.modelValue.model_parameters, (val) => {
+  if (val) {
+    try {
+      // Only update if structurally different to avoid cursor jumps
+      const current = JSON.parse(modelParametersJson.value || '{}')
+      if (JSON.stringify(current) !== JSON.stringify(val)) {
+        modelParametersJson.value = JSON.stringify(val, null, 2)
+      }
+    } catch {
+      modelParametersJson.value = JSON.stringify(val, null, 2)
+    }
+  } else {
+      if (modelParametersJson.value !== '{}') modelParametersJson.value = '{}'
+  }
+}, { immediate: true, deep: true })
+
+const updateModelParametersJson = (val: string) => {
+  modelParametersJson.value = val
+  if (!val.trim()) {
+    updateField('model_parameters', {})
+    jsonError.value = ''
+    return
+  }
+  try {
+    const parsed = JSON.parse(val)
+    updateField('model_parameters', parsed)
+    jsonError.value = ''
+  } catch (e) {
+    jsonError.value = t('assistantForm.invalidJson')
+  }
+}
+
 </script>
 
 <template>
@@ -166,6 +209,32 @@ const handleMaxHistoryToggle = (enabled: boolean) => {
             {{ t('assistantForm.maxHistoryHelp') }}
           </div>
         </div>
+      </div>
+
+      <!-- Advanced Parameters (JSON) -->
+      <div class="space-y-4 pt-4 border-t">
+         <div class="flex items-center justify-between">
+            <Label>{{ t('assistantForm.advancedParams') }}</Label>
+            <Button variant="ghost" size="sm" @click="showAdvanced = !showAdvanced">
+                {{ showAdvanced ? t('common.hide') : t('common.show') }}
+            </Button>
+         </div>
+         
+         <div v-if="showAdvanced" class="space-y-2">
+            <Textarea
+              :model-value="modelParametersJson"
+              @update:model-value="updateModelParametersJson"
+              :class="{ 'border-destructive': jsonError, 'font-mono text-xs': true }"
+              placeholder="{ &quot;top_p&quot;: 0.9 }"
+              rows="8"
+            />
+            <div v-if="jsonError" class="text-sm text-destructive">
+                {{ jsonError }}
+            </div>
+             <div class="text-sm text-muted-foreground">
+                {{ t('assistantForm.advancedParamsHelp') }}
+            </div>
+         </div>
       </div>
     </CardContent>
   </Card>

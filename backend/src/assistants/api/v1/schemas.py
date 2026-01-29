@@ -32,7 +32,11 @@ class AssistantBase(BaseModel):
     description: Optional[str] = Field(None, description="Assistant description")
     system_prompt: Optional[str] = Field(None, description="System prompt for the assistant")
     avatar_file_path: Optional[str] = Field(None, max_length=500, description="Avatar URL")
-    config: Dict[str, Any] = Field(default_factory=dict, description="Model configuration")
+    config: Dict[str, Any] = Field(default_factory=dict, description="App-specific configuration")
+    model_parameters: Dict[str, Any] = Field(
+        default_factory=dict, 
+        description="Native parameters passed directly to Model API (e.g. tools, top_p)"
+    )
     temperature: float = Field(
         default=1.0,
         ge=0.0,
@@ -97,6 +101,10 @@ class AssistantUpdate(BaseModel):
     avatar_file_path: Optional[str] = Field(None, max_length=500, description="Avatar URL")
     model_id: Optional[uuid.UUID] = Field(None, description="Model ID to use")
     config: Optional[Dict[str, Any]] = Field(None, description="Model configuration")
+    model_parameters: Optional[Dict[str, Any]] = Field(
+        None, 
+        description="Native parameters passed directly to Model API (e.g. tools, top_p)"
+    )
     temperature: Optional[float] = Field(
         None,
         ge=0.0,

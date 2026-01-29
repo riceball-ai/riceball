@@ -62,15 +62,16 @@ def upgrade() -> None:
         batch_op.create_index(batch_op.f('ix_user_channel_bindings_external_user_id'), ['external_user_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_user_channel_bindings_user_id'), ['user_id'], unique=False)
 
-    with op.batch_alter_table('assistant_channels', schema=None) as batch_op:
-        batch_op.drop_index(batch_op.f('ix_assistant_channels_assistant_id'))
-
-    op.drop_table('assistant_channels')
     with op.batch_alter_table('channel_identities', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_channel_identities_identity_id'))
         batch_op.drop_index(batch_op.f('ix_channel_identities_user_id'))
 
     op.drop_table('channel_identities')
+
+    with op.batch_alter_table('assistant_channels', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_assistant_channels_assistant_id'))
+
+    op.drop_table('assistant_channels')
     # ### end Alembic commands ###
 
 

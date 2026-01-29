@@ -46,8 +46,23 @@ def create_chat_model(
     model_params = {
         "temperature": temperature,
         "api_key": provider.api_key,
-        **additional_params
     }
+
+    # Handle special parameters that should move to model_kwargs
+    # - 'tools', 'tool_choice': Avoid LangChain warnings/errors
+    # - 'extra_body': Required for passing non-standard params to OpenAI client (e.g. enable_search)
+    special_args = ["tools", "tool_choice", "extra_body"]
+    model_kwargs = additional_params.pop("model_kwargs", {})
+    
+    for arg in special_args:
+        if arg in additional_params:
+            model_kwargs[arg] = additional_params.pop(arg)
+            
+    if model_kwargs:
+        model_params["model_kwargs"] = model_kwargs
+
+    # Add remaining additional parameters
+    model_params.update(additional_params)
     
     # Add max_tokens if specified
     if max_tokens:

@@ -49,9 +49,9 @@ const { t } = useI18n()
 const { $api } = useNuxtApp()
 
 // Fetch Data
-const { data: tasks, refresh: refreshTasks } = await useAPI<ScheduledTask[]>('/api/v1/scheduled-tasks/')
-const { data: assistants } = await useAPI<Assistant[]>('/api/v1/assistants/')
-const { data: channels } = await useAPI<ChannelConfig[]>('/api/v1/channels/')
+const { data: tasks, refresh: refreshTasks } = await useAPI<ScheduledTask[]>('/v1/scheduled-tasks/')
+const { data: assistants } = await useAPI<Assistant[]>('/v1/assistants')
+const { data: channels } = await useAPI<ChannelConfig[]>('/v1/channels')
 
 // State
 const isDialogOpen = ref(false)

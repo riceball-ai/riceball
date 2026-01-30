@@ -17,6 +17,7 @@ from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload, attributes as orm_attributes
 
 from src.assistants.models import Assistant, Conversation, Message, MessageTypeEnum
+from src.assistants.utils import resolve_assistant_model_params
 from src.ai_models.models import Model
 from src.ai_models.client_factory import create_chat_model
 from src.system_config.service import config_service
@@ -835,28 +836,8 @@ class LangchainChatService:
         # For other providers: Use LangChain
         provider = assistant.model.provider
         
-        def _merge_generation_params(*param_dicts: Optional[dict]) -> dict:
-            """Merge provider-level and assistant-level generation parameters."""
-            merged: dict[str, Any] = {}
-            for params in param_dicts:
-                if not params:
-                    continue
-                for key, value in params.items():
-                    if value is None:
-                        continue
-                    merged[key] = value
-            return merged
-
-        model_generation_config = getattr(assistant.model, "generation_config", None)
-        assistant_overrides = (assistant.config or {}).get("additional_params", {})
-        generation_params = _merge_generation_params(model_generation_config, assistant_overrides)
-
-        # Merge new model_parameters (Blind Forward)
-        if assistant.model_parameters:
-             generation_params.update(assistant.model_parameters)
-
-        if self.google_adapter.is_google_provider(assistant):
-            generation_params = self.google_adapter.normalize_generation_params(generation_params, assistant)
+        # Resolve merged Model Config + Assistant Params + Model Parameters using shared util
+        generation_params = resolve_assistant_model_params(assistant)
 
         # Create LangChain client
         try:

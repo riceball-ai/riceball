@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 
 from src.assistants.models import Assistant
+from src.assistants.utils import resolve_assistant_model_params
 from src.ai_models.client_factory import create_chat_model
 from src.chat.models import MessageRole
 from src.chat.prompt_builder import PromptBuilder
@@ -75,8 +76,8 @@ class AIEngine:
             raise ValueError("PromptBuilder required for simple chat")
             
         # Get model parameters
-        model_kwargs = assistant.model_parameters or {}
-        logger.debug(f"Creating chat model with parameters: {model_kwargs}")
+        model_kwargs = resolve_assistant_model_params(assistant)
+        logger.info(f"Creating chat model with parameters: {model_kwargs}")
         
         llm = create_chat_model(
             provider=assistant.model.provider,

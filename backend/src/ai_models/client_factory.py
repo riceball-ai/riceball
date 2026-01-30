@@ -49,9 +49,9 @@ def create_chat_model(
     }
 
     # Handle special parameters that should move to model_kwargs
-    # - 'tools', 'tool_choice': Avoid LangChain warnings/errors
-    # - 'extra_body': Required for passing non-standard params to OpenAI client (e.g. enable_search)
-    special_args = ["tools", "tool_choice", "extra_body"]
+    # - 'tools', 'tool_choice': Avoid LangChain ChatOpenAI validation errors if passed top-level without bind_tools
+    # Note: 'extra_body' should be passed explicitly (top-level), not in model_kwargs, to avoid UserWarnings.
+    special_args = ["tools", "tool_choice"]
     model_kwargs = additional_params.pop("model_kwargs", {})
     
     for arg in special_args:
@@ -61,7 +61,7 @@ def create_chat_model(
     if model_kwargs:
         model_params["model_kwargs"] = model_kwargs
 
-    # Add remaining additional parameters
+    # Add remaining additional parameters (includes extra_body if present)
     model_params.update(additional_params)
     
     # Add max_tokens if specified

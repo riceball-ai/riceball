@@ -11,6 +11,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool
 
 from src.assistants.models import Assistant
+from src.assistants.utils import resolve_assistant_model_params
 from src.ai_models.client_factory import create_chat_model
 from .tools.base import AgentTool
 from .tools.registry import tool_registry
@@ -127,11 +128,15 @@ class AgentExecutionEngine:
         model = self.assistant.model
         provider = model.provider
         
+        # Prepare parameters using shared logic
+        params = resolve_assistant_model_params(self.assistant)
+        logger.info(f"Creating agent chat model with parameters: {params}")
+        
         return create_chat_model(
             provider=provider,
             model_name=model.name,
             temperature=self.assistant.temperature,
-            **self.assistant.config
+            **params
         )
     
     async def _load_tools(self):

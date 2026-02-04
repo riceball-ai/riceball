@@ -36,8 +36,8 @@ class AgentExecutionStatusEnum(enum.Enum):
 class MCPServerTypeEnum(enum.Enum):
     """MCP server type enumeration"""
     STDIO = "STDIO"  # Standard input/output
-    SSE = "SSE"      # Server-sent events
-    HTTP = "HTTP"    # HTTP protocol
+    SSE = "SSE"      # Server-sent events (Legacy)
+    HTTP = "HTTP"    # Streamable HTTP (Standard for Remote)
 
 
 # Assistant and MCP server many-to-many relationship table
@@ -117,7 +117,7 @@ class MCPServerConfig(Base):
     # Server type
     server_type: Mapped[MCPServerTypeEnum] = mapped_column(
         SQLEnum(MCPServerTypeEnum),
-        default=MCPServerTypeEnum.STDIO,
+        default=MCPServerTypeEnum.HTTP,
         nullable=False
     )
     

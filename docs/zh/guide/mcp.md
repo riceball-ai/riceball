@@ -53,7 +53,7 @@ services:
 
 1.  启动容器：`docker compose up -d`。
 2.  进入 **管理后台 -> 预设库**。
-3.  安装 **Filesystem (Docker Sidecar)**。
+3.  安装 **Filesystem (Remote)**。
     -   Host 连接地址默认为：`http://mcp-filesystem:8000/sse` (Docker 内部 DNS)。
 
 ## 🛠️ 手动配置 (Manual Configuration)

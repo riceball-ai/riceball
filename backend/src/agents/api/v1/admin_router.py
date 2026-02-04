@@ -12,6 +12,7 @@ from src.auth import current_superuser
 from src.users.models import User
 from ...schemas import (
     MCPServerConfigCreate,
+    MCPServerConfigUpdate,
     MCPServerConfigResponse,
     MCPServerToolsResponse,
     MCPToolInfo,
@@ -93,6 +94,27 @@ async def get_mcp_server(
     return MCPServerConfigResponse.model_validate(server)
 
 
+@router.patch("/{server_id}", response_model=MCPServerConfigResponse)
+async def update_mcp_server(
+    server_id: uuid.UUID,
+    server_data: MCPServerConfigUpdate,
+    current_user: User = Depends(current_superuser),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Update MCP server configuration (Admin only)"""
+    service = MCPServerService(session)
+    try:
+        updated_server = await service.update_mcp_server(server_id, server_data.model_dump(exclude_unset=True))
+        if not updated_server:
+            raise HTTPException(status_code=404, detail="MCP server not found")
+        return MCPServerConfigResponse.model_validate(updated_server)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to update server {server_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @router.delete("/{server_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_mcp_server(
     server_id: uuid.UUID,
@@ -113,19 +135,31 @@ async def list_mcp_server_tools(
 ):
     """List tools available from MCP server (Admin only)"""
     client = await mcp_manager.get_client(server_name)
-    if not client:
-        # Check if it was supposed to be there but failed? 
-        # For now just 404
-        raise HTTPException(status_code=404, detail="MCP server not connected or registered")
+    tools = []
+    
+    if client:
+        try:
+            # Try to fetch live tools
+            tools = await client.list_tools()
+            # Update cache implicitly? Manager does it on refresh usually.
+            # We should probably let manager handle caching to keep it in sync.
+            # But client.list_tools() just calls the remote.
+        except Exception as e:
+            logger.error(f"Error listing tools for connected server {server_name}: {e}")
+            # Fallback to cache if live fetch fails
+            tools = await mcp_manager.get_tools(server_name) or []
+    else:
+        # Try to get from cache if disconnected
+        tools = await mcp_manager.get_tools(server_name)
+        
+    if tools is None:
+        # No client and no cache -> Server likely never connected or doesn't exist
+        raise HTTPException(
+            status_code=404, 
+            detail=f"MCP server '{server_name}' not connected or available"
+        )
         
     try:
-        # We can either fetch from cache or live
-        # tools = await mcp_manager.list_all_tools() # This lists all tools from all servers
-        # We want specific server tools.
-        # The manager caches them, but doesn't expose a clean per-server getter for cache.
-        # Let's call refresh on the client to be safe and live
-        tools = await client.list_tools()
-        
         tool_infos = []
         for tool in tools:
             # Handle different formats (dict vs object)
@@ -142,5 +176,5 @@ async def list_mcp_server_tools(
             tools=tool_infos
         )
     except Exception as e:
-        logger.error(f"Error listing tools for {server_name}: {e}")
+        logger.error(f"Error parsing tools for {server_name}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

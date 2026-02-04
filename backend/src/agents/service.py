@@ -3,6 +3,7 @@ Agent Service - Business logic for MCP Server operations
 """
 import uuid
 import logging
+import asyncio
 from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -30,7 +31,8 @@ class MCPServerService:
         
         # Connect if active
         if server.is_active:
-            await mcp_manager.connect_server(server)
+            # Run connection in background to avoid blocking API response
+            asyncio.create_task(mcp_manager.connect_server(server))
         
         return server
     
@@ -75,8 +77,8 @@ class MCPServerService:
         await self.session.commit()
         await self.session.refresh(server)
         
-        # Auto connect
-        await mcp_manager.connect_server(server)
+        # Auto connect in background
+        asyncio.create_task(mcp_manager.connect_server(server))
         
         return server
     
@@ -95,7 +97,41 @@ class MCPServerService:
     async def list_presets(self) -> List[Any]:
         """List available presets"""
         return MCP_PRESETS
-    
+
+    async def update_mcp_server(self, server_id: uuid.UUID, update_data: Dict[str, Any]) -> Optional[MCPServerConfig]:
+        """Update MCP server configuration"""
+        server = await self.get_mcp_server(server_id)
+        if not server:
+            return None
+            
+        # Check if name is changing and if new name conflicts
+        if "name" in update_data and update_data["name"] != server.name:
+            stmt = select(MCPServerConfig).where(MCPServerConfig.name == update_data["name"])
+            existing = (await self.session.execute(stmt)).scalar_one_or_none()
+            if existing:
+                raise ValueError(f"Server with name '{update_data['name']}' already exists")
+                
+        # Store old name for disconnection if needed
+        old_name = server.name
+        
+        # Update fields
+        for key, value in update_data.items():
+            if hasattr(server, key):
+                setattr(server, key, value)
+                
+        await self.session.commit()
+        await self.session.refresh(server)
+        
+        # Reconnect logic
+        # Always disconnect the old one
+        await mcp_manager.disconnect_server(old_name)
+        
+        # If still active, connect the new one
+        if server.is_active:
+             asyncio.create_task(mcp_manager.connect_server(server))
+             
+        return server
+
     async def delete_mcp_server(self, server_id: uuid.UUID) -> bool:
         """Delete MCP server"""
         server = await self.get_mcp_server(server_id)

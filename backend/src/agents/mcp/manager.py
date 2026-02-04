@@ -3,6 +3,7 @@ MCP Connection Manager
 Handles lifecycle of MCP client connections and tool caching
 """
 import logging
+import asyncio
 from typing import Dict, List, Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -40,7 +41,7 @@ class MCPConnectionManager:
                 if config.name in self.clients and self.clients[config.name].is_connected:
                     continue
                     
-                await self.connect_server(config)
+                asyncio.create_task(self.connect_server(config))
                 
         except Exception as e:
             logger.error(f"Failed to load MCP servers: {e}")
@@ -59,10 +60,17 @@ class MCPConnectionManager:
             
             # Connect
             await client.connect()
+            
+            # Since connect() is async and might not be fully ready immediately if it uses background tasks?
+            # Actually standard client.connect() awaits until session is initialized.
+            
             self.clients[config.name] = client
             
             # Initial tool discovery
-            await self.refresh_tools(config.name)
+            try:
+                await self.refresh_tools(config.name)
+            except Exception as e:
+                 logger.warning(f"Initial tool refresh failed for {config.name}, but connection is active: {e}")
             
             logger.info(f"Successfully connected to MCP server: {config.name}")
             
@@ -81,6 +89,10 @@ class MCPConnectionManager:
     async def get_client(self, name: str) -> Optional[MCPClientBase]:
         """Get a connected client by name"""
         return self.clients.get(name)
+
+    async def get_tools(self, name: str) -> Optional[List[Dict[str, Any]]]:
+        """Get tools for a server (from cache or client)"""
+        return self.tool_cache.get(name)
 
     async def list_all_tools(self) -> List[Dict[str, Any]]:
         """

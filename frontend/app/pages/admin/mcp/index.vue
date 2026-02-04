@@ -40,7 +40,9 @@ import {
     CheckCircle2, 
     AlertCircle,
     Server,
-    Hammer
+    Hammer,
+    Plus,
+    Pencil
 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { MCPServerConfigResponse, MCPPresetResponse, MCPServerToolsResponse } from '~/types/mcp'
@@ -52,7 +54,7 @@ definePageMeta({
 })
 
 const { t } = useI18n()
-const { listServers, listPresets, installPreset, deleteServer, listTools } = useMCP()
+const { listServers, listPresets, installPreset, deleteServer, listTools, updateServer } = useMCP()
 
 // State
 const servers = ref<MCPServerConfigResponse[]>([])
@@ -64,11 +66,18 @@ const isInstalling = ref(false)
 const selectedPreset = ref<MCPPresetResponse | null>(null)
 const installModalOpen = ref(false)
 const connectionOverrides = ref('') // JSON string
+const addServerModalOpen = ref(false)
 
 // Tools Modal
 const toolsModalOpen = ref(false)
 const currentServerTools = ref<MCPServerToolsResponse | null>(null)
 const isLoadingTools = ref(false)
+
+// Edit Modal
+const editModalOpen = ref(false)
+const serverToEdit = ref<MCPServerConfigResponse | null>(null)
+const editConfig = ref('')
+const isUpdating = ref(false)
 
 // Load Data
 const loadData = async () => {
@@ -98,6 +107,10 @@ const openInstallModal = (preset: MCPPresetResponse) => {
     installModalOpen.value = true
 }
 
+const handleServerAdded = async () => {
+    await loadData()
+}
+
 const handleInstall = async () => {
     if (!selectedPreset.value) return
     
@@ -122,6 +135,37 @@ const handleInstall = async () => {
     }
 }
 
+const handleEdit = (server: MCPServerConfigResponse) => {
+    serverToEdit.value = server
+    editConfig.value = JSON.stringify(server.connection_config, null, 2)
+    editModalOpen.value = true
+}
+
+const handleUpdateServer = async () => {
+    if (!serverToEdit.value) return
+    isUpdating.value = true
+    try {
+        let config = {}
+        try {
+            config = JSON.parse(editConfig.value)
+        } catch (e) {
+            toast.error(t('admin.mcp.error.invalidJson'))
+            return
+        }
+
+        await updateServer(serverToEdit.value.id, {
+            connection_config: config
+        })
+        toast.success(t('common.success'))
+        editModalOpen.value = false
+        await loadData()
+    } catch (e) {
+        toast.error(t('common.error'))
+    } finally {
+        isUpdating.value = false
+    }
+}
+
 const handleDelete = async (server: MCPServerConfigResponse) => {
     if (!confirm(t('admin.mcp.deleteConfirm', { name: server.name }))) return
     
@@ -142,8 +186,11 @@ const handleViewTools = async (serverName: string) => {
     try {
         const tools = await listTools(serverName)
         currentServerTools.value = tools
-    } catch (e) {
-        toast.error(t('common.error'))
+    } catch (e: any) {
+        const msg = e.data?.detail || e.message || t('common.error')
+        toast.error(msg)
+        // Close modal if failed? Or keep it open to retry?
+        // toolsModalOpen.value = false 
     } finally {
         isLoadingTools.value = false
     }
@@ -168,10 +215,16 @@ const getTypeIcon = (type: MCPServerTypeEnum) => {
           {{ t('admin.mcp.description') }}
         </p>
       </div>
-      <Button variant="outline" @click="loadData" :disabled="isLoading">
-          <RefreshCcw class="w-4 h-4 mr-2" :class="{ 'animate-spin': isLoading }" />
-          {{ t('common.refresh') }}
-      </Button>
+      <div class="flex gap-2">
+        <Button @click="addServerModalOpen = true">
+            <Plus class="w-4 h-4 mr-2" />
+            {{ t('admin.mcp.custom.add') }}
+        </Button>
+        <Button variant="outline" @click="loadData" :disabled="isLoading">
+            <RefreshCcw class="w-4 h-4 mr-2" :class="{ 'animate-spin': isLoading }" />
+            {{ t('common.refresh') }}
+        </Button>
+      </div>
     </div>
 
     <!-- Installed Servers -->
@@ -225,6 +278,9 @@ const getTypeIcon = (type: MCPServerTypeEnum) => {
                             </div>
                         </TableCell>
                         <TableCell class="text-right space-x-2">
+                            <Button variant="ghost" size="sm" @click="handleEdit(server)">
+                                <Pencil class="w-4 h-4" />
+                            </Button>
                             <Button variant="ghost" size="sm" @click="handleViewTools(server.name)">
                                 <Hammer class="w-4 h-4 mr-1" />
                                 {{ t('admin.mcp.viewTools') }}
@@ -313,6 +369,34 @@ const getTypeIcon = (type: MCPServerTypeEnum) => {
         </DialogContent>
     </Dialog>
 
+    <!-- Edit Modal -->
+    <Dialog v-model:open="editModalOpen">
+        <DialogContent class="sm:max-w-[500px]">
+            <DialogHeader>
+                <DialogTitle>{{ t('admin.mcp.editServer', { name: serverToEdit?.name }) }}</DialogTitle>
+                <DialogDescription>
+                    {{ t('admin.mcp.editServerDescription') }}
+                </DialogDescription>
+            </DialogHeader>
+            
+            <div class="py-4">
+                <Label>{{ t('admin.mcp.connectionConfig') }}</Label>
+                <textarea 
+                    v-model="editConfig"
+                    class="w-full h-[200px] p-2 mt-2 font-mono text-xs border rounded bg-slate-950 text-slate-50"
+                ></textarea>
+            </div>
+
+            <DialogFooter>
+                <Button variant="outline" @click="editModalOpen = false">{{ t('common.cancel') }}</Button>
+                <Button @click="handleUpdateServer" :disabled="isUpdating">
+                    <RefreshCcw v-if="isUpdating" class="w-4 h-4 mr-2 animate-spin" />
+                    {{ t('common.save') }}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
     <!-- Tools Modal -->
     <Dialog v-model:open="toolsModalOpen">
         <DialogContent class="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
@@ -342,5 +426,10 @@ const getTypeIcon = (type: MCPServerTypeEnum) => {
             </div>
         </DialogContent>
     </Dialog>
+
+    <McpAddCustomServerDialog 
+        v-model:open="addServerModalOpen" 
+        @success="handleServerAdded" 
+    />
   </div>
 </template>

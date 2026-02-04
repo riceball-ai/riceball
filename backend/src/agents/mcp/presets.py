@@ -19,7 +19,7 @@ class MCPPreset(BaseModel):
 MCP_PRESETS: List[MCPPreset] = [
     MCPPreset(
         id="filesystem-docker",
-        name="Filesystem (Docker Sidecar)",
+        name="Filesystem (Remote)",
         description="Access local files via Docker sidecar container. Requires 'mcp-filesystem' service in docker-compose.",
         server_type=MCPServerTypeEnum.HTTP,
         connection_config={
@@ -29,7 +29,7 @@ MCP_PRESETS: List[MCPPreset] = [
     ),
     MCPPreset(
         id="brave-search-docker",
-        name="Brave Search (Docker Sidecar)",
+        name="Brave Search (Remote)",
         description="Web search capability via Brave Search API. Requires 'mcp-brave' service in docker-compose and API Key.",
         server_type=MCPServerTypeEnum.HTTP,
         connection_config={
@@ -39,11 +39,21 @@ MCP_PRESETS: List[MCPPreset] = [
     ),
     MCPPreset(
         id="fetch-docker",
-        name="Fetch (Docker Sidecar)",
+        name="Fetch (Remote)",
         description="Fetch URL content. Requires 'mcp-fetch' service.",
         server_type=MCPServerTypeEnum.HTTP,
         connection_config={
             "url": "http://mcp-fetch:8000/sse",
+            "headers": {}
+        }
+    ),
+    MCPPreset(
+        id="jina-ai",
+        name="Jina AI",
+        description="Search, Read URL, and Grounding Optimized for LLMs. (Web)",
+        server_type=MCPServerTypeEnum.HTTP,
+        connection_config={
+            "url": "https://mcp.jina.ai/v1",
             "headers": {}
         }
     ),

@@ -19,27 +19,37 @@ export const useMCP = () => {
     })
   }
 
+  const createServer = async (data: any) => {
+    return await $api<MCPServerConfigResponse>('/api/v1/admin/mcp-servers', {
+      method: 'POST',
+      body: data
+    })
+  }
+
   const deleteServer = async (serverId: string) => {
     return await $api(`/api/v1/admin/mcp-servers/${serverId}`, {
       method: 'DELETE'
     })
   }
 
+  const updateServer = async (serverId: string, data: any) => {
+    return await $api<MCPServerConfigResponse>(`/api/v1/admin/mcp-servers/${serverId}`, {
+        method: 'PATCH',
+        body: data
+    })
+  }
+
   const listTools = async (serverName: string) => {
-      // Need to handle error gracefully if server is disconnected
-      try {
-        return await $api<MCPServerToolsResponse>(`/api/v1/admin/mcp-servers/${serverName}/tools`)
-      } catch (e) {
-          console.error("Failed to list tools", e)
-          return null
-      }
+      return await $api<MCPServerToolsResponse>(`/api/v1/admin/mcp-servers/${serverName}/tools`)
   }
 
   return {
     listServers,
     listPresets,
     installPreset,
+    createServer,
     deleteServer,
+    updateServer,
     listTools
   }
 }

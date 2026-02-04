@@ -9,7 +9,8 @@ from contextlib import AsyncExitStack
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from mcp.client.sse import sse_client
+# Swapped std mcp sse implementation for custom one supporting Jina/StreamableHTTP
+from .transports import streamable_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ class MCPClientBase(abc.ABC):
                      tools_data.append(t if isinstance(t, dict) else t.__dict__)
             return tools_data
         except Exception as e:
-            logger.error(f"Failed to list tools for {self.name}: {e}")
+            logger.error(f"Failed to list tools for {self.name}: {e!r}")
             raise
 
     async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
@@ -107,7 +108,7 @@ class MCPStdioClient(MCPClientBase):
             raise
 
 class MCPSseClient(MCPClientBase):
-    """MCP Client using SSE transport (Remote/Docker)"""
+    """MCP Client using Streamable HTTP (SSE) transport (Remote/Docker)"""
     
     def __init__(self, name: str, url: str, headers: Dict[str, str] = None):
         super().__init__(name)
@@ -118,8 +119,11 @@ class MCPSseClient(MCPClientBase):
         try:
             logger.debug(f"Connecting to SSE MCP server: {self.url}")
             # sse_client context manager yields (read, write) streams
+            # Add timeout to headers if not present?
+            # Ensure URL is correct endpoint. Many servers use /sse
+            
             transport = await self.exit_stack.enter_async_context(
-                sse_client(url=self.url, headers=self.headers)
+                streamable_http_client(url=self.url, headers=self.headers)
             )
             read, write = transport
             self.session = await self.exit_stack.enter_async_context(

@@ -27,7 +27,7 @@ class MCPServerConfigBase(BaseModel):
     """Base MCP server config schema"""
     name: str = Field(..., max_length=100)
     description: Optional[str] = Field(None, max_length=500)
-    server_type: MCPServerTypeEnum = MCPServerTypeEnum.STDIO
+    server_type: MCPServerTypeEnum = MCPServerTypeEnum.HTTP
     connection_config: Dict[str, Any]
     is_active: bool = True
     extra_data: Dict[str, Any] = Field(default_factory=dict)
@@ -40,6 +40,8 @@ class MCPServerConfigCreate(MCPServerConfigBase):
 
 class MCPServerConfigUpdate(BaseModel):
     """Update MCP server config"""
+    name: Optional[str] = Field(None, max_length=100)
+    server_type: Optional[MCPServerTypeEnum] = None
     description: Optional[str] = Field(None, max_length=500)
     connection_config: Optional[Dict[str, Any]] = None
     is_active: Optional[bool] = None

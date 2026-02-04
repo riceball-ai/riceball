@@ -53,7 +53,7 @@ services:
 
 1.  Start the containers: `docker compose up -d`.
 2.  Go to **Admin Panel -> Presets**.
-3.  Install **Filesystem (Docker Sidecar)**.
+3.  Install **Filesystem (Remote)**.
     -   Host connection URL: `http://mcp-filesystem:8000/sse` (Internal Docker DNS)
 
 ## 🛠️ Manual Configuration

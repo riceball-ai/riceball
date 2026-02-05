@@ -19,7 +19,7 @@ if settings.DATABASE_URL.startswith("sqlite"):
         except Exception as e:
             print(f"Warning: Could not create database directory: {e}")
 
-engine = create_async_engine(settings.DATABASE_URL, connect_args=connect_args)
+engine = create_async_engine(settings.DATABASE_URL, connect_args=connect_args, pool_pre_ping=True)
 
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 

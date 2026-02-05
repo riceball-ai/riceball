@@ -7,7 +7,7 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 
 from .config import settings, StorageType
-from .database import async_session_maker
+from .database import async_session_maker, engine
 from .agents.mcp.manager import mcp_manager
 from .sandbox.service import close_sandbox_service
 from .auth import current_active_user, current_superuser
@@ -72,6 +72,9 @@ async def lifespan(app: FastAPI):
     # Startup
     logger = logging.getLogger("uvicorn.startup")
     logger.info("Starting up RiceBall...")
+    
+    # Dispose the engine to ensure clean connections in this process
+    await engine.dispose()
     
     # Initialize MCP Manager
     try:

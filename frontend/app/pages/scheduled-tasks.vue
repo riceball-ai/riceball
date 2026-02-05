@@ -264,7 +264,7 @@ const formatDate = (dateStr?: string) => {
             </DialogDescription>
           </DialogHeader>
 
-          <div class="grid gap-4 py-4">
+          <div class="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
             <!-- Name -->
             <div class="grid grid-cols-4 items-center gap-4">
               <Label for="name" class="text-right">{{ $t('tasks.name') }}</Label>

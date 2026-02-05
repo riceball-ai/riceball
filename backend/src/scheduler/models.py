@@ -22,6 +22,7 @@ class ScheduledTask(Base):
     
     # Trigger Config
     cron_expression: Mapped[str] = mapped_column(String(100), nullable=False) # e.g. "0 8 * * *"
+    timezone: Mapped[str] = mapped_column(String(50), default="UTC", server_default="UTC", nullable=False)
     
     # Task Payload
     assistant_id: Mapped[uuid.UUID] = mapped_column(GUID, ForeignKey("assistants.id", ondelete="RESTRICT"), nullable=False)

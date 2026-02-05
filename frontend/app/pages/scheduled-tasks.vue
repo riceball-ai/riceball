@@ -65,6 +65,7 @@ const form = ref<ScheduledTaskCreate>({
   name: '',
   description: '',
   cron_expression: '',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   assistant_id: '',
   prompt_template: '',
   channel_config_id: '',
@@ -80,6 +81,7 @@ const openCreateDialog = () => {
     name: '',
     description: '',
     cron_expression: '0 9 * * *',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     assistant_id: assistants.value?.[0]?.id || '',
     prompt_template: '',
     channel_config_id: channels.value?.[0]?.id || '',
@@ -96,6 +98,7 @@ const openEditDialog = (task: ScheduledTask) => {
     name: task.name,
     description: task.description || '',
     cron_expression: task.cron_expression,
+    timezone: task.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
     assistant_id: task.assistant_id,
     prompt_template: task.prompt_template,
     channel_config_id: task.channel_config_id,
@@ -279,6 +282,12 @@ const formatDate = (dateStr?: string) => {
             <!-- Cron -->
             <div class="w-full">
                  <CronEditor v-model="form.cron_expression" />
+            </div>
+
+            <!-- Timezone -->
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="timezone" class="text-right">{{ $t('common.timezone') }}</Label>
+              <Input id="timezone" v-model="form.timezone" class="col-span-3" placeholder="UTC" />
             </div>
 
             <!-- Assistant -->

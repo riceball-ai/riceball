@@ -6,6 +6,7 @@ class ScheduledTaskBase(BaseModel):
     name: str = Field(..., max_length=100)
     description: Optional[str] = Field(None, max_length=255)
     cron_expression: str = Field(..., json_schema_extra={"example": "0 9 * * *"})
+    timezone: str = Field(default="UTC", json_schema_extra={"example": "Asia/Shanghai"})
     assistant_id: UUID4
     prompt_template: str
     channel_config_id: UUID4
@@ -19,6 +20,7 @@ class ScheduledTaskUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     cron_expression: Optional[str] = None
+    timezone: Optional[str] = None
     assistant_id: Optional[UUID4] = None
     prompt_template: Optional[str] = None
     channel_config_id: Optional[UUID4] = None

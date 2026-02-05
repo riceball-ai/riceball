@@ -61,7 +61,7 @@ def add_job_to_scheduler(task: ScheduledTask):
         else:
             # Note: from_crontab requires 5 fields.
             try:
-                trigger = CronTrigger.from_crontab(task.cron_expression)
+                trigger = CronTrigger.from_crontab(task.cron_expression, timezone=task.timezone)
             except ValueError:
                 # Fallback or specific error logging
                  logger.error(f"Invalid Cron format for task {task.id}: {task.cron_expression}")

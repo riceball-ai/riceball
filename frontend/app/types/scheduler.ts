@@ -4,6 +4,7 @@ export interface ScheduledTask {
   name: string
   description?: string
   cron_expression: string
+  timezone: string
   assistant_id: string
   prompt_template: string
   channel_config_id: string
@@ -18,6 +19,7 @@ export interface ScheduledTaskCreate {
   name: string
   description?: string
   cron_expression: string
+  timezone: string
   assistant_id: string
   prompt_template: string
   channel_config_id: string

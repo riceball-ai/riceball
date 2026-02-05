@@ -36,6 +36,8 @@ export default defineI18nLocale(async locale => {
       or: '或',
       none: '无',
       noData: '暂无数据',
+      timezone: '时区',
+      description: '描述',
       bulkOperationSuccess: '批量{action}操作成功，影响 {count} 条记录',
       importSuccess: '导入成功，共导入 {count} 条记录',
       saveChanges: '保存修改',

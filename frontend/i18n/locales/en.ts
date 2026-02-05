@@ -37,6 +37,8 @@ export default defineI18nLocale(async locale => {
       none: 'None',
       actions: 'Actions',
       noData: 'No data available',
+      timezone: 'Timezone',
+      description: 'Description',
       bulkOperationSuccess: 'Batch {action} operation successful, affected {count} records',
       importSuccess: 'Import successful, imported {count} records',
       saveChanges: 'Save Changes',

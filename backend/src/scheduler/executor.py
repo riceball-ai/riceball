@@ -89,7 +89,8 @@ async def execute_scheduled_task(task_id: uuid.UUID):
                 return
 
             stmt = select(Assistant).options(
-                selectinload(Assistant.model).selectinload(Model.provider)
+                selectinload(Assistant.model).selectinload(Model.provider),
+                selectinload(Assistant.mcp_servers)
             ).where(Assistant.id == task.assistant_id)
             result = await session.execute(stmt)
             assistant = result.scalar_one_or_none()

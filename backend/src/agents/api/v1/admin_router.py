@@ -139,11 +139,8 @@ async def list_mcp_server_tools(
     
     if client:
         try:
-            # Try to fetch live tools
-            tools = await client.list_tools()
-            # Update cache implicitly? Manager does it on refresh usually.
-            # We should probably let manager handle caching to keep it in sync.
-            # But client.list_tools() just calls the remote.
+            # Try to fetch live tools and update cache
+            tools = await mcp_manager.refresh_tools(server_name)
         except Exception as e:
             logger.error(f"Error listing tools for connected server {server_name}: {e}")
             # Fallback to cache if live fetch fails

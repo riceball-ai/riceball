@@ -108,15 +108,23 @@ class MCPConnectionManager:
                 all_tools.append(tool_copy)
         return all_tools
 
-    async def refresh_tools(self, server_name: str):
-        """Force refresh tools for a specific server"""
+    async def refresh_tools(self, server_name: str) -> List[Dict[str, Any]]:
+        """Force refresh tools for a specific server and update cache"""
         if client := self.clients.get(server_name):
+            if not client.is_connected:
+                # Client is present but disconnected (e.g. during disconnect race condition)
+                # Raise exception to trigger fallback in caller
+                raise RuntimeError(f"Client {server_name} is found but disconnected")
+
             try:
                 tools = await client.list_tools()
                 self.tool_cache[server_name] = tools
                 logger.debug(f"Refreshed {len(tools)} tools for {server_name}")
+                return tools
             except Exception as e:
                 logger.error(f"Failed to refresh tools for {server_name}: {e}")
+                raise e
+        return []
 
     async def shutdown(self):
         """Gracefully shutdown all connections"""

@@ -65,6 +65,11 @@ class MCPClientBase(abc.ABC):
             return tools_data
         except Exception as e:
             logger.error(f"Failed to list tools for {self.name}: {e!r}")
+            # Mark as disconnected if resource is closed or connection error
+            if "ClosedResourceError" in repr(e) or "Connection" in repr(e):
+                 logger.warning(f"Marking client {self.name} as disconnected due to error.")
+                 self._connected = False
+                 self.session = None
             raise
 
     async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
@@ -76,6 +81,10 @@ class MCPClientBase(abc.ABC):
             return await self.session.call_tool(tool_name, arguments)
         except Exception as e:
             logger.error(f"Failed to call tool {tool_name} on {self.name}: {e}")
+            if "ClosedResourceError" in repr(e) or "Connection" in repr(e):
+                 logger.warning(f"Marking client {self.name} as disconnected due to error.")
+                 self._connected = False
+                 self.session = None
             raise
 
 class MCPStdioClient(MCPClientBase):

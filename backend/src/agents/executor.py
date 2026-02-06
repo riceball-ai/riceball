@@ -194,8 +194,22 @@ class AgentExecutionEngine:
                     logger.warning(f"MCP Server {mcp_server.name} unavailable. Skipping.")
                     continue
                 
-                # Get tools
-                mcp_tool_list = await client.list_tools()
+                # Get tools with retry logic
+                try:
+                    mcp_tool_list = await client.list_tools()
+                except Exception as e:
+                    # Retry once if it looks like a connection issue (which list_tools might have just flagged)
+                    if not client.is_connected or "ClosedResourceError" in repr(e) or "Connection" in repr(e):
+                        logger.warning(f"Connection lost for {mcp_server.name}, retrying connection...")
+                        await mcp_manager.disconnect_server(mcp_server.name)
+                        await mcp_manager.connect_server(mcp_server)
+                        client = await mcp_manager.get_client(mcp_server.name)
+                        if client and client.is_connected:
+                             mcp_tool_list = await client.list_tools()
+                        else:
+                            raise e
+                    else:
+                        raise e
                 
                 # Convert to agent tools
                 for tool_info in mcp_tool_list:

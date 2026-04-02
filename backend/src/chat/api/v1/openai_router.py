@@ -38,11 +38,14 @@ async def get_assistant_with_model(
     assistant_id: uuid.UUID,
     session: AsyncSession,
 ) -> Assistant:
-    """Fetch assistant with loaded model and provider"""
+    """Fetch assistant with loaded model/provider and agent MCP servers."""
     stmt = (
         select(Assistant)
         .where(Assistant.id == assistant_id)
-        .options(selectinload(Assistant.model).selectinload(Model.provider))
+        .options(
+            selectinload(Assistant.model).selectinload(Model.provider),
+            selectinload(Assistant.mcp_servers),
+        )
     )
     result = await session.execute(stmt)
     assistant = result.scalar_one_or_none()
@@ -95,17 +98,8 @@ async def chat_completions(
     Stateless: uses provided messages for context.
     """
     
-    # 1. Fetch Assistant with Model
-    stmt = (
-        select(Assistant)
-        .where(Assistant.id == assistant_id)
-        .options(selectinload(Assistant.model).selectinload(Model.provider))
-    )
-    result = await session.execute(stmt)
-    assistant = result.scalar_one_or_none()
-    
-    if not assistant:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Assistant not found")
+    # 1. Fetch assistant with all agent-required relations preloaded.
+    assistant = await get_assistant_with_model(assistant_id, session)
 
     if not assistant.model or not assistant.model.provider:
          raise HTTPException(status.HTTP_400_BAD_REQUEST, "Assistant model configuration invalid")
